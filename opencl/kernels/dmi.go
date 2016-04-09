@@ -1,0 +1,175 @@
+package kernels
+
+// Exchange + Dzyaloshinskii-Moriya interaction according to
+// Bagdanov and Röβler, PRL 87, 3, 2001. eq.8 (out-of-plane symmetry breaking).
+// Taking into account proper boundary conditions.
+// m: normalized magnetization
+// H: effective field in Tesla
+// D: dmi strength / Msat, in Tesla*m
+// A: Aex/Msat
+
+var DmiSource = `
+__kernel void
+adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global float* __restrict Hz,
+       __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
+       __global float* __restrict aLUT2d, __global float* __restrict dLUT2d, __global uint8_t* __restrict regions,
+       float cx, float cy, float cz, int Nx, int Ny, int Nz, uint8_t PBC) {
+
+	int ix = get_group_id(0) * get_local_size(0) + get_local_id(0);
+	int iy = get_group_id(1) * get_local_size(1) + get_local_id(1);
+	int iz = get_group_id(2) * get_local_size(2) + get_local_id(2);
+
+	if (ix >= Nx || iy >= Ny || iz >= Nz) {
+		return;
+	}
+
+	int I = idx(ix, iy, iz);                      // central cell index
+	float3 h = make_float3(Hx[I], Hy[I], Hz[I]);  // add to H
+	float3 m0 = make_float3(mx[I], my[I], mz[I]); // central m
+	uint8_t r0 = regions[I];
+	int i_;                                       // neighbor index
+
+	if(is0(m0)) {
+		return;
+	}
+
+	// x derivatives (along length)
+	{
+		float3 m1 = make_float3(0.0f, 0.0f, 0.0f);     // left neighbor
+		i_ = idx(lclampx(ix-1), iy, iz);               // load neighbor m if inside grid, keep 0 otherwise
+		if (ix-1 >= 0 || PBCx) {
+			m1 = make_float3(mx[i_], my[i_], mz[i_]);
+		}
+		float A1 = aLUT2d[symidx(r0, regions[i_])];    // inter-region Aex
+		float D1 = dLUT2d[symidx(r0, regions[i_])];    // inter-region Dex
+		if (is0(m1)) {                                 // neighbor missing
+			m1.x = m0.x - (-cx * (0.5f*D1/A1) * m0.z); // extrapolate missing m from BC's
+			m1.y = m0.y;
+			m1.z = m0.z + (-cx * (0.5f*D1/A1) * m0.x);
+		}
+		h   += (2.0f*A1/(cx*cx)) * (m1 - m0);          // exchange
+		h.x += (D1/cx)*(m0.z - m1.z);                  // DM (first 1/2 contribution, 2*D * deltaM / (2*c))
+		h.z -= (D1/cx)*(m0.x - m1.x);
+	}
+
+	{
+		float3 m2 = make_float3(0.0f, 0.0f, 0.0f);     // right neighbor
+		i_ = idx(hclampx(ix+1), iy, iz);
+		if (ix+1 < Nx || PBCx) {
+			m2 = make_float3(mx[i_], my[i_], mz[i_]);
+		}
+		float A2 = aLUT2d[symidx(r0, regions[i_])];
+		float D2 = dLUT2d[symidx(r0, regions[i_])];
+		if (is0(m2)) {
+			m2.x = m0.x - (cx * (0.5f*D2/A2) * m0.z);
+			m2.y = m0.y;
+			m2.z = m0.z + (cx * (0.5f*D2/A2) * m0.x);
+		}
+		h   += (2.0f*A2/(cx*cx)) * (m2 - m0);
+		h.x += (D2/cx)*(m2.z - m0.z);
+		h.z -= (D2/cx)*(m2.x - m0.x);
+	}
+
+	// y derivatives (along height)
+	{
+		float3 m1 = make_float3(0.0f, 0.0f, 0.0f);
+		i_ = idx(ix, lclampy(iy-1), iz);
+		if (iy-1 >= 0 || PBCy) {
+			m1 = make_float3(mx[i_], my[i_], mz[i_]);
+		}
+		float A1 = aLUT2d[symidx(r0, regions[i_])];
+		float D1 = dLUT2d[symidx(r0, regions[i_])];
+		if (is0(m1)) {
+			m1.x = m0.x;
+			m1.y = m0.y - (-cy * (0.5f*D1/A1) * m0.z);
+			m1.z = m0.z + (-cy * (0.5f*D1/A1) * m0.y);
+		}
+		h   += (2.0f*A1/(cy*cy)) * (m1 - m0);
+		h.y += (D1/cy)*(m0.z - m1.z);
+		h.z -= (D1/cy)*(m0.y - m1.y);
+	}
+
+	{
+		float3 m2 = make_float3(0.0f, 0.0f, 0.0f);
+		i_ = idx(ix, hclampy(iy+1), iz);
+		if  (iy+1 < Ny || PBCy) {
+			m2 = make_float3(mx[i_], my[i_], mz[i_]);
+		}
+		float A2 = aLUT2d[symidx(r0, regions[i_])];
+		float D2 = dLUT2d[symidx(r0, regions[i_])];
+		if (is0(m2)) {
+			m2.x = m0.x;
+			m2.y = m0.y - (cy * (0.5f*D2/A2) * m0.z);
+			m2.z = m0.z + (cy * (0.5f*D2/A2) * m0.y);
+		}
+		h   += (2.0f*A2/(cy*cy)) * (m2 - m0);
+		h.y += (D2/cy)*(m2.z - m0.z);
+		h.z -= (D2/cy)*(m2.y - m0.y);
+	}
+
+	// only take vertical derivative for 3D sim
+	if (Nz != 1) {
+		// bottom neighbor
+		{
+			i_  = idx(ix, iy, lclampz(iz-1));
+			float3 m1  = make_float3(mx[i_], my[i_], mz[i_]);
+			m1  = ( is0(m1)? m0: m1 );                         // Neumann BC
+			float A1 = aLUT2d[symidx(r0, regions[i_])];
+			h += (2.0f*A1/(cz*cz)) * (m1 - m0);                // Exchange only
+		}
+
+		// top neighbor
+		{
+			i_  = idx(ix, iy, hclampz(iz+1));
+			float3 m2  = make_float3(mx[i_], my[i_], mz[i_]);
+			m2  = ( is0(m2)? m0: m2 );
+			float A2 = aLUT2d[symidx(r0, regions[i_])];
+			h += (2.0f*A2/(cz*cz)) * (m2 - m0);
+		}
+	}
+
+	// write back, result is H + Hdmi + Hex
+	Hx[I] = h.x;
+	Hy[I] = h.y;
+	Hz[I] = h.z;
+}
+
+`
+
+// Note on boundary conditions.
+//
+// We need the derivative and laplacian of m in point A, but e.g. C lies out of the boundaries.
+// We use the boundary condition in B (derivative of the magnetization) to extrapolate m to point C:
+// 	m_C = m_A + (dm/dx)|_B * cellsize
+//
+// When point C is inside the boundary, we just use its actual value.
+//
+// Then we can take the central derivative in A:
+// 	(dm/dx)|_A = (m_C - m_D) / (2*cellsize)
+// And the laplacian:
+// 	lapl(m)|_A = (m_C + m_D - 2*m_A) / (cellsize^2)
+//
+// All these operations should be second order as they involve only central derivatives.
+//
+//    ------------------------------------------------------------------ *
+//   |                                                   |             C |
+//   |                                                   |          **   |
+//   |                                                   |        ***    |
+//   |                                                   |     ***       |
+//   |                                                   |   ***         |
+//   |                                                   | ***           |
+//   |                                                   B               |
+//   |                                               *** |               |
+//   |                                            ***    |               |
+//   |                                         ****      |               |
+//   |                                     ****          |               |
+//   |                                  ****             |               |
+//   |                              ** A                 |               |
+//   |                         *****                     |               |
+//   |                   ******                          |               |
+//   |          *********                                |               |
+//   |D ********                                         |               |
+//   |                                                   |               |
+//   +----------------+----------------+-----------------+---------------+
+//  -1              -0.5               0               0.5               1
+//                                 x
