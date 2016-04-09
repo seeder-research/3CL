@@ -5,7 +5,7 @@ package data
 import (
 	"bytes"
 	"fmt"
-	"go-opencl/util"
+	"github.com/mumax/3cl/util"
 	"log"
 	"reflect"
 	"unsafe"

@@ -1,7 +1,7 @@
 package data
 
 import (
-	"go-opencl/util"
+	"github.com/mumax/3cl/util"
 )
 
 // Resample returns a slice of new size N,
