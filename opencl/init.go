@@ -6,9 +6,9 @@ import (
 //	"log"
 	"runtime"
 
-	"go-opencl/opencl/cl"
-	"go-opencl/opencl/kernels"
-//	"go-opencl/util"
+	"github.com/mumax/3cl/opencl/cl"
+	"github.com/mumax/3cl/opencl/kernels"
+//	"github.com/mumax/3cl/util"
 )
 
 var (
