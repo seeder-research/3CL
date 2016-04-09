@@ -1,10 +1,10 @@
 package main
 
 import (
-	"go-opencl/opencl/cl"
+	"github.com/mumax/3cl/opencl/cl"
 	"fmt"
 	"math/rand"
-	"go-opencl/opencl/kernels"
+	"github.com/mumax/3cl/opencl/kernels"
 )
 
 func main() {
