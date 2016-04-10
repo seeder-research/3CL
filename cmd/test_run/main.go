@@ -127,6 +127,9 @@ func main() {
 			fmt.Printf("Kernel arg %d: %s \n", i, name)
 		}
 	}
+
+	fmt.Printf("Begin first run of square kernel... \n");
+
 	input, err := context.CreateEmptyBuffer(cl.MemReadOnly, 4*len(data))
 	if err != nil {
 		fmt.Printf("CreateBuffer failed for input: %+v \n", err)
@@ -188,38 +191,47 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Finished tests on square\n")
-	fmt.Println("Creating other kernels...")
+	fmt.Printf("First run of square kernel completed...starting second run \n");
 
-	for i0 := range kernels.KernelsList {
-		fmt.Println("")
-		TestCreateKern(kernels.KernelsList[i0], program)
+	// Create second set of data to re-run kernel
+	var data1 [1024]float32
+	for i := 0; i < len(data1); i++ {
+		data1[i] = rand.Float32()
 	}
-	fmt.Printf("Finished all tests!\n")
-}
 
-func TestCreateKern(kernName string, program *cl.Program) {
-	fmt.Printf("Creating %s kernel\n", kernName)
-	kern_handle, err := program.CreateKernel(kernName)
-	if err != nil {
-		fmt.Printf("CreateKernel failed: %+v \n", err)
+	if _, err := queue.EnqueueWriteBufferFloat32(input, true, 0, data1[:], nil); err != nil {
+		fmt.Printf("EnqueueWriteBufferFloat32 failed: %+v \n", err)
+		return
 	}
-	fmt.Printf("Created kernel: %s\n", kern_handle.GetName())
-	totalArgs, err := kern_handle.NumArgs()
-	if err != nil {
-		fmt.Printf("Failed to get number of arguments of kernel: $+v \n", err)
-	} else {
-		fmt.Printf("Number of arguments in kernel : %d \n", totalArgs)
+
+	if _, err := queue.EnqueueNDRangeKernel(kernelObj, nil, []int{global}, []int{local}, nil); err != nil {
+		fmt.Printf("EnqueueNDRangeKernel failed: %+v \n", err)
+		return
 	}
-	for i := 0; i < totalArgs; i++ {
-		name, err := kern_handle.ArgName(i)
-		if err == cl.ErrUnsupported {
-			break
-		} else if err != nil {
-			fmt.Printf("GetKernelArgInfo for name failed: %+v \n", err)
-			break
-		} else {
-			fmt.Printf("Kernel arg %d: %s \n", i, name)
+
+	if err := queue.Finish(); err != nil {
+		fmt.Printf("Finish failed: %+v \n", err)
+		return
+	}
+
+	results1 := make([]float32, len(data))
+	if _, err := queue.EnqueueReadBufferFloat32(output, true, 0, results1, nil); err != nil {
+		fmt.Printf("EnqueueReadBufferFloat32 failed: %+v \n", err)
+		return
+	}
+
+	correct = 0
+	for i, v := range data1 {
+		if results1[i] == v*v {
+			correct++
 		}
 	}
+
+	if correct != len(data1) {
+		fmt.Printf("%d/%d correct values \n", correct, len(data1))
+		return
+	}
+
+	fmt.Printf("Finished tests on square\n")
 }
+
