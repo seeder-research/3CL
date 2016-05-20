@@ -19,18 +19,17 @@ type Slice struct {
 	memType int8
 }
 
-// this package must not depend on CUDA. If CUDA is
-// loaded, these functions are set to cu.MemFree, ...
+// this package must not depend on OpenCL.
 // NOTE: cpyDtoH and cpuHtoD are only needed to support 32-bit builds,
 // otherwise, it could be removed in favor of memCpy only.
 var (
-	memFree, memFreeHost           func(unsafe.Pointer)
-	memCpy, memCpyDtoH, memCpyHtoD func(dst, src unsafe.Pointer, bytes int64)
+	memFree, memFreeHost           func(unsafe.ArbitraryType)
+	memCpy, memCpyDtoH, memCpyHtoD func(dst, src unsafe.ArbitraryType, bytes int64)
 )
 
-// Internal: enables slices on GPU. Called upon cuda init.
-func EnableGPU(free, freeHost func(unsafe.Pointer),
-	cpy, cpyDtoH, cpyHtoD func(dst, src unsafe.Pointer, bytes int64)) {
+// Internal: enables slices on GPU. Called upon opencl init.
+func EnableGPU(free, freeHost func(unsafe.ArbitraryType),
+	cpy, cpyDtoH, cpyHtoD func(dst, src unsafe.ArbitraryType, bytes int64)) {
 	memFree = free
 	memFreeHost = freeHost
 	memCpy = cpy
@@ -170,10 +169,10 @@ func (s *Slice) Comp(i int) *Slice {
 	return sl
 }
 
-// DevPtr returns a CUDA device pointer to a component.
+// DevPtr returns a OpenCL memory object handle to a component.
 // Slice must have GPUAccess.
 // It is safe to call on a nil slice, returns NULL.
-func (s *Slice) DevPtr(component int) unsafe.Pointer {
+func (s *Slice) DevPtr(component int) unsafe.ArbitraryType {
 	if s == nil {
 		return nil
 	}
