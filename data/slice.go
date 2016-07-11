@@ -23,13 +23,13 @@ type Slice struct {
 // NOTE: cpyDtoH and cpuHtoD are only needed to support 32-bit builds,
 // otherwise, it could be removed in favor of memCpy only.
 var (
-	memFree, memFreeHost           func(unsafe.ArbitraryType)
-	memCpy, memCpyDtoH, memCpyHtoD func(dst, src unsafe.ArbitraryType, bytes int64)
+	memFree, memFreeHost           func(unsafe.Pointer)
+	memCpy, memCpyDtoH, memCpyHtoD func(dst, src unsafe.Pointer, bytes int64)
 )
 
 // Internal: enables slices on GPU. Called upon opencl init.
-func EnableGPU(free, freeHost func(unsafe.ArbitraryType),
-	cpy, cpyDtoH, cpyHtoD func(dst, src unsafe.ArbitraryType, bytes int64)) {
+func EnableGPU(free, freeHost func(unsafe.Pointer),
+	cpy, cpyDtoH, cpyHtoD func(dst, src unsafe.Pointer, bytes int64)) {
 	memFree = free
 	memFreeHost = freeHost
 	memCpy = cpy
@@ -172,7 +172,7 @@ func (s *Slice) Comp(i int) *Slice {
 // DevPtr returns a OpenCL memory object handle to a component.
 // Slice must have GPUAccess.
 // It is safe to call on a nil slice, returns NULL.
-func (s *Slice) DevPtr(component int) unsafe.ArbitraryType {
+func (s *Slice) DevPtr(component int) unsafe.Pointer {
 	if s == nil {
 		return nil
 	}
