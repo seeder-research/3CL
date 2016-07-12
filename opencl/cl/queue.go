@@ -44,7 +44,7 @@ func (q *CommandQueue) Flush() error {
 }
 
 // Enqueues a command to map a region of the buffer object given by buffer into the host address space and returns a pointer to this mapped region.
-func (q *CommandQueue) EnqueueMapBuffer(buffer *MemObject, blocking bool, flags MapFlag, offset, size int, eventWaitList []*Event) (*MappedMemObject, *Event, error) {
+func (q *CommandQueue) EnqueueMapBuffer(buffer *MemObject, blocking bool, flags MapFlag, offset, size Size_t, eventWaitList []*Event) (*MappedMemObject, *Event, error) {
 	var event C.cl_event
 	var err C.cl_int
 	ptr := C.clEnqueueMapBuffer(q.clQueue, buffer.clMem, clBool(blocking), flags.toCl(), C.size_t(offset), C.size_t(size), C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event, &err)
@@ -73,8 +73,8 @@ func (q *CommandQueue) EnqueueMapImage(buffer *MemObject, blocking bool, flags M
 	if ptr == nil {
 		return nil, ev, ErrUnknown
 	}
-	size := 0 // TODO: could calculate this
-	return &MappedMemObject{ptr: ptr, size: size, rowPitch: int(rowPitch), slicePitch: int(slicePitch)}, ev, nil
+	size := Size_t(0) // TODO: could calculate this
+	return &MappedMemObject{ptr: ptr, size: size, rowPitch: Size_t(rowPitch), slicePitch: Size_t(slicePitch)}, ev, nil
 }
 
 // Enqueues a command to unmap a previously mapped region of a memory object.
@@ -87,47 +87,47 @@ func (q *CommandQueue) EnqueueUnmapMemObject(buffer *MemObject, mappedObj *Mappe
 }
 
 // Enqueues a command to copy a buffer object to another buffer object.
-func (q *CommandQueue) EnqueueCopyBuffer(srcBuffer, dstBuffer *MemObject, srcOffset, dstOffset, byteCount int, eventWaitList []*Event) (*Event, error) {
+func (q *CommandQueue) EnqueueCopyBuffer(srcBuffer, dstBuffer *MemObject, srcOffset, dstOffset, byteCount Size_t, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
 	err := toError(C.clEnqueueCopyBuffer(q.clQueue, srcBuffer.clMem, dstBuffer.clMem, C.size_t(srcOffset), C.size_t(dstOffset), C.size_t(byteCount), C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
 	return newEvent(event), err
 }
 
 // Enqueue commands to write to a buffer object from host memory.
-func (q *CommandQueue) EnqueueWriteBuffer(buffer *MemObject, blocking bool, offset, dataSize int, dataPtr unsafe.Pointer, eventWaitList []*Event) (*Event, error) {
+func (q *CommandQueue) EnqueueWriteBuffer(buffer *MemObject, blocking bool, offset, dataSize Size_t, dataPtr unsafe.Pointer, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
 	err := toError(C.clEnqueueWriteBuffer(q.clQueue, buffer.clMem, clBool(blocking), C.size_t(offset), C.size_t(dataSize), dataPtr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
 	return newEvent(event), err
 }
 
-func (q *CommandQueue) EnqueueWriteBufferByte(buffer *MemObject, blocking bool, offset int, data []byte, eventWaitList []*Event) (*Event, error) {
+func (q *CommandQueue) EnqueueWriteBufferByte(buffer *MemObject, blocking bool, offset Size_t, data []byte, eventWaitList []*Event) (*Event, error) {
 	dataPtr := unsafe.Pointer(&data[0])
-	dataSize := int(unsafe.Sizeof(data[0])) * len(data)
+	dataSize := Size_t(int(unsafe.Sizeof(data[0])) * len(data))
 	return q.EnqueueWriteBuffer(buffer, blocking, offset, dataSize, dataPtr, eventWaitList)
 }
 
-func (q *CommandQueue) EnqueueWriteBufferFloat32(buffer *MemObject, blocking bool, offset int, data []float32, eventWaitList []*Event) (*Event, error) {
+func (q *CommandQueue) EnqueueWriteBufferFloat32(buffer *MemObject, blocking bool, offset Size_t, data []float32, eventWaitList []*Event) (*Event, error) {
 	dataPtr := unsafe.Pointer(&data[0])
-	dataSize := int(unsafe.Sizeof(data[0])) * len(data)
+	dataSize := Size_t(int(unsafe.Sizeof(data[0])) * len(data))
 	return q.EnqueueWriteBuffer(buffer, blocking, offset, dataSize, dataPtr, eventWaitList)
 }
 
 // Enqueue commands to read from a buffer object to host memory.
-func (q *CommandQueue) EnqueueReadBuffer(buffer *MemObject, blocking bool, offset, dataSize int, dataPtr unsafe.Pointer, eventWaitList []*Event) (*Event, error) {
+func (q *CommandQueue) EnqueueReadBuffer(buffer *MemObject, blocking bool, offset, dataSize Size_t, dataPtr unsafe.Pointer, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
 	err := toError(C.clEnqueueReadBuffer(q.clQueue, buffer.clMem, clBool(blocking), C.size_t(offset), C.size_t(dataSize), dataPtr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
 	return newEvent(event), err
 }
 
-func (q *CommandQueue) EnqueueReadBufferByte(buffer *MemObject, blocking bool, offset int, data []byte, eventWaitList []*Event) (*Event, error) {
+func (q *CommandQueue) EnqueueReadBufferByte(buffer *MemObject, blocking bool, offset Size_t, data []byte, eventWaitList []*Event) (*Event, error) {
 	dataPtr := unsafe.Pointer(&data[0])
-	dataSize := int(unsafe.Sizeof(data[0])) * len(data)
+	dataSize := Size_t(int(unsafe.Sizeof(data[0])) * len(data))
 	return q.EnqueueReadBuffer(buffer, blocking, offset, dataSize, dataPtr, eventWaitList)
 }
 
-func (q *CommandQueue) EnqueueReadBufferFloat32(buffer *MemObject, blocking bool, offset int, data []float32, eventWaitList []*Event) (*Event, error) {
+func (q *CommandQueue) EnqueueReadBufferFloat32(buffer *MemObject, blocking bool, offset Size_t, data []float32, eventWaitList []*Event) (*Event, error) {
 	dataPtr := unsafe.Pointer(&data[0])
-	dataSize := int(unsafe.Sizeof(data[0])) * len(data)
+	dataSize := Size_t(int(unsafe.Sizeof(data[0])) * len(data))
 	return q.EnqueueReadBuffer(buffer, blocking, offset, dataSize, dataPtr, eventWaitList)
 }
 
@@ -167,7 +167,7 @@ func (q *CommandQueue) EnqueueNDRangeKernel(kernel *Kernel, globalWorkOffset, gl
 }
 
 // Enqueues a command to read from a 2D or 3D image object to host memory.
-func (q *CommandQueue) EnqueueReadImage(image *MemObject, blocking bool, origin, region [3]int, rowPitch, slicePitch int, data []byte, eventWaitList []*Event) (*Event, error) {
+func (q *CommandQueue) EnqueueReadImage(image *MemObject, blocking bool, origin, region [3]int, rowPitch, slicePitch Size_t, data []byte, eventWaitList []*Event) (*Event, error) {
 	cOrigin := sizeT3(origin)
 	cRegion := sizeT3(region)
 	var event C.cl_event
@@ -176,7 +176,7 @@ func (q *CommandQueue) EnqueueReadImage(image *MemObject, blocking bool, origin,
 }
 
 // Enqueues a command to write from a 2D or 3D image object to host memory.
-func (q *CommandQueue) EnqueueWriteImage(image *MemObject, blocking bool, origin, region [3]int, rowPitch, slicePitch int, data []byte, eventWaitList []*Event) (*Event, error) {
+func (q *CommandQueue) EnqueueWriteImage(image *MemObject, blocking bool, origin, region [3]int, rowPitch, slicePitch Size_t, data []byte, eventWaitList []*Event) (*Event, error) {
 	cOrigin := sizeT3(origin)
 	cRegion := sizeT3(region)
 	var event C.cl_event
@@ -184,7 +184,7 @@ func (q *CommandQueue) EnqueueWriteImage(image *MemObject, blocking bool, origin
 	return newEvent(event), err
 }
 
-func (q *CommandQueue) EnqueueFillBuffer(buffer *MemObject, pattern unsafe.Pointer, patternSize, offset, size int, eventWaitList []*Event) (*Event, error) {
+func (q *CommandQueue) EnqueueFillBuffer(buffer *MemObject, pattern unsafe.Pointer, patternSize, offset, size Size_t, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
 	err := toError(C.clEnqueueFillBuffer(q.clQueue, buffer.clMem, pattern, C.size_t(patternSize), C.size_t(offset), C.size_t(size), C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
 	return newEvent(event), err

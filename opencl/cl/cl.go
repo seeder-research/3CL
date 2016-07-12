@@ -28,3 +28,5 @@ import "C"
 import "errors"
 
 var ErrUnsupported = errors.New("cl: unsupported")
+
+type Size_t C.size_t

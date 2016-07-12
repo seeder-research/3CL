@@ -22,7 +22,7 @@ type Context struct {
 
 type MemObject struct {
 	clMem C.cl_mem
-	size  int
+	size  Size_t
 }
 
 func releaseContext(c *Context) {
@@ -39,7 +39,7 @@ func releaseMemObject(b *MemObject) {
 	}
 }
 
-func newMemObject(mo C.cl_mem, size int) *MemObject {
+func newMemObject(mo C.cl_mem, size Size_t) *MemObject {
 	memObject := &MemObject{clMem: mo, size: size}
 	runtime.SetFinalizer(memObject, releaseMemObject)
 	return memObject
@@ -115,7 +115,7 @@ func (ctx *Context) CreateProgramWithSource(sources []string) (*Program, error) 
 	return program, nil
 }
 
-func (ctx *Context) CreateBufferUnsafe(flags MemFlag, size int, dataPtr unsafe.Pointer) (*MemObject, error) {
+func (ctx *Context) CreateBufferUnsafe(flags MemFlag, size Size_t, dataPtr unsafe.Pointer) (*MemObject, error) {
 	var err C.cl_int
 	clBuffer := C.clCreateBuffer(ctx.clContext, C.cl_mem_flags(flags), C.size_t(size), dataPtr, &err)
 	if err != C.CL_SUCCESS {
@@ -127,21 +127,21 @@ func (ctx *Context) CreateBufferUnsafe(flags MemFlag, size int, dataPtr unsafe.P
 	return newMemObject(clBuffer, size), nil
 }
 
-func (ctx *Context) CreateEmptyBuffer(flags MemFlag, size int) (*MemObject, error) {
+func (ctx *Context) CreateEmptyBuffer(flags MemFlag, size Size_t) (*MemObject, error) {
 	return ctx.CreateBufferUnsafe(flags, size, nil)
 }
 
-func (ctx *Context) CreateEmptyBufferFloat32(flags MemFlag, size int) (*MemObject, error) {
-	return ctx.CreateBufferUnsafe(flags, 4*size, nil)
+func (ctx *Context) CreateEmptyBufferFloat32(flags MemFlag, size Size_t) (*MemObject, error) {
+	return ctx.CreateBufferUnsafe(flags, Size_t(4)*size, nil)
 }
 
 func (ctx *Context) CreateBuffer(flags MemFlag, data []byte) (*MemObject, error) {
-	return ctx.CreateBufferUnsafe(flags, len(data), unsafe.Pointer(&data[0]))
+	return ctx.CreateBufferUnsafe(flags, Size_t(len(data)), unsafe.Pointer(&data[0]))
 }
 
 //float64
 func (ctx *Context) CreateBufferFloat32(flags MemFlag, data []float32) (*MemObject, error) {
-	return ctx.CreateBufferUnsafe(flags, 4*len(data), unsafe.Pointer(&data[0]))
+	return ctx.CreateBufferUnsafe(flags, Size_t(4*len(data)), unsafe.Pointer(&data[0]))
 }
 
 func (ctx *Context) CreateUserEvent() (*Event, error) {

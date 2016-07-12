@@ -28,7 +28,7 @@ func (ctx *Context) CreateImage(flags MemFlag, imageFormat ImageFormat, imageDes
 	if clBuffer == nil {
 		return nil, ErrUnknown
 	}
-	return newMemObject(clBuffer, len(data)), nil
+	return newMemObject(clBuffer, Size_t(len(data))), nil
 }
 
 func (ctx *Context) CreateImageSimple(flags MemFlag, width, height int, channelOrder ChannelOrder, channelDataType ChannelDataType, data []byte) (*MemObject, error) {

@@ -456,16 +456,16 @@ func sizeT3(i3 [3]int) [3]C.size_t {
 
 type MappedMemObject struct {
 	ptr        unsafe.Pointer
-	size       int
-	rowPitch   int
-	slicePitch int
+	size       Size_t
+	rowPitch   Size_t
+	slicePitch Size_t
 }
 
 func (mb *MappedMemObject) ByteSlice() []byte {
 	var byteSlice []byte
 	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&byteSlice))
-	sliceHeader.Cap = mb.size
-	sliceHeader.Len = mb.size
+	sliceHeader.Cap = int(mb.size)
+	sliceHeader.Len = int(mb.size)
 	sliceHeader.Data = uintptr(mb.ptr)
 	return byteSlice
 }
@@ -474,14 +474,14 @@ func (mb *MappedMemObject) Ptr() unsafe.Pointer {
 	return mb.ptr
 }
 
-func (mb *MappedMemObject) Size() int {
+func (mb *MappedMemObject) Size() Size_t {
 	return mb.size
 }
 
-func (mb *MappedMemObject) RowPitch() int {
+func (mb *MappedMemObject) RowPitch() Size_t {
 	return mb.rowPitch
 }
 
-func (mb *MappedMemObject) SlicePitch() int {
+func (mb *MappedMemObject) SlicePitch() Size_t {
 	return mb.slicePitch
 }

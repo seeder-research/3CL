@@ -5,11 +5,14 @@ package data
 import (
 	"bytes"
 	"fmt"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/util"
 	"log"
 	"reflect"
 	"unsafe"
 )
+
+const SIZEOF_FLOAT32 = 4
 
 // Slice is like a [][]float32, but may be stored in GPU or host memory.
 type Slice struct {
@@ -23,13 +26,13 @@ type Slice struct {
 // NOTE: cpyDtoH and cpuHtoD are only needed to support 32-bit builds,
 // otherwise, it could be removed in favor of memCpy only.
 var (
-	memFree, memFreeHost           func(unsafe.Pointer)
-	memCpy, memCpyDtoH, memCpyHtoD func(dst, src unsafe.Pointer, bytes int64)
+	memFree, memFreeHost		func(unsafe.Pointer)
+	memCpy, memCpyDtoH, memCpyHtoD	func(dst, src unsafe.Pointer, bytes cl.Size_t)
 )
 
 // Internal: enables slices on GPU. Called upon opencl init.
 func EnableGPU(free, freeHost func(unsafe.Pointer),
-	cpy, cpyDtoH, cpyHtoD func(dst, src unsafe.Pointer, bytes int64)) {
+	cpy, cpyDtoH, cpyHtoD func(dst, src unsafe.Pointer, bytes cl.Size_t)) {
 	memFree = free
 	memFreeHost = freeHost
 	memCpy = cpy
@@ -182,8 +185,6 @@ func (s *Slice) DevPtr(component int) unsafe.Pointer {
 	return s.ptrs[component]
 }
 
-const SIZEOF_FLOAT32 = 4
-
 // Host returns the Slice as a [][]float32 indexed by component, cell number.
 // It should have CPUAccess() == true.
 func (s *Slice) Host() [][]float32 {
@@ -218,15 +219,15 @@ func Copy(dst, src *Slice) {
 		panic("bug")
 	case d && s:
 		for c := 0; c < dst.NComp(); c++ {
-			memCpy(dst.DevPtr(c), src.DevPtr(c), bytes)
+			memCpy(dst.DevPtr(c), src.DevPtr(c), cl.Size_t(bytes))
 		}
 	case s && !d:
 		for c := 0; c < dst.NComp(); c++ {
-			memCpyDtoH(dst.ptr_[c], src.DevPtr(c), bytes)
+			memCpyDtoH(dst.ptr_[c], src.DevPtr(c), cl.Size_t(bytes))
 		}
 	case !s && d:
 		for c := 0; c < dst.NComp(); c++ {
-			memCpyHtoD(dst.DevPtr(c), src.ptr_[c], bytes)
+			memCpyHtoD(dst.DevPtr(c), src.ptr_[c], cl.Size_t(bytes))
 		}
 	case !d && !s:
 		dst, src := dst.Host(), src.Host()
