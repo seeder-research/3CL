@@ -84,8 +84,8 @@ func Memset(s *data.Slice, val ...float32) {
 		timer.Start("memset")
 	}
 	util.Argument(len(val) == s.NComp())
-	for c := range val {
-		if _, err := ClCmdQueue.EnqueueFillBuffer((*cl.MemObject)(s.DevPtr(c)), unsafe.Pointer(&val[c]), SIZEOF_FLOAT32, 0, cl.Size_t(s.Len()), nil); err != nil {
+	for c, v := range val {
+		if _, err := ClCmdQueue.EnqueueFillBuffer((*cl.MemObject)(s.DevPtr(c)), unsafe.Pointer(&v), SIZEOF_FLOAT32, 0, cl.Size_t(s.Len()*SIZEOF_FLOAT32), nil); err != nil {
 			fmt.Printf("EnqueueFillBuffer failed: %+v \n", err)
 		}
 	}

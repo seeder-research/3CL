@@ -3,7 +3,7 @@ package opencl
 import (
 	"testing"
 
-	"github.com/mumax/3cl/data"
+//	"github.com/mumax/3cl/data"
 )
 
 func TestSlice(t *testing.T) {
@@ -101,3 +101,5 @@ func TestSliceHost(t *testing.T) {
 		t.Error("slice memset")
 	}
 }
+
+

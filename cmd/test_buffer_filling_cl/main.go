@@ -110,7 +110,7 @@ func main() {
 
 	fmt.Printf("Begin first run of buffer tests... \n");
 
-	input, err := context.CreateEmptyBuffer(cl.MemReadWrite, 4*len(data))
+	input, err := context.CreateEmptyBuffer(cl.MemReadWrite, cl.Size_t(4*len(data)))
 	if err != nil {
 		fmt.Printf("CreateBuffer failed for input: %+v \n", err)
 		return
@@ -149,11 +149,11 @@ func main() {
 	origData[modTarget] *= -1.0;
 	modifiedData[0] = origData[modTarget];
 	target := unsafe.Pointer(&modifiedData[0]);
-	if _, err :=queue.EnqueueFillBuffer(input, target, 4*len(modifiedData), 4*modTarget, 4*len(modifiedData), nil); err != nil {
+	if _, err :=queue.EnqueueFillBuffer(input, target, cl.Size_t(4*len(modifiedData)), cl.Size_t(4*modTarget), cl.Size_t(4*len(modifiedData)), nil); err != nil {
 		fmt.Printf("EnqueueFillBuffer failed: %+v \n", err)
 		return
 	}
-	
+
 	fmt.Printf("Reading after first modification \n");
 
 	if _, err := queue.EnqueueReadBufferFloat32(input, true, 0, results, nil); err != nil {
@@ -187,7 +187,7 @@ func main() {
 		origData[idx] *= -0.5;
 		modifiedData[i] = origData[idx];
 		target = unsafe.Pointer(&modifiedData[i])
-		if _, err :=queue.EnqueueFillBuffer(input, target, 4, 4*(idx), 4, nil); err != nil {
+		if _, err :=queue.EnqueueFillBuffer(input, target, 4, cl.Size_t(4*(idx)), 4, nil); err != nil {
 			fmt.Printf("EnqueueFillBuffer failed: %+v \n", err)
 			return
 		}
