@@ -3,7 +3,7 @@ package opencl
 import (
 	"testing"
 
-//	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/data"
 )
 
 func TestSlice(t *testing.T) {
