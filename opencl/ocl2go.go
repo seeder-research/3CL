@@ -6,14 +6,14 @@
 package main
 
 import (
-//	"bufio"
-//	"bytes"
+	"bufio"
+	"bytes"
 	"flag"
 	"fmt"
-//	"io"
-//	"log"
+	"io"
+	"log"
 	"os"
-//	"regexp"
+	"regexp"
 //	"strconv"
 	"text/scanner"
 	"text/template"
@@ -28,7 +28,7 @@ func main() {
 	}
 }
 
-// generate opencl wrapper for file.
+/ generate opencl wrapper for file.
 func ocl2go(fname string) {
 	// open cuda file
 	f, err := os.Open(fname)
@@ -90,7 +90,7 @@ func typemap(ctype string) string {
 	if gotype, ok := tm[ctype]; ok {
 		return gotype
 	}
-	panic(fmt.Errorf("unsupported cuda type: %v", ctype))
+	panic(fmt.Errorf("unsupported OpenCL type: %v", ctype))
 }
 
 var tm = map[string]string{"float*": "unsafe.Pointer", "float": "float32", "int": "int", "uint8_t*": "unsafe.Pointer", "uint8_t": "byte"}
@@ -100,15 +100,39 @@ type Kernel struct {
 	Name string
 	ArgT []string
 	ArgN []string
+	OCL  map[int]string
 }
 
 var ls []string
 
 // generate wrapper code from template
 func wrapgen(filename, funcname string, argt, argn []string) {
-	kernel := &Kernel{funcname, argt, argn}
+	kernel := &Kernel{funcname, argt, argn, make(map[int]string)}
+
+        // find corresponding .cl files
+        if ls == nil {
+                dir, errd := os.Open(".")
+                defer dir.Close()
+                util.PanicErr(errd)
+                var errls error
+                ls, errls = dir.Readdirnames(-1)
+                util.PanicErr(errls)
+        }
 
 	basename := util.NoExt(filename)
+        for _, f := range ls {
+		fmt.Println("Trying to compare %s \n", f)
+                match, e := regexp.MatchString("^"+basename+"..ocl", f)
+                util.PanicErr(e)
+                if match {
+                        kernel.OCL[0] = filterCLkern(f)
+                }
+        }
+
+        if len(kernel.OCL) == 0 {
+                log.Fatal("no OpenCL files for ", filename)
+        }
+
 	wrapfname := basename + "_wrapper.go"
 	wrapout, err := os.OpenFile(wrapfname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	util.PanicErr(err)
@@ -132,7 +156,9 @@ import(
 )
 
 // OpenCL handle for {{.Name}} kernel
-var {{.Name}}_code cl.Function
+const(
+{{range $k, $v := .OCL}}  {{.Name}}_code = {{$v}}
+{{end}})
 
 // Stores the arguments for {{.Name}} kernel invocation
 type {{.Name}}_args_t struct{
@@ -190,4 +216,26 @@ func filter(token string) bool {
 	}
 	return false
 }
+
+// Filter comments and ".file" entries from OpenCL kernel code.
+// They spoil the git history.
+func filterCLkern(fname string) string {
+        f, err := os.Open(fname)
+        util.PanicErr(err)
+        defer f.Close()
+        in := bufio.NewReader(f)
+        var out bytes.Buffer
+        out.Write(([]byte)("`"))
+        line, err := in.ReadBytes('\n')
+        for err != io.EOF {
+                util.PanicErr(err)
+                if !bytes.HasPrefix(line, []byte("//")) && !bytes.HasPrefix(line, []byte("      .file")) {
+                        out.Write(line)
+                }
+                line, err = in.ReadBytes('\n')
+        }
+        out.Write(([]byte)("`"))
+        return out.String()
+}
+
 
