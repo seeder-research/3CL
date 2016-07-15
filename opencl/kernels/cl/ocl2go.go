@@ -6,11 +6,8 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"text/scanner"
 	"text/template"
@@ -97,16 +94,15 @@ type Kernel struct {
 	Name string
 	ArgT []string
 	ArgN []string
-	OCL  string
 }
 
 var ls []string
 
 // generate wrapper code from template
 func wrapgen(filename, funcname string, argt, argn []string) {
-	kernel := &Kernel{funcname, argt, argn, filterCLkern(filename)}
+	kernel := &Kernel{funcname, argt, argn}
 	basename := util.NoExt(filename)
-	wrapfname := basename + "_wrapper.go"
+	wrapfname := "../../" + basename + "_wrapper.go"
 	wrapout, err := os.OpenFile(wrapfname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	util.PanicErr(err)
 	defer wrapout.Close()
@@ -143,12 +139,6 @@ func init(){
 	// OpenCL driver kernel call wants pointers to arguments, set them up once.
 	{{range $i, $t := .ArgN}} {{$.Name}}_args.argptr[{{$i}}] = unsafe.Pointer(&{{$.Name}}_args.arg_{{.}})
 	{{end}} }
-
-// OpenCL code for {{.Name}} kernel
-func k_{{.Name}}_initialization() {
-  Kernel_codes["{{.Name}}"] = {{.OCL}}
-
-}
 
 // Wrapper for {{.Name}} OpenCL kernel, asynchronous.
 func k_{{.Name}}_async ( {{range $i, $t := .ArgT}}{{index $.ArgN $i}} {{$t}}, {{end}} cfg *config) {
@@ -199,26 +189,4 @@ func filter(token string) bool {
 	}
 	return false
 }
-
-// Filter comments and ".file" entries from OpenCL kernel code.
-// They spoil the git history.
-func filterCLkern(fname string) string {
-        f, err := os.Open(fname)
-        util.PanicErr(err)
-        defer f.Close()
-        in := bufio.NewReader(f)
-        var out bytes.Buffer
-        out.Write(([]byte)("`\n"))
-        line, err := in.ReadBytes('\n')
-        for err != io.EOF {
-                util.PanicErr(err)
-                if !bytes.HasPrefix(line, []byte("//")) && !bytes.HasPrefix(line, []byte("      .file")) {
-                        out.Write(line)
-                }
-                line, err = in.ReadBytes('\n')
-        }
-        out.Write(([]byte)("`"))
-        return out.String()
-}
-
 
