@@ -13,4 +13,5 @@ const (
 )
 
 var Kernel_codes = make(map[string]*bytes.Buffer)
+var Kernel_headers = make(map[int]*bytes.Buffer)
 

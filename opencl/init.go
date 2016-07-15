@@ -7,7 +7,6 @@ import (
 	"runtime"
 
 	"github.com/mumax/3cl/opencl/cl"
-	"github.com/mumax/3cl/opencl/kernels"
 //	"github.com/mumax/3cl/util"
 )
 
@@ -90,7 +89,7 @@ func Init(gpu, platformId int) {
 	if err != nil {
 		fmt.Printf("CreateCommandQueue failed: %+v \n", err)
 	}
-	program, err := context.CreateProgramWithSource([]string{kernels.GenMergedKernelSource()})
+	program, err := context.CreateProgramWithSource([]string{GenMergedKernelSource()})
 	if err != nil {
 		fmt.Printf("CreateProgramWithSource failed: %+v \n", err)
 	}
@@ -99,9 +98,8 @@ func Init(gpu, platformId int) {
 	}
 
 	KernList = map[string]*cl.Kernel{}
-	for i0 := range kernels.KernelsList {
-		kernName := kernels.KernelsList[i0]
-		KernList[kernName], err = program.CreateKernel(kernName)
+	for kernname, _ := range Kernel_codes {
+		KernList[kernname], err = program.CreateKernel(kernname)
 		if err != nil {
 		       fmt.Printf("CreateKernel failed: %+v \n", err)
 		}
