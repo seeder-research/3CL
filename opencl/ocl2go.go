@@ -27,7 +27,7 @@ func main() {
 
 // generate opencl wrapper for file.
 func ocl2go(fname string) {
-	// open cuda file
+	// open opencl file
 	f, err := os.Open(fname)
 	util.PanicErr(err)
 	defer f.Close()
@@ -208,7 +208,7 @@ func filterCLkern(fname string) string {
         defer f.Close()
         in := bufio.NewReader(f)
         var out bytes.Buffer
-        out.Write(([]byte)("`"))
+        out.Write(([]byte)("`\n"))
         line, err := in.ReadBytes('\n')
         for err != io.EOF {
                 util.PanicErr(err)

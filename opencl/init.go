@@ -26,7 +26,7 @@ var (
 	ClProgram   	*cl.Program		// handle to program in the global OpenCL context
 	KernList    =	map[string]*cl.Kernel{}	// Store pointers to all compiled kernels
 	initialized     = false                 // Initial state defaults to false
-	Kernel_headers = map[int]string{}
+	Kernel_headers = map[string]string{}
 	Kernel_codes  =  map[string]string{}
 )
 

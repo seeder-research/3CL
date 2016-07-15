@@ -10,13 +10,13 @@ func GenMergedKernelSource() string {
 
      // Write headers
      clhInit()
-     for _, codes := range Kernel_headers {
-          KernelsSource.WriteString(codes)
+     for _, keyname := range OCLHeadersList {
+          KernelsSource.WriteString(Kernel_headers[keyname])
      }
 
      // Write actual codes
-     for _, codes := range Kernel_codes {
-          KernelsSource.WriteString(codes)
+     for _, keyname := range OCLKernelsList {
+          KernelsSource.WriteString(Kernel_codes[keyname])
      }
 
      return KernelsSource.String()

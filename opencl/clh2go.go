@@ -19,7 +19,7 @@ import (
 
 // template data
 type Kernel_headers struct {
-        OCL  map[int]string
+        OCL  map[string]string
 }
 
 type Kernel struct {
@@ -40,19 +40,18 @@ func main() {
         }
 
         // get header codes in .clh files
-        idx := 0
-	header_codes := &Kernel_headers{make(map[int]string)}
+	header_codes := &Kernel_headers{make(map[string]string)}
         for _, f := range ls_dir {
                 match, e := regexp.MatchString("..clh$", f)
                 util.PanicErr(e)
                 if match {
-                        header_codes.OCL[idx] = getHeaderFile(f)
-                        idx++
+			fkey := f[:len(f)-len(".clh")]
+                        header_codes.OCL[fkey] = getHeaderFile(f)
                 }
         }
 
 	// get names of kernels available in .cl files
-	idx = 0
+	idx := 0
 	kernel_codes := &Kernel{make(map[int]string)}
         for _, f := range ls_dir {
                 match, e := regexp.MatchString("..cl$", f)
@@ -111,7 +110,7 @@ func getHeaderFile(fname string) string {
         defer f.Close()
         in := bufio.NewReader(f)
         var out bytes.Buffer
-        out.Write(([]byte)("`"))
+        out.Write(([]byte)("`\n"))
         line, err := in.ReadBytes('\n')
         for err != io.EOF {
                 util.PanicErr(err)
@@ -132,7 +131,7 @@ const templText0 = `package opencl
 
 func clhInit() {
 {{range $k, $v := .OCL}}
-  Kernel_headers[{{$k}}] = {{$v}}
+  Kernel_headers["{{$k}}"] = {{$v}}
 
 {{end}}
 
@@ -140,8 +139,7 @@ func clhInit() {
 
 // wrapper code template text
 const templText1 = `
-{{range $k, $v := .Name}}
-  k_{{$v}}_initialization()
+{{range $k, $v := .Name}} k_{{$v}}_initialization()
 {{end}}
 }
 
