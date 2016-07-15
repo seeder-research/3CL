@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
-	"github.com/mumax/3cl/opencl/kernels"
 //	"github.com/mumax/3cl/util"
 	"log"
 //	"os"
@@ -66,9 +65,9 @@ func TestKernels() {
 		fmt.Println("No kernels found!")
 		return
 	}
-	for i0 := range kernels.KernelsList {
-		fmt.Println("")
-		PrintKernelInfo(kernels.KernelsList[i0])
+	for kernname, _ := range opencl.Kernel_codes {
+		fmt.Printf("Found kernel: %s \n", kernname)
+		PrintKernelInfo(kernname)
 	}
 }
 

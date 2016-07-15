@@ -123,7 +123,8 @@ const templText = `package opencl
 
 import(
 	"unsafe"
-	"github.com/mumax/3cl/opencl/cl"
+        "bytes"
+//	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/timer"
 	"sync"
 )
@@ -132,8 +133,6 @@ import(
 const(
   {{.Name}}_code = {{.OCL}}
 )
-
-Kernel_codes[{{.Name}}] = {{.Name}}_code
 
 // Stores the arguments for {{.Name}} kernel invocation
 type {{.Name}}_args_t struct{
@@ -146,6 +145,8 @@ type {{.Name}}_args_t struct{
 var {{.Name}}_args {{.Name}}_args_t
 
 func init(){
+	Kernel_codes["{{.Name}}"] = bytes.NewBufferString({{.Name}}_code)
+
 	// OpenCL driver kernel call wants pointers to arguments, set them up once.
 	{{range $i, $t := .ArgN}} {{$.Name}}_args.argptr[{{$i}}] = unsafe.Pointer(&{{$.Name}}_args.arg_{{.}})
 	{{end}} }
@@ -163,8 +164,8 @@ func k_{{.Name}}_async ( {{range $i, $t := .ArgT}}{{index $.ArgN $i}} {{$t}}, {{
 	{{range $i, $t := .ArgN}} {{$.Name}}_args.arg_{{.}} = {{.}}
 	{{end}}
 
-	args := {{.Name}}_args.argptr[:]
-	cl.LaunchKernel({{.Name}}_code, cfg.Grid.X, cfg.Grid.Y, cfg.Grid.Z, cfg.Block.X, cfg.Block.Y, cfg.Block.Z, 0, args)
+//	args := {{.Name}}_args.argptr[:]
+//	cl.LaunchKernel({{.Name}}_code, cfg.Grid.X, cfg.Grid.Y, cfg.Grid.Z, cfg.Block.X, cfg.Block.Y, cfg.Block.Z, 0, args)
 
 	if Synchronous{ // debug
 		ClCmdQueue.Finish()
@@ -187,6 +188,14 @@ func filter(token string) bool {
 	case "__constant":
 		return true
 	case "__local":
+		return true
+	case "volatile":
+		return true
+	case "unsigned":
+		return true
+	case "signed":
+		return true
+	case "const":
 		return true
 	}
 	return false

@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/mumax/3cl/opencl/cl"
+	"github.com/mumax/3cl/opencl"
 	"fmt"
 	"math/rand"
-	"github.com/mumax/3cl/opencl/kernels"
 )
 
 func main() {
@@ -99,7 +99,7 @@ func main() {
 	if err != nil {
 		fmt.Printf("CreateCommandQueue failed: %+v \n", err)
 	}
-	program, err := context.CreateProgramWithSource([]string{kernels.GenMergedKernelSource()})
+	program, err := context.CreateProgramWithSource([]string{opencl.GenMergedKernelSource()})
 	if err != nil {
 		fmt.Printf("CreateProgramWithSource failed: %+v \n", err)
 	}
