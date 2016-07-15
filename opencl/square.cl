@@ -1,6 +1,3 @@
-package kernels
-
-var SquareSource = `
 __kernel void square(
    __global float* input,
    __global float* output,
@@ -11,4 +8,3 @@ __kernel void square(
        output[i] = input[i] * input[i];
 }
 
-`

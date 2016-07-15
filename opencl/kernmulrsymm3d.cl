@@ -1,5 +1,3 @@
-package kernels
-
 // 3D micromagnetic kernel multiplication:
 //
 // |Mx|   |Kxx Kxy Kxz|   |Mx|
@@ -26,7 +24,6 @@ package kernels
 // -bbbb
 // -aaaa
 
-var KernMulRSymm3DSource = `
 __kernel void
 kernmulRSymm3D(__global float* __restrict  fftMx,  __global float* __restrict  fftMy,  __global float* __restrict  fftMz,
                __global float* __restrict  fftKxx, __global float* __restrict  fftKyy, __global float* __restrict  fftKzz,
@@ -91,4 +88,3 @@ kernmulRSymm3D(__global float* __restrict  fftMx,  __global float* __restrict  f
 	fftMz[e+1] = imMx * Kxz + imMy * Kyz + imMz * Kzz;
 }
 
-`

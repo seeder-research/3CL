@@ -1,6 +1,3 @@
-package kernels
-
-var ZhangLiSource = `
 #define PREFACTOR ((MUB * MU0) / (2 * QE * GAMMA0))
 
 #define deltax(in) (in[idx(hclampx(ix+1), iy, iz)] - in[idx(lclampx(ix-1), iy, iz)])
@@ -60,4 +57,3 @@ addzhanglitorque(__global float* __restrict tx, __global float* __restrict ty, _
 	tz[I] += torque.z;
 }
 
-`

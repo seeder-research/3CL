@@ -1,6 +1,3 @@
-package kernels
-
-var RegionSelectSource = `
 __kernel void
 regionselect(__global float* __restrict  dst, __global float* __restrict src, __global uint8_t* regions, uint8_t region, int N) {
 
@@ -10,4 +7,3 @@ regionselect(__global float* __restrict  dst, __global float* __restrict src, __
 	}
 }
 
-`

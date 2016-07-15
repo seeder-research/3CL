@@ -1,6 +1,3 @@
-package kernels
-
-var CLRNG_LFSR113_Header = `
  /*
  ***********************************************************************
  Copyright (c) 2015 Advanced Micro Devices, Inc. 
@@ -360,4 +357,3 @@ clrngStatus clrngLfsr113MakeOverSubstreams(clrngLfsr113Stream* stream, size_t co
 
 #endif
 
-`

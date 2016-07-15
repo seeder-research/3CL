@@ -1,6 +1,3 @@
-package kernels
-
-var UniaxialAnisotropySource = `
 __kernel void
 adduniaxialanisotropy(__global float* __restrict  Bx, __global float* __restrict  By, __global float* __restrict  Bz,
                       __global float* __restrict  mx, __global float* __restrict  my, __global float* __restrict  mz,
@@ -29,4 +26,3 @@ adduniaxialanisotropy(__global float* __restrict  Bx, __global float* __restrict
 	}
 }
 
-`

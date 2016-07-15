@@ -1,6 +1,3 @@
-package kernels
-
-var ReduceMaxVecDiff2Source = `
 #define load_vecdiff2(i)  \
 	pow2(x1[i] - x2[i]) + \
 	pow2(y1[i] - y2[i]) + \
@@ -13,4 +10,3 @@ reducemaxvecdiff2(__global float* __restrict x1, __global float* __restrict y1, 
 	reduce(load_vecdiff2, fmax, atomicFmaxabs)
 }
 
-`

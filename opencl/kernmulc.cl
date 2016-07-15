@@ -1,6 +1,3 @@
-package kernels
-
-var KernMulCSource = `
 __kernel void
 kernmulC(__global float* __restrict  fftM, __global float* __restrict  fftK, int Nx, int Ny) {
 
@@ -23,4 +20,3 @@ kernmulC(__global float* __restrict  fftM, __global float* __restrict  fftK, int
 	fftM[e+1] = reM * imK + imM * reK;
 }
 
-`

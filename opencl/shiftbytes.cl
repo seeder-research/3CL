@@ -1,6 +1,3 @@
-package kernels
-
-var ShiftBytesSource = `
 __kernel void
 shiftbytes(__global uint8_t* __restrict  dst, __global uint8_t* __restrict  src,
            int Nx,  int Ny,  int Nz, int shx, uint8_t clampV) {
@@ -21,4 +18,3 @@ shiftbytes(__global uint8_t* __restrict  dst, __global uint8_t* __restrict  src,
 	}
 }
 
-`

@@ -1,6 +1,3 @@
-package kernels
-
-var AtomicFHeader = `
 #ifndef _ATOMICF_H_
 #define _ATOMICF_H_
 
@@ -12,4 +9,3 @@ inline void atomicFmaxabs(volatile __global float* a, float b){
 
 #endif
 
-`

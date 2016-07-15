@@ -1,8 +1,5 @@
-package kernels
-
 // dst += prefactor * dot(a,b)
 
-var DotProductSource = `
 __kernel void
 dotproduct(__global float* __restrict  dst, float  prefactor,
            __global float* __restrict  ax, __global float* __restrict  ay, __global float* __restrict  az,
@@ -17,4 +14,3 @@ dotproduct(__global float* __restrict  dst, float  prefactor,
 	}
 }
 
-`

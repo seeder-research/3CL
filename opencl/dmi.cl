@@ -1,5 +1,3 @@
-package kernels
-
 // Exchange + Dzyaloshinskii-Moriya interaction according to
 // Bagdanov and Röβler, PRL 87, 3, 2001. eq.8 (out-of-plane symmetry breaking).
 // Taking into account proper boundary conditions.
@@ -8,7 +6,6 @@ package kernels
 // D: dmi strength / Msat, in Tesla*m
 // A: Aex/Msat
 
-var DmiSource = `
 __kernel void
 adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global float* __restrict Hz,
        __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
@@ -133,8 +130,6 @@ adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global fl
 	Hy[I] = h.y;
 	Hz[I] = h.z;
 }
-
-`
 
 // Note on boundary conditions.
 //

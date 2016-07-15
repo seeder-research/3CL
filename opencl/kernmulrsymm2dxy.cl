@@ -1,11 +1,8 @@
-package kernels
-
 // 2D XY (in-plane) micromagnetic kernel multiplication:
 // |Mx| = |Kxx Kxy| * |Mx|
 // |My|   |Kyx Kyy|   |My|
 // Using the same symmetries as kernmulrsymm3d.go
 
-var KernMulRSymm2DxySource = `
 __kernel void
 kernmulRSymm2Dxy(__global float* __restrict  fftMx,  __global float* __restrict  fftMy,
                  __global float* __restrict  fftKxx, __global float* __restrict  fftKyy, __global float* __restrict  fftKxy,
@@ -44,4 +41,3 @@ kernmulRSymm2Dxy(__global float* __restrict  fftMx,  __global float* __restrict 
 	fftMy[e+1] = imMx * Kxy + imMy * Kyy;
 }
 
-`

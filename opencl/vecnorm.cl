@@ -1,6 +1,3 @@
-package kernels
-
-var VecNormSource = `
 __kernel void
 vecnorm(__global float* __restrict dst,
         __global float* __restrict ax, __global float* __restrict ay, __global float* __restrict az,
@@ -13,4 +10,3 @@ vecnorm(__global float* __restrict dst,
 	}
 }
 
-`

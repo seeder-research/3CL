@@ -1,5 +1,3 @@
-package kernels
-
 // Exchange + Dzyaloshinskii-Moriya interaction for bulk material.
 // Energy:
 //
@@ -26,7 +24,6 @@ package kernels
 // 	        2A dzMz = 0
 //
 
-var DmiBulkSource = `
 __kernel void
 adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __global float* __restrict Hz,
            __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
@@ -164,8 +161,6 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
 	Hy[I] = h.y;
 	Hz[I] = h.z;
 }
-
-`
 
 // Note on boundary conditions.
 //

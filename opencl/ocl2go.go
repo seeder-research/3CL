@@ -11,10 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
-	"regexp"
-//	"strconv"
 	"text/scanner"
 	"text/template"
 
@@ -28,7 +25,7 @@ func main() {
 	}
 }
 
-/ generate opencl wrapper for file.
+// generate opencl wrapper for file.
 func ocl2go(fname string) {
 	// open cuda file
 	f, err := os.Open(fname)
@@ -100,39 +97,15 @@ type Kernel struct {
 	Name string
 	ArgT []string
 	ArgN []string
-	OCL  map[int]string
+	OCL  string
 }
 
 var ls []string
 
 // generate wrapper code from template
 func wrapgen(filename, funcname string, argt, argn []string) {
-	kernel := &Kernel{funcname, argt, argn, make(map[int]string)}
-
-        // find corresponding .cl files
-        if ls == nil {
-                dir, errd := os.Open(".")
-                defer dir.Close()
-                util.PanicErr(errd)
-                var errls error
-                ls, errls = dir.Readdirnames(-1)
-                util.PanicErr(errls)
-        }
-
+	kernel := &Kernel{funcname, argt, argn, filterCLkern(filename)}
 	basename := util.NoExt(filename)
-        for _, f := range ls {
-		fmt.Println("Trying to compare %s \n", f)
-                match, e := regexp.MatchString("^"+basename+"..ocl", f)
-                util.PanicErr(e)
-                if match {
-                        kernel.OCL[0] = filterCLkern(f)
-                }
-        }
-
-        if len(kernel.OCL) == 0 {
-                log.Fatal("no OpenCL files for ", filename)
-        }
-
 	wrapfname := basename + "_wrapper.go"
 	wrapout, err := os.OpenFile(wrapfname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	util.PanicErr(err)
@@ -157,8 +130,10 @@ import(
 
 // OpenCL handle for {{.Name}} kernel
 const(
-{{range $k, $v := .OCL}}  {{.Name}}_code = {{$v}}
-{{end}})
+  {{.Name}}_code = {{.OCL}}
+)
+
+Kernel_codes[{{.Name}}] = {{.Name}}_code
 
 // Stores the arguments for {{.Name}} kernel invocation
 type {{.Name}}_args_t struct{

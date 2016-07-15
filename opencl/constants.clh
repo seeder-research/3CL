@@ -1,6 +1,3 @@
-package kernels
-
-var ConstantsHeader = `
 #ifndef _CONSTANTS_H_
 #define _CONSTANTS_H_
 
@@ -13,4 +10,3 @@ var ConstantsHeader = `
 
 #endif
 
-`

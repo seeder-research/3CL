@@ -1,6 +1,3 @@
-package kernels
-
-var ZeroMaskSource = `
 __kernel void
 zeromask(__global float* __restrict  dst, __global float* maskLUT, __global uint8_t* regions, int N) {
 
@@ -12,4 +9,3 @@ zeromask(__global float* __restrict  dst, __global float* maskLUT, __global uint
 	}
 }
 
-`

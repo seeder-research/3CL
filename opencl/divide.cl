@@ -1,8 +1,5 @@
-package kernels
-
 // dst[i] = a[i] / b[i]
 
-var DivideSource = `
 __kernel void
 divide(__global float* __restrict  dst, __global float* __restrict  a, __global float* __restrict b, int N) {
 
@@ -17,4 +14,3 @@ divide(__global float* __restrict  dst, __global float* __restrict  a, __global 
 	}
 }
 
-`

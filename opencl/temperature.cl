@@ -1,6 +1,3 @@
-package kernels
-
-var TemperatureSource = `
 __kernel void
 settemperature(__global float* __restrict  B,      __global float* __restrict noise, float kB2_VgammaDt,
                __global float* __restrict tempRedLUT, __global uint8_t* __restrict regions, int N) {
@@ -13,4 +10,3 @@ settemperature(__global float* __restrict  B,      __global float* __restrict no
 	}
 }
 
-`

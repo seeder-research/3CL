@@ -1,5 +1,3 @@
-package kernels
-
 // add cubic anisotropy field to B.
 // B:      effective field in T
 // m:      reduced magnetization (unit length)
@@ -9,7 +7,6 @@ package kernels
 //
 // based on http://www.southampton.ac.uk/~fangohr/software/oxs_cubic8.html
 
-var AddCubicAnisotropySource = `
 __kernel void
 addcubicanisotropy(__global float* __restrict Bx, __global float* __restrict By, __global float* __restrict Bz,
                    __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
@@ -49,4 +46,4 @@ addcubicanisotropy(__global float* __restrict Bx, __global float* __restrict By,
 	}
 }
 
-`
+k

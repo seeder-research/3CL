@@ -1,6 +1,3 @@
-package kernels
-
-var ReduceHeader = `
 #ifndef _REDUCE_H_
 #define _REDUCE_H_
 
@@ -47,4 +44,3 @@ var ReduceHeader = `
 // Based on "Optimizing parallel reduction in CUDA" by Mark Harris.
 #endif
 
-`

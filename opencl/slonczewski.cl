@@ -1,6 +1,3 @@
-package kernels
-
-var SlonczewskiSource = `
 __kernel void
 addslonczewskitorque(__global float* __restrict tx, __global float* __restrict ty, __global float* __restrict tz,
                      __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz, __global float* __restrict jz,
@@ -49,4 +46,3 @@ addslonczewskitorque(__global float* __restrict tx, __global float* __restrict t
 	}
 }
 
-`

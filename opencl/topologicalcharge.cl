@@ -1,6 +1,3 @@
-package kernels
-
-var TopologicalChargeSource = `
 __kernel void
 settopologicalcharge(__global float* __restrict s,
                      __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
@@ -153,4 +150,3 @@ settopologicalcharge(__global float* __restrict s,
     s[I] = icxcy * dot(m0, dmdx_x_dmdy);
 }
 
-`

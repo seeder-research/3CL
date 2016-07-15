@@ -1,6 +1,3 @@
-package kernels
-
-var CLRNG_MRG31k3p_Header = `
  /*
  ***********************************************************************
  Copyright (c) 2015 Advanced Micro Devices, Inc. 
@@ -386,4 +383,3 @@ clrngStatus clrngMrg31k3pMakeOverSubstreams(clrngMrg31k3pStream* stream, size_t 
 
 #endif
 
-`

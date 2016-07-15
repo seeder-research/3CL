@@ -1,8 +1,5 @@
-package kernels
-
 // Landau-Lifshitz torque.
 
-var LLTorqueSource = `
 __kernel void
 lltorque(__global float* __restrict  tx, __global float* __restrict  ty, __global float* __restrict  tz,
          __global float* __restrict  mx, __global float* __restrict  my, __global float* __restrict  mz,
@@ -26,4 +23,3 @@ lltorque(__global float* __restrict  tx, __global float* __restrict  ty, __globa
 	}
 }
 
-`

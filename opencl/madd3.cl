@@ -1,8 +1,5 @@
-package kernels
-
 // dst[i] = fac1 * src1[i] + fac2 * src2[i] + fac3 * src3[i]
 
-var MAdd3Source = `
 __kernel void
 madd3(__global float* __restrict__ dst,
       __global float* __restrict src1, float fac1,
@@ -17,4 +14,3 @@ madd3(__global float* __restrict__ dst,
 	}
 }
 
-`

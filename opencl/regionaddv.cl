@@ -1,6 +1,3 @@
-package kernels
-
-var RegionAddVSource = `
 __kernel void
 regionaddv(__global float* __restrict dstx, __global float* __restrict dsty, __global float* __restrict dstz,
            __global float* __restrict LUTx, __global float* __restrict LUTy, __global float* __restrict LUTz,
@@ -16,4 +13,3 @@ regionaddv(__global float* __restrict dstx, __global float* __restrict dsty, __g
 	}
 }
 
-`

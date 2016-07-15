@@ -1,6 +1,3 @@
-package kernels
-
-var ShiftXSource = `
 __kernel void
 shiftx(__global float* __restrict  dst, __global float* __restrict  src,
        int Nx,  int Ny,  int Nz, int shx, float clampL, float clampR) {
@@ -23,4 +20,3 @@ shiftx(__global float* __restrict  dst, __global float* __restrict  src,
 	}
 }
 
-`

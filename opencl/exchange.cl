@@ -1,11 +1,8 @@
-package kernels
-
 // Add exchange field to Beff.
 // 	m: normalized magnetization
 // 	B: effective field in Tesla
 // 	Aex_red: Aex / (Msat * 1e18 m2)
 
-var ExchangeSource = `
 __kernel void
 addexchange(__global float* __restrict Bx, __global float* __restrict By, __global float* __restrict Bz,
             __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
@@ -85,4 +82,3 @@ addexchange(__global float* __restrict Bx, __global float* __restrict By, __glob
 	Bz[I] = B.z;
 }
 
-`

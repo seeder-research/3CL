@@ -1,8 +1,5 @@
-package kernels
-
 // Finds the average exchange strength around each cell, for debugging.
 
-var ExchangeDecodeSource = `
 __kernel void
 exchangedecode(__global float* __restrict dst, __global float* __restrict aLUT2d, __global uint8_t* __restrict regions,
                float wx, float wy, float wz, int Nx, int Ny, int Nz, uint8_t PBC) {
@@ -52,4 +49,3 @@ exchangedecode(__global float* __restrict dst, __global float* __restrict aLUT2d
 	dst[I] = avg;
 }
 
-`

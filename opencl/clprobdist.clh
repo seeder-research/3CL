@@ -1,6 +1,3 @@
-package kernels
-
-var CLProbDist_Header = `
 /* This file is part of clProbDist.
  *
  * Copyright 2015-2016  Pierre L'Ecuyer, Universite de Montreal and Advanced Micro Devices, Inc.
@@ -241,4 +238,3 @@ cl_float clprobdistStdNormalInverseCDF(cl_float u, clprobdistStatus* err) {
 
 #endif
 
-`

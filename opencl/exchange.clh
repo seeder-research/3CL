@@ -1,6 +1,3 @@
-package kernels
-
-var ExchangeHeader = `
 #ifndef _EXCHANGE_H_
 #define _EXCHANGE_H_
 
@@ -9,4 +6,3 @@ var ExchangeHeader = `
 
 #endif
 
-`
