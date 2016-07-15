@@ -24,8 +24,10 @@ var (
 	ClCtx       	*cl.Context 		// global OpenCL context
 	ClCmdQueue      *cl.CommandQueue        // command queue attached to global OpenCL context
 	ClProgram   	*cl.Program		// handle to program in the global OpenCL context
-	KernList    	map[string]*cl.Kernel	// Store pointers to all compiled kernels
+	KernList    =	map[string]*cl.Kernel{}	// Store pointers to all compiled kernels
 	initialized     = false                 // Initial state defaults to false
+	Kernel_headers = map[int]string{}
+	Kernel_codes  =  map[string]string{}
 )
 
 // Locks to an OS thread and initializes CUDA for that thread.
@@ -97,7 +99,6 @@ func Init(gpu, platformId int) {
 		fmt.Printf("BuildProgram failed: %+v \n", err)
 	}
 
-	KernList = map[string]*cl.Kernel{}
 	for kernname, _ := range Kernel_codes {
 		KernList[kernname], err = program.CreateKernel(kernname)
 		if err != nil {

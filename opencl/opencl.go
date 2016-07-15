@@ -1,9 +1,5 @@
 package opencl
 
-import (
-	"bytes"
-)
-
 // Type size in bytes
 const (
         SIZEOF_FLOAT32    = 4
@@ -12,4 +8,3 @@ const (
         SIZEOF_COMPLEX128 = 16
 )
 
-var Kernel_codes = make(map[string]*bytes.Buffer)

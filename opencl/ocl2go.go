@@ -123,16 +123,11 @@ const templText = `package opencl
 
 import(
 	"unsafe"
-        "bytes"
 //	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/timer"
 	"sync"
 )
 
-// OpenCL handle for {{.Name}} kernel
-const(
-  {{.Name}}_code = {{.OCL}}
-)
 
 // Stores the arguments for {{.Name}} kernel invocation
 type {{.Name}}_args_t struct{
@@ -145,11 +140,15 @@ type {{.Name}}_args_t struct{
 var {{.Name}}_args {{.Name}}_args_t
 
 func init(){
-	Kernel_codes["{{.Name}}"] = bytes.NewBufferString({{.Name}}_code)
-
 	// OpenCL driver kernel call wants pointers to arguments, set them up once.
 	{{range $i, $t := .ArgN}} {{$.Name}}_args.argptr[{{$i}}] = unsafe.Pointer(&{{$.Name}}_args.arg_{{.}})
 	{{end}} }
+
+// OpenCL code for {{.Name}} kernel
+func k_{{.Name}}_initialization() {
+  Kernel_codes["{{.Name}}"] = {{.OCL}}
+
+}
 
 // Wrapper for {{.Name}} OpenCL kernel, asynchronous.
 func k_{{.Name}}_async ( {{range $i, $t := .ArgT}}{{index $.ArgN $i}} {{$t}}, {{end}} cfg *config) {
