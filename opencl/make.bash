@@ -1,5 +1,6 @@
 #! /bin/bash
 
+go build clh2go.go || exit 1
 go build ocl2go.go || exit 1
 
 ./clh2go || exit 1
