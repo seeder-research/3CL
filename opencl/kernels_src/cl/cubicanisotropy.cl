@@ -46,4 +46,3 @@ addcubicanisotropy(__global float* __restrict Bx, __global float* __restrict By,
 	}
 }
 
-k

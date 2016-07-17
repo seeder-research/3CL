@@ -1,4 +1,4 @@
-package kernels
+package kernels_src
 
 // Use the following lists to sequence order of file
 // loads in order to build OpenCL Program
