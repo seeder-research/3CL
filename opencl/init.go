@@ -26,8 +26,6 @@ var (
 	ClProgram   	*cl.Program		// handle to program in the global OpenCL context
 	KernList    =	map[string]*cl.Kernel{}	// Store pointers to all compiled kernels
 	initialized     = false                 // Initial state defaults to false
-	Kernel_headers = map[string]string{}
-	Kernel_codes  =  map[string]string{}
 )
 
 // Locks to an OS thread and initializes CUDA for that thread.
@@ -53,7 +51,7 @@ func Init(gpu, platformId int) {
 	PlatformInfo = fmt.Sprint("//   Name: ", PlatformName, "\n//   Vendor: ", PlatformVendor, "\n//   Profile: ", PlatformProfile, "\n//   Version: ", PlatformVersion,"\n")
 	ClPlatforms = platforms
 	ClPlatform = platform
-	
+
 	devices, err := platform.GetDevices(cl.DeviceTypeGPU)
 	if err != nil {
 		fmt.Printf("Failed to get devices: %+v \n", err)
@@ -99,7 +97,7 @@ func Init(gpu, platformId int) {
 		fmt.Printf("BuildProgram failed: %+v \n", err)
 	}
 
-	for kernname, _ := range Kernel_codes {
+	for _, kernname := range KernelNames {
 		KernList[kernname], err = program.CreateKernel(kernname)
 		if err != nil {
 		       fmt.Printf("CreateKernel failed: %+v \n", err)

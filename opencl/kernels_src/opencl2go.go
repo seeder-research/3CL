@@ -85,9 +85,24 @@ func main() {
         wrapfname := "../kernels/program_wrapper.go"
         wrapout, err := os.OpenFile(wrapfname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
         util.PanicErr(err)
-        defer wrapout.Close()
 	wrapout.WriteString(tmpBuffer.String())
+	wrapout.Close()
 
+	tmpBuffer = new(bytes.Buffer)
+	tmpBuffer.WriteString("package opencl\n\n")
+	tmpBuffer.WriteString("var KernelNames = []string{\n")
+	for idx, keynames := range kernels_src.OCLKernelsList {
+		if idx == len(kernels_src.OCLKernelsList)-1 {
+			tmpBuffer.WriteString("\t\""+keynames+"\"}\n")
+		} else {
+			tmpBuffer.WriteString("\t\""+keynames+"\",\n")
+		}
+	}
+        wrapfname = "../opencl_kernels_wrapper.go"
+        wrapout, err = os.OpenFile(wrapfname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+        util.PanicErr(err)
+	wrapout.WriteString(tmpBuffer.String())
+	wrapout.Close()
 }
 
 func getKernelName(fname string) string {

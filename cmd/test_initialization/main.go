@@ -65,7 +65,7 @@ func TestKernels() {
 		fmt.Println("No kernels found!")
 		return
 	}
-	for kernname, _ := range opencl.Kernel_codes {
+	for kernname, _ := range opencl.KernList {
 		fmt.Printf("Found kernel: %s \n", kernname)
 		PrintKernelInfo(kernname)
 	}
