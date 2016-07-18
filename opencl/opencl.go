@@ -1,5 +1,9 @@
 package opencl
 
+import (
+	"log"
+)
+
 // Type size in bytes
 const (
         SIZEOF_FLOAT32    = 4
@@ -8,3 +12,12 @@ const (
         SIZEOF_COMPLEX128 = 16
 )
 
+// Assumes kernel arguments set prior to launch
+func LaunchKernel(kernname string, gridDim, workDim []int) {
+	if KernList[kernname] == nil {
+		log.Panic("Kernel "+kernname+" does not exist!")
+	}
+	if _, err := ClCmdQueue.EnqueueNDRangeKernel(KernList[kernname], nil, gridDim, workDim, nil); err != nil {
+		log.Fatal(err)
+	}
+}
