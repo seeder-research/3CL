@@ -20,6 +20,7 @@ type Slice struct {
 	ptrs    []unsafe.Pointer         // points into ptr_, limited to NComp()
 	size    [3]int
 	memType int8
+	event	*cl.Event
 }
 
 // this package must not depend on OpenCL.
@@ -80,6 +81,7 @@ func SliceFromPtrs(size [3]int, memType int8, ptrs []unsafe.Pointer) *Slice {
 		s.ptrs[c] = ptrs[c]
 	}
 	s.memType = memType
+	s.event = nil
 	return s
 }
 
@@ -206,6 +208,16 @@ func (s *Slice) HostCopy() *Slice {
 	cpy := NewSlice(s.NComp(), s.Size())
 	Copy(cpy, s)
 	return cpy
+}
+
+// Associate a cl.Event to the slice
+func (s *Slice) SetEvent(event *cl.Event) {
+	s.event = event
+}
+
+// Returns cl.Event associated with the slice
+func (s *Slice) GetEvent() *cl.Event {
+	return s.event
 }
 
 func Copy(dst, src *Slice) {
