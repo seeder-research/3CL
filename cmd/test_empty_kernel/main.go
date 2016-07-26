@@ -90,6 +90,8 @@ func main() {
 	// Name of non-existing kernel
 	kernelname := "unknown"
 
+/*
+	input, err := context.CreateEmptyBuffer
 	if _, err := queue.EnqueueWriteBufferFloat32(input, true, 0, data[:], nil); err != nil {
 		fmt.Printf("EnqueueWriteBufferFloat32 failed: %+v \n", err)
 		return
@@ -183,6 +185,6 @@ func main() {
 	}
 
 	fmt.Printf("Finished tests on square\n")
-
+*/
 }
 
