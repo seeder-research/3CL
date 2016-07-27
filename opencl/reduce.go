@@ -17,7 +17,12 @@ const REDUCE_BLOCKSIZE = 512
 func Sum(in *data.Slice) float32 {
 	util.Argument(in.NComp() == 1)
 	out := reduceBuf(0)
-	k_reducesum_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, nil)
+	bar, events := make([](*cl.Event), 1), make([](*cl.Event), 1)
+	events[0] = in.GetEvent(0)
+	bar[0] = k_reducesum_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, events)
+	if err := cl.WaitForEvents(bar); err != nil {
+		fmt.Printf("WaitForEvents failed in sum: %+v \n", err)
+	}
 	return copyback(out)
 }
 
@@ -27,9 +32,14 @@ func Dot(a, b *data.Slice) float32 {
 	util.Argument(nComp == b.NComp())
 	out := reduceBuf(0)
 	// not async over components
+	bar, events := make([](*cl.Event), nComp), make([](*cl.Event), 2)
 	for c := 0; c < nComp; c++ {
-		k_reducedot_async(a.DevPtr(c), b.DevPtr(c), out, 0, a.Len(), reducecfg, nil) // all components add to out
+		events[0], events[1] = a.GetEvent(c), b.GetEvent(c)
+		bar[c] = k_reducedot_async(a.DevPtr(c), b.DevPtr(c), out, 0, a.Len(), reducecfg, events) // all components add to out
 	}
+        if err := cl.WaitForEvents(bar); err != nil {
+                fmt.Printf("WaitForEvents failed in dot: %+v \n", err)
+        }
 	return copyback(out)
 }
 
@@ -37,7 +47,12 @@ func Dot(a, b *data.Slice) float32 {
 func MaxAbs(in *data.Slice) float32 {
 	util.Argument(in.NComp() == 1)
 	out := reduceBuf(0)
-	k_reducemaxabs_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, nil)
+        bar, events := make([](*cl.Event), 1), make([](*cl.Event), 1)
+        events[0] = in.GetEvent(0)
+	bar[0] = k_reducemaxabs_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, events)
+        if err := cl.WaitForEvents(bar); err != nil {
+                fmt.Printf("WaitForEvents failed in maxabs: %+v \n", err)
+        }
 	return copyback(out)
 }
 
@@ -45,7 +60,12 @@ func MaxAbs(in *data.Slice) float32 {
 // 	max_i sqrt( x[i]*x[i] + y[i]*y[i] + z[i]*z[i] )
 func MaxVecNorm(v *data.Slice) float64 {
 	out := reduceBuf(0)
-	k_reducemaxvecnorm2_async(v.DevPtr(0), v.DevPtr(1), v.DevPtr(2), out, 0, v.Len(), reducecfg, nil)
+        bar, events := make([](*cl.Event), 1), make([](*cl.Event), 3)
+        events[0], events[1], events[2] = v.GetEvent(0), v.GetEvent(1), v.GetEvent(2)
+	bar[0] = k_reducemaxvecnorm2_async(v.DevPtr(0), v.DevPtr(1), v.DevPtr(2), out, 0, v.Len(), reducecfg, events)
+        if err := cl.WaitForEvents(bar); err != nil {
+                fmt.Printf("WaitForEvents failed in maxvecnorm: %+v \n", err)
+        }
 	return math.Sqrt(float64(copyback(out)))
 }
 
@@ -55,9 +75,15 @@ func MaxVecNorm(v *data.Slice) float64 {
 func MaxVecDiff(x, y *data.Slice) float64 {
 	util.Argument(x.Len() == y.Len())
 	out := reduceBuf(0)
-	k_reducemaxvecdiff2_async(x.DevPtr(0), x.DevPtr(1), x.DevPtr(2),
+        bar, events := make([](*cl.Event), 1), make([](*cl.Event), 6)
+        events[0], events[1], events[2] = x.GetEvent(0), x.GetEvent(1), x.GetEvent(2)
+        events[3], events[4], events[5] = y.GetEvent(0), y.GetEvent(1), y.GetEvent(2)
+  	bar[0] = k_reducemaxvecdiff2_async(x.DevPtr(0), x.DevPtr(1), x.DevPtr(2),
 		y.DevPtr(0), y.DevPtr(1), y.DevPtr(2),
-		out, 0, x.Len(), reducecfg, nil)
+		out, 0, x.Len(), reducecfg, events)
+        if err := cl.WaitForEvents(bar); err != nil {
+                fmt.Printf("WaitForEvents failed in maxvecdiff: %+v \n", err)
+        }
 	return math.Sqrt(float64(copyback(out)))
 }
 
@@ -75,11 +101,11 @@ func reduceBuf(initVal float32) unsafe.Pointer {
 		fmt.Printf("reduceBuf failed: %+v \n", err)
 		return nil
 	}
-	waitEventList := make([](*cl.Event),1)
+	waitEventList := make([](*cl.Event), 1)
 	waitEventList[0] = waitEvent
 	err = cl.WaitForEvents(waitEventList)
         if err != nil {
-                fmt.Printf("WatForEvents in reduceBuf failed: %+v \n", err)
+                fmt.Printf("WaitForEvents in reduceBuf failed: %+v \n", err)
                 return nil
         }
 	return buf
