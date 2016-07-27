@@ -1,5 +1,5 @@
 package opencl
-
+/*
 import "testing"
 
 // In case of memory leak, this will crash
@@ -35,3 +35,4 @@ func BenchmarkBuffer(b *testing.B) {
 		Recycle(a)
 	}
 }
+*/

@@ -31,19 +31,24 @@ func LaunchKernel(kernname string, gridDim, workDim []int, events []*cl.Event) *
 }
 
 func SetKernelArgWrapper(kernname string, index int, arg interface{}) {
+//	log.Printf("Working on index %d \n", index)
 	switch val := arg.(type) {
 	default:
 		if err := KernList[kernname].SetArg(index, val); err != nil {
 			log.Fatal(err)
 		}
 	case unsafe.Pointer:
-		memBufHandle, flag := arg.(*cl.MemObject)
+		memBufHandle, flag := arg.(unsafe.Pointer)
 		if flag {
-			if err := KernList[kernname].SetArg(index, memBufHandle); err != nil {
+			if err := KernList[kernname].SetArg(index, (*cl.MemObject)(memBufHandle)); err != nil {
 				log.Fatal(err)
 			}
 		} else {
 			log.Fatal("Unable to change argument type to *cl.MemObject")
 		}
-	}		
+	case int:
+                if err := KernList[kernname].SetArg(index, (int32)(val)); err != nil {
+                        log.Fatal(err)
+                }
+        }
 }

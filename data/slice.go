@@ -20,7 +20,7 @@ type Slice struct {
 	ptrs    []unsafe.Pointer         // points into ptr_, limited to NComp()
 	size    [3]int
 	memType int8
-	event	[]*cl.Event
+	event	[MAX_COMP]*cl.Event
 }
 
 // this package must not depend on OpenCL.

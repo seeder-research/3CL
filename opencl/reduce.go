@@ -131,4 +131,4 @@ func initReduceBuf() {
 // launch configuration for reduce kernels
 // 8 is typ. number of multiprocessors.
 // could be improved but takes hardly ~1% of execution time
-var reducecfg = &config{Grid: []int{8, 1, 1}, Block: []int{REDUCE_BLOCKSIZE, 1, 1}}
+var reducecfg = &config{Grid: []int{8*REDUCE_BLOCKSIZE, 1, 1}, Block: []int{REDUCE_BLOCKSIZE, 1, 1}}

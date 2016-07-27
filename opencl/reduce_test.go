@@ -1,7 +1,7 @@
 package opencl
 
 import (
-//	"testing"
+	"testing"
 	"unsafe"
 
 	"github.com/mumax/3cl/data"
@@ -39,7 +39,7 @@ func toGPU(list []float32) *data.Slice {
 	data.Copy(d, h)
 	return d
 }
-/*
+
 func TestReduceSum(t *testing.T) {
 	initTest()
 	result := Sum(in1)
@@ -47,7 +47,7 @@ func TestReduceSum(t *testing.T) {
 		t.Error("got:", result)
 	}
 }
-
+/*
 func TestReduceDot(t *testing.T) {
 	initTest()
 
