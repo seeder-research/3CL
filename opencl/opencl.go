@@ -16,11 +16,14 @@ const (
 func LaunchKernel(kernname string, gridDim, workDim []int, events []*cl.Event) *cl.Event {
 	if KernList[kernname] == nil {
 		log.Panic("Kernel "+kernname+" does not exist!")
+		return nil
 	}
 	KernEvent, err := ClCmdQueue.EnqueueNDRangeKernel(KernList[kernname], nil, gridDim, workDim, events)
 	if err != nil {
 		log.Fatal(err)
+		return nil
 	} else {
 		return KernEvent
 	}
 }
+
