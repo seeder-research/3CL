@@ -13,11 +13,14 @@ const (
 )
 
 // Assumes kernel arguments set prior to launch
-func LaunchKernel(kernname string, gridDim, workDim []int) {
+func LaunchKernel(kernname string, gridDim, workDim []int, events []*cl.Event) *cl.Event {
 	if KernList[kernname] == nil {
 		log.Panic("Kernel "+kernname+" does not exist!")
 	}
-	if _, err := ClCmdQueue.EnqueueNDRangeKernel(KernList[kernname], nil, gridDim, workDim, nil); err != nil {
+	KernEvent, err := ClCmdQueue.EnqueueNDRangeKernel(KernList[kernname], nil, gridDim, workDim, events)
+	if err != nil {
 		log.Fatal(err)
+	} else {
+		return KernEvent
 	}
 }
