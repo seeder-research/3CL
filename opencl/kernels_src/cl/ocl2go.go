@@ -156,7 +156,7 @@ func k_{{.Name}}_async ( {{range $i, $t := .ArgT}}{{index $.ArgN $i}} {{$t}}, {{
 	{{end}}
 
 //	args := {{.Name}}_args.argptr[:]
-	LaunchKernel("{{.Name}}", cfg.Grid, cfg.Block, 0, args)
+	LaunchKernel("{{.Name}}", cfg.Grid, cfg.Block, nil)
 
 	if Synchronous{ // debug
 		ClCmdQueue.Finish()
