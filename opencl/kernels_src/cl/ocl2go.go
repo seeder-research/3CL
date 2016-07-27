@@ -119,6 +119,7 @@ const templText = `package opencl
 
 import(
 	"unsafe"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/timer"
 	"sync"
 )
@@ -140,7 +141,7 @@ func init(){
 	{{end}} }
 
 // Wrapper for {{.Name}} OpenCL kernel, asynchronous.
-func k_{{.Name}}_async ( {{range $i, $t := .ArgT}}{{index $.ArgN $i}} {{$t}}, {{end}} cfg *config) {
+func k_{{.Name}}_async ( {{range $i, $t := .ArgT}}{{index $.ArgN $i}} {{$t}}, {{end}} cfg *config, events []*cl.Event) {
 	if Synchronous{ // debug
 		ClCmdQueue.Finish()
 		timer.Start("{{.Name}}")
@@ -156,7 +157,7 @@ func k_{{.Name}}_async ( {{range $i, $t := .ArgT}}{{index $.ArgN $i}} {{$t}}, {{
 	{{end}}
 
 //	args := {{.Name}}_args.argptr[:]
-	LaunchKernel("{{.Name}}", cfg.Grid, cfg.Block, nil)
+	LaunchKernel("{{.Name}}", cfg.Grid, cfg.Block, events)
 
 	if Synchronous{ // debug
 		ClCmdQueue.Finish()

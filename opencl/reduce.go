@@ -17,7 +17,7 @@ const REDUCE_BLOCKSIZE = 512
 func Sum(in *data.Slice) float32 {
 	util.Argument(in.NComp() == 1)
 	out := reduceBuf(0)
-	k_reducesum_async(in.DevPtr(0), out, 0, in.Len(), reducecfg)
+	k_reducesum_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, nil)
 	return copyback(out)
 }
 
@@ -28,7 +28,7 @@ func Dot(a, b *data.Slice) float32 {
 	out := reduceBuf(0)
 	// not async over components
 	for c := 0; c < nComp; c++ {
-		k_reducedot_async(a.DevPtr(c), b.DevPtr(c), out, 0, a.Len(), reducecfg) // all components add to out
+		k_reducedot_async(a.DevPtr(c), b.DevPtr(c), out, 0, a.Len(), reducecfg, nil) // all components add to out
 	}
 	return copyback(out)
 }
@@ -37,7 +37,7 @@ func Dot(a, b *data.Slice) float32 {
 func MaxAbs(in *data.Slice) float32 {
 	util.Argument(in.NComp() == 1)
 	out := reduceBuf(0)
-	k_reducemaxabs_async(in.DevPtr(0), out, 0, in.Len(), reducecfg)
+	k_reducemaxabs_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, nil)
 	return copyback(out)
 }
 
@@ -45,7 +45,7 @@ func MaxAbs(in *data.Slice) float32 {
 // 	max_i sqrt( x[i]*x[i] + y[i]*y[i] + z[i]*z[i] )
 func MaxVecNorm(v *data.Slice) float64 {
 	out := reduceBuf(0)
-	k_reducemaxvecnorm2_async(v.DevPtr(0), v.DevPtr(1), v.DevPtr(2), out, 0, v.Len(), reducecfg)
+	k_reducemaxvecnorm2_async(v.DevPtr(0), v.DevPtr(1), v.DevPtr(2), out, 0, v.Len(), reducecfg, nil)
 	return math.Sqrt(float64(copyback(out)))
 }
 
@@ -57,7 +57,7 @@ func MaxVecDiff(x, y *data.Slice) float64 {
 	out := reduceBuf(0)
 	k_reducemaxvecdiff2_async(x.DevPtr(0), x.DevPtr(1), x.DevPtr(2),
 		y.DevPtr(0), y.DevPtr(1), y.DevPtr(2),
-		out, 0, x.Len(), reducecfg)
+		out, 0, x.Len(), reducecfg, nil)
 	return math.Sqrt(float64(copyback(out)))
 }
 
