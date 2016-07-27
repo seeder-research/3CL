@@ -2,6 +2,7 @@ package opencl
 
 import (
 	"log"
+	github.com/mumax/3cl/opencl/cl
 )
 
 // Type size in bytes

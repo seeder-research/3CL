@@ -153,6 +153,7 @@ func k_{{.Name}}_async ( {{range $i, $t := .ArgT}}{{index $.ArgN $i}} {{$t}}, {{
 	{{range $i, $t := .ArgN}} {{$.Name}}_args.arg_{{.}} = {{.}}
 	{{end}}
 
+	{{range $i, $t := .ArgN}}SetKernelArgWrapper("{{.Name}}",{{$i}}, {{$t}})
 //	args := {{.Name}}_args.argptr[:]
 //	cl.LaunchKernel({{.Name}}_code, cfg.Grid.X, cfg.Grid.Y, cfg.Grid.Z, cfg.Block.X, cfg.Block.Y, cfg.Block.Z, 0, args)
 
