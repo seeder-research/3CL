@@ -2,7 +2,9 @@ package opencl
 
 import (
 	"log"
-	github.com/mumax/3cl/opencl/cl
+	"unsafe"
+
+	"github.com/mumax/3cl/opencl/cl"
 )
 
 // Type size in bytes
@@ -28,3 +30,20 @@ func LaunchKernel(kernname string, gridDim, workDim []int, events []*cl.Event) *
 	}
 }
 
+func SetKernelArgWrapper(kernname string, index int, arg interface{}) {
+	switch val := arg.(type) {
+	default:
+		if err := KernList[kernname].SetArg(index, val); err != nil {
+			log.Fatal(err)
+		}
+	case unsafe.Pointer:
+		memBufHandle, flag := arg.(*cl.MemObject)
+		if flag {
+			if err := KernList[kernname].SetArg(index, memBufHandle); err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			log.Fatal("Unable to change argument type to *cl.MemObject")
+		}
+	}		
+}
