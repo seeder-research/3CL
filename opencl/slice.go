@@ -43,19 +43,19 @@ func memFree(ptr unsafe.Pointer) {
 	buf.Release()
 }
 
-func MemCpyDtoH(dst, src unsafe.Pointer, bytes cl.Size_t) {
+func MemCpyDtoH(dst, src unsafe.Pointer, bytes cl.Size_t) []*cl.Event {
 	// sync previous kernels
 	eventList := make([](*cl.Event),1)
 	waitList, err := ClCmdQueue.EnqueueBarrierWithWaitList(nil)
 	if err != nil {
 		fmt.Printf("EnqueueBarrierWithWaitList failed: %+v \n", err)
-		return
+		return nil
 	}
 	eventList[0] = waitList
 	err = cl.WaitForEvents(eventList)
 	if err != nil {
 		fmt.Printf("First WaitForEvents in MemCpyDtoH failed: %+v \n", err)
-		return
+		return nil
 	}
 	timer.Start("memcpyDtoH")
 
@@ -63,7 +63,7 @@ func MemCpyDtoH(dst, src unsafe.Pointer, bytes cl.Size_t) {
 	eventList[0], err = ClCmdQueue.EnqueueReadBuffer((*cl.MemObject)(src), false, 0, bytes, dst, nil)
 	if err != nil {
 		fmt.Printf("EnqueueReadBuffer failed: %+v \n", err)
-		return
+		return nil
 	}
 
 	// sync copy
@@ -71,23 +71,25 @@ func MemCpyDtoH(dst, src unsafe.Pointer, bytes cl.Size_t) {
 	timer.Stop("memcpyDtoH")
 	if err != nil {
 		fmt.Printf("Second WaitForEvents in MemCpyDtoH failed: %+v \n", err)
-		return
+		return nil
 	}
+
+	return eventList
 }
 
-func MemCpyHtoD(dst, src unsafe.Pointer, bytes cl.Size_t) {
+func MemCpyHtoD(dst, src unsafe.Pointer, bytes cl.Size_t) []*cl.Event {
 	// sync previous kernels
         eventList := make([](*cl.Event),1)
         waitList, err := ClCmdQueue.EnqueueBarrierWithWaitList(nil)
         if err != nil {
                 fmt.Printf("EnqueueBarrierWithWaitList failed: %+v \n", err)
-                return
+                return nil
         }
         eventList[0] = waitList
         err = cl.WaitForEvents(eventList)
         if err != nil {
                 fmt.Printf("First WaitForEvents in MemCpyHtoD failed: %+v \n", err)
-                return
+                return nil
         }
 	timer.Start("memcpyHtoD")
 
@@ -95,7 +97,7 @@ func MemCpyHtoD(dst, src unsafe.Pointer, bytes cl.Size_t) {
 	eventList[0], err = ClCmdQueue.EnqueueWriteBuffer((*cl.MemObject)(dst), false, 0, bytes, src, nil)
 	if err != nil {
 		fmt.Printf("EnqueueWriteBuffer failed: %+v \n", err)
-		return
+		return nil
 	}
 
 	// sync copy
@@ -103,23 +105,25 @@ func MemCpyHtoD(dst, src unsafe.Pointer, bytes cl.Size_t) {
 	timer.Stop("memcpyHtoD")
         if err != nil {
                 fmt.Printf("Second WaitForEvents in MemCpyHtoD failed: %+v \n", err)
-                return
+                return nil
         }
+
+	return eventList
 }
 
-func MemCpy(dst, src unsafe.Pointer, bytes cl.Size_t) {
+func MemCpy(dst, src unsafe.Pointer, bytes cl.Size_t) []*cl.Event {
 	// sync kernels
         eventList := make([](*cl.Event),1)
         waitList, err := ClCmdQueue.EnqueueBarrierWithWaitList(nil)
         if err != nil {
                 fmt.Printf("EnqueueBarrierWithWaitList failed: %+v \n", err)
-                return
+                return nil
         }
         eventList[0] = waitList
         err = cl.WaitForEvents(eventList)
         if err != nil {
                 fmt.Printf("First WaitForEvents in MemCpy failed: %+v \n", err)
-                return
+                return nil
         }
 	timer.Start("memcpy")
 
@@ -127,7 +131,7 @@ func MemCpy(dst, src unsafe.Pointer, bytes cl.Size_t) {
 	eventList[0], err = ClCmdQueue.EnqueueCopyBuffer((*cl.MemObject)(src), (*cl.MemObject)(dst), 0, 0, bytes, nil)
 	if err != nil {
 		fmt.Printf("EnqueueCopyBuffer failed: %+v \n", err)
-		return
+		return nil
 	}
 
 	// sync copy
@@ -135,9 +139,13 @@ func MemCpy(dst, src unsafe.Pointer, bytes cl.Size_t) {
 	timer.Stop("memcpy")
         if err != nil {
                 fmt.Printf("First WaitForEvents in MemCpy failed: %+v \n", err)
-                return
+                return nil
         }
- }
+
+	returnList := make([]*cl.Event,2)
+	returnList[0], returnList[1] = eventList[0], eventList[0]
+	return returnList
+}
 
 // Memset sets the Slice's components to the specified values.
 // To be carefully used on unified slice (need sync)
