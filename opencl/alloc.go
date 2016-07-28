@@ -2,14 +2,14 @@ package opencl
 
 import (
 	"log"
-	"unsafe"
+//	"unsafe"
 
 	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
 )
 
 // Wrapper for cu.MemAlloc, fatal exit on out of memory.
-func MemAlloc(bytes cl.Size_t) unsafe.Pointer {
+func MemAlloc(bytes cl.Size_t) *cl.MemObject {
 	memObj, err := ClCtx.CreateEmptyBuffer(cl.MemReadWrite, bytes)
 	if err == cl.ErrMemObjectAllocationFailure || err == cl.ErrOutOfResources {
 		log.Fatal(err)
@@ -17,7 +17,7 @@ func MemAlloc(bytes cl.Size_t) unsafe.Pointer {
 	if err != nil {
 		panic(err)
 	}
-	return unsafe.Pointer(memObj)
+	return memObj
 }
 
 // Returns a copy of in, allocated on GPU.

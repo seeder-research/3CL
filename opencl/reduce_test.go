@@ -47,7 +47,7 @@ func TestReduceSum(t *testing.T) {
 		t.Error("got:", result)
 	}
 }
-*/
+
 func TestReduceDot(t *testing.T) {
 	initTest()
 
@@ -71,7 +71,7 @@ func TestReduceDot(t *testing.T) {
 		t.Error("got:", result)
 	}
 }
-/*
+*/
 func TestReduceMaxAbs(t *testing.T) {
 	result := MaxAbs(in1)
 	if result != 999 {
@@ -82,7 +82,7 @@ func TestReduceMaxAbs(t *testing.T) {
 		t.Error("got:", result)
 	}
 }
-*/
+
 func sliceFromList(arr [][]float32, size [3]int) *data.Slice {
 	ptrs := make([]unsafe.Pointer, len(arr))
 	for i := range ptrs {

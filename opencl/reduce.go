@@ -2,6 +2,7 @@ package opencl
 
 import (
 	"math"
+//	"log"
 	"fmt"
 	"unsafe"
 
@@ -87,7 +88,7 @@ func MaxVecDiff(x, y *data.Slice) float64 {
 	return math.Sqrt(float64(copyback(out)))
 }
 
-var reduceBuffers chan unsafe.Pointer // pool of 1-float CUDA buffers for reduce
+var reduceBuffers chan (*cl.MemObject) // pool of 1-float OpenCL buffers for reduce
 
 // return a 1-float OPENCL reduction buffer from a pool
 // initialized to initVal
@@ -96,7 +97,7 @@ func reduceBuf(initVal float32) unsafe.Pointer {
 		initReduceBuf()
 	}
 	buf := <-reduceBuffers
-	waitEvent, err := ClCmdQueue.EnqueueFillBuffer((*cl.MemObject)(buf), unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, cl.Size_t(SIZEOF_FLOAT32), nil)
+	waitEvent, err := ClCmdQueue.EnqueueFillBuffer(buf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, cl.Size_t(SIZEOF_FLOAT32), nil)
 	if err != nil {
 		fmt.Printf("reduceBuf failed: %+v \n", err)
 		return nil
@@ -108,21 +109,21 @@ func reduceBuf(initVal float32) unsafe.Pointer {
                 fmt.Printf("WaitForEvents in reduceBuf failed: %+v \n", err)
                 return nil
         }
-	return buf
+	return (unsafe.Pointer)(buf)
 }
 
 // copy back single float result from GPU and recycle buffer
 func copyback(buf unsafe.Pointer) float32 {
 	var result float32
 	MemCpyDtoH(unsafe.Pointer(&result), buf, SIZEOF_FLOAT32)
-	reduceBuffers <- buf
+	reduceBuffers <- (*cl.MemObject)(buf)
 	return result
 }
 
 // initialize pool of 1-float OPENCL reduction buffers
 func initReduceBuf() {
 	const N = 128
-	reduceBuffers = make(chan unsafe.Pointer, N)
+	reduceBuffers = make(chan *cl.MemObject, N)
 	for i := 0; i < N; i++ {
 		reduceBuffers <- MemAlloc(1 * SIZEOF_FLOAT32)
 	}
