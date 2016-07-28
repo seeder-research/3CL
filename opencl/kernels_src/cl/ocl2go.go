@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"text/scanner"
 	"text/template"
 
@@ -34,6 +35,8 @@ func ocl2go(fname string) {
 	var s scanner.Scanner
 	s.Init(f)
 	tok := s.Scan()
+	// Go through the file and filters out specific words, storing
+	// the other words in sequence. Preserves code
 	for tok != scanner.EOF {
 		if !filter(s.TokenText()) {
 			token = append(token, s.TokenText())
@@ -45,6 +48,15 @@ func ocl2go(fname string) {
 	funcname := ""
 	argstart, argstop := -1, -1
 	for i := 0; i < len(token); i++ {
+		// Looks for "__kernel" first. At this point, we
+		// know which of the recorded words is the name
+		// for the kernel and we can start extracting the
+		// arguments for the kernel. Hint: if the current
+		// word is "__kernel", the next word must be the
+		// return type (per C function definition syntax)
+		// followed by the function (kernel in this case)
+		// name, and then the list of input arguments in
+		// parenthese
 		if token[i] == "__kernel" {
 			funcname = token[i+2]
 			argstart = i + 4
@@ -69,14 +81,34 @@ func ocl2go(fname string) {
 	// separate arg names/types and make pointers Go-style
 	argn := make([]string, len(args))
 	argt := make([]string, len(args))
+	setn := make([]string, len(args))
 	for i := range args {
-		if args[i][1] == "*" {
-			args[i] = []string{args[i][0] + "*", args[i][2]}
+		// Scan through the argument to locate "__global",
+		// "__constant", "__local" and "__private"
+		var currarg []string
+		setn[i] = ""
+		for j, txt := range args[i] {
+			flag := chkArgMemType(txt)
+			if flag == 2 {
+				setn[i] = "__local"
+			} else if flag == 0 {
+				currarg = append(currarg, args[i][j])
+			}
 		}
-		argt[i] = typemap(args[i][0])
-		argn[i] = args[i][1]
+		if currarg[1] == "*" {
+			currarg = []string{currarg[0] + "*", currarg[2]}
+		}
+		argt[i] = typemap(currarg[0])
+		argn[i] = currarg[1]
 	}
-	wrapgen(fname, funcname, argt, argn)
+	for i, a := range argn {
+		if setn[i] == "__local" {
+			setn[i] = "KernList[\""+funcname+"\"].SetArgUnsafe("+strconv.Itoa(i)+", cfg.Block[0]*cfg.Block[1]*cfg.Block[2]*SIZEOF_FLOAT32, nil)"
+		} else {
+			setn[i] = "SetKernelArgWrapper(\""+funcname+"\", "+strconv.Itoa(i)+", "+a+")"
+		}
+	}
+	wrapgen(fname, funcname, argt, argn, setn)
 }
 
 // translate C type to Go type.
@@ -94,13 +126,14 @@ type Kernel struct {
 	Name string
 	ArgT []string
 	ArgN []string
+	SetN []string
 }
 
 var ls []string
 
 // generate wrapper code from template
-func wrapgen(filename, funcname string, argt, argn []string) {
-	kernel := &Kernel{funcname, argt, argn}
+func wrapgen(filename, funcname string, argt, argn, setn []string) {
+	kernel := &Kernel{funcname, argt, argn, setn}
 	basename := util.NoExt(filename)
 	wrapfname := "../../" + basename + "_wrapper.go"
 	wrapout, err := os.OpenFile(wrapfname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
@@ -153,7 +186,7 @@ func k_{{.Name}}_async ( {{range $i, $t := .ArgT}}{{index $.ArgN $i}} {{$t}}, {{
 	{{range $i, $t := .ArgN}} {{$.Name}}_args.arg_{{.}} = {{.}}
 	{{end}}
 
-	{{range $i, $t := .ArgN}}SetKernelArgWrapper("{{$.Name}}",{{$i}}, {{$t}})
+	{{range $i, $t := .SetN}}{{$t}}
 	{{end}}
 
 //	args := {{.Name}}_args.argptr[:]
@@ -177,12 +210,6 @@ func filter(token string) bool {
 	switch token {
 	case "__restrict":
 		return true
-	case "__global":
-		return true
-	case "__constant":
-		return true
-	case "__local":
-		return true
 	case "volatile":
 		return true
 	case "unsigned":
@@ -195,3 +222,16 @@ func filter(token string) bool {
 	return false
 }
 
+func chkArgMemType(token string) int {
+	switch token {
+	case "__global":
+		return 1
+	case "__local":
+		return 2
+	case "__constant":
+		return 3
+	case "__private":
+		return 4
+	}
+	return 0
+}
