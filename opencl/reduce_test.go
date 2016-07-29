@@ -12,7 +12,6 @@ import (
 var in1, in2, in3 *data.Slice
 
 func initTest() {
-	Init(0, 0)
 	if in1 != nil {
 		return
 	}
@@ -41,7 +40,10 @@ func toGPU(list []float32) *data.Slice {
 }
 
 func TestReduceSum(t *testing.T) {
+	Init(0, 0)
+
 	initTest()
+
 	result := Sum(in1)
 	if result != 499500 {
 		t.Error("got:", result)
