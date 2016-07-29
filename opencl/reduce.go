@@ -53,7 +53,10 @@ func MaxAbs(in *data.Slice, t *testing.T) float32 {
 	t.Logf("After output buffer returned")
         bar, events := make([](*cl.Event), 1), make([](*cl.Event), 1)
         events[0] = in.GetEvent(0)
+	t.Logf("Before kernel launch")
+	t.Logf("Compute MaxAbs over %d elements ", in.Len())
 	bar[0] = k_reducemaxabs_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, events)
+	t.Logf("After kernel launch")
         if err := cl.WaitForEvents(bar); err != nil {
                 fmt.Printf("WaitForEvents failed in maxabs: %+v \n", err)
         }
