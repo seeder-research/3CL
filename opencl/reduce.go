@@ -2,7 +2,7 @@ package opencl
 
 import (
 //	"math"
-	"testing"
+//	"testing"
 	"fmt"
 	"unsafe"
 
@@ -13,20 +13,23 @@ import (
 
 // Block size for reduce kernels.
 const REDUCE_BLOCKSIZE = 512
-/*
+
 // Sum of all elements.
 func Sum(in *data.Slice) float32 {
 	util.Argument(in.NComp() == 1)
-	out := reduceBuf(0)
-	bar, events := make([](*cl.Event), 1), make([](*cl.Event), 1)
-	events[0] = in.GetEvent(0)
-	bar[0] = k_reducesum_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, events)
-	if err := cl.WaitForEvents(bar); err != nil {
-		fmt.Printf("WaitForEvents failed in sum: %+v \n", err)
-	}
+	out, intermed := reduceBuf(0)
+	intEvent := k_reducesum_async(in.DevPtr(0), intermed, 0, in.Len(), reduceintcfg, [](*cl.Event){in.GetEvent(0)})
+        if err := cl.WaitForEvents([]*cl.Event{intEvent}); err != nil {
+                fmt.Printf("First WaitForEvents failed in sum: %+v \n", err)
+        }
+	event := k_reducesum_async(intermed, out, 0, ClCUnits, reducecfg, [](*cl.Event){intEvent})
+        if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
+                fmt.Printf("Second WaitForEvents failed in sum: %+v \n", err)
+        }
+	reduceIntBuffers <- (*cl.MemObject)(intermed)
 	return copyback(out)
 }
-
+/*
 // Dot product.
 func Dot(a, b *data.Slice) float32 {
 	nComp := a.NComp()
@@ -45,7 +48,7 @@ func Dot(a, b *data.Slice) float32 {
 }
 */
 // Maximum of absolute values of all elements.
-func MaxAbs(in *data.Slice, t *testing.T) float32 {
+func MaxAbs(in *data.Slice) float32 {
 	util.Argument(in.NComp() == 1)
 	out, intermed := reduceBuf(0)
 	intEvent := k_reducemaxabs_async(in.DevPtr(0), intermed, 0, in.Len(), reduceintcfg, [](*cl.Event){in.GetEvent(0)})
