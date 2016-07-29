@@ -46,18 +46,17 @@ func Dot(a, b *data.Slice) float32 {
 */
 // Maximum of absolute values of all elements.
 func MaxAbs(in *data.Slice, t *testing.T) float32 {
-	t.Logf("Arrived in MaxAbs")
 	util.Argument(in.NComp() == 1)
-	t.Logf("Before output buffer returned")
-	out := reduceBuf(0)
-	t.Logf("After output buffer returned")
-	t.Logf("Before kernel launch")
-	t.Logf("Compute MaxAbs over %d elements ", in.Len())
-	k_reducemaxabs_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, [](*cl.Event){in.GetEvent(0)})
-	t.Logf("After kernel launch")
-        if err := ClCmdQueue.Finish(); err != nil {
-                fmt.Printf("WaitForEvents failed in maxabs: %+v \n", err)
+	out, intermed := reduceBuf(0)
+	intEvent := k_reducemaxabs_async(in.DevPtr(0), intermed, 0, in.Len(), reduceintcfg, [](*cl.Event){in.GetEvent(0)})
+        if err := cl.WaitForEvents([]*cl.Event{intEvent}); err != nil {
+                fmt.Printf("First WaitForEvents failed in maxabs: %+v \n", err)
         }
+	event := k_reducemaxabs_async(intermed, out, 0, ClCUnits, reducecfg, [](*cl.Event){intEvent})
+        if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
+                fmt.Printf("Second WaitForEvents failed in maxabs: %+v \n", err)
+        }
+	reduceIntBuffers <- (*cl.MemObject)(intermed)
 	return copyback(out)
 }
 /*
@@ -93,27 +92,37 @@ func MaxVecDiff(x, y *data.Slice) float64 {
 }
 */
 var reduceBuffers chan (*cl.MemObject) // pool of 1-float OpenCL buffers for reduce
+var reduceIntBuffers chan (*cl.MemObject) // pool of 1-float OpenCL buffers for reduce
 
-// return a 1-float OPENCL reduction buffer from a pool
+// return a 1-float and an N-float OPENCL reduction buffer from a pool
 // initialized to initVal
-func reduceBuf(initVal float32) unsafe.Pointer {
+func reduceBuf(initVal float32) (unsafe.Pointer, unsafe.Pointer) {
 	if reduceBuffers == nil {
 		initReduceBuf()
 	}
 	buf := <-reduceBuffers
+	interBuf := <-reduceIntBuffers
 	waitEvent, err := ClCmdQueue.EnqueueFillBuffer(buf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, cl.Size_t(SIZEOF_FLOAT32), nil)
 	if err != nil {
 		fmt.Printf("reduceBuf failed: %+v \n", err)
-		return nil
+		return nil, nil
 	}
-	waitEventList := make([](*cl.Event), 1)
-	waitEventList[0] = waitEvent
-	err = cl.WaitForEvents(waitEventList)
+	err = cl.WaitForEvents([]*cl.Event{waitEvent})
         if err != nil {
-                fmt.Printf("WaitForEvents in reduceBuf failed: %+v \n", err)
-                return nil
+                fmt.Printf("First WaitForEvents in reduceBuf failed: %+v \n", err)
+                return nil, nil
         }
-	return (unsafe.Pointer)(buf)
+	waitEvent, err = ClCmdQueue.EnqueueFillBuffer(interBuf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, cl.Size_t(ClCUnits*SIZEOF_FLOAT32), nil)
+        if err != nil {
+                fmt.Printf("reduceBuf failed: %+v \n", err)
+                return nil, nil
+        }
+        err = cl.WaitForEvents([]*cl.Event{waitEvent})
+        if err != nil {
+                fmt.Printf("Seconf WaitForEvents in reduceBuf failed: %+v \n", err)
+                return nil, nil
+        }
+	return (unsafe.Pointer)(buf), (unsafe.Pointer)(interBuf)
 }
 
 // copy back single float result from GPU and recycle buffer
@@ -124,12 +133,14 @@ func copyback(buf unsafe.Pointer) float32 {
 	return result
 }
 
-// initialize pool of 1-float OPENCL reduction buffers
+// initialize pool of 1-float and N-float OPENCL reduction buffers
 func initReduceBuf() {
 	const N = 128
 	reduceBuffers = make(chan *cl.MemObject, N)
+	reduceIntBuffers = make(chan *cl.MemObject, N)
 	for i := 0; i < N; i++ {
-		reduceBuffers <- MemAlloc(1 * SIZEOF_FLOAT32)
+		reduceBuffers <- MemAlloc(cl.Size_t(1 * SIZEOF_FLOAT32))
+		reduceIntBuffers <- MemAlloc(cl.Size_t(ClCUnits * SIZEOF_FLOAT32))
 	}
 }
 
@@ -137,3 +148,4 @@ func initReduceBuf() {
 // 8 is typ. number of multiprocessors.
 // could be improved but takes hardly ~1% of execution time
 var reducecfg = &config{Grid: []int{REDUCE_BLOCKSIZE, 1, 1}, Block: []int{REDUCE_BLOCKSIZE, 1, 1}}
+var reduceintcfg = &config{Grid: []int{8*REDUCE_BLOCKSIZE, 1, 1}, Block: []int{REDUCE_BLOCKSIZE, 1, 1}}

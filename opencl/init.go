@@ -26,6 +26,8 @@ var (
 	ClProgram   	*cl.Program		// handle to program in the global OpenCL context
 	KernList    =	map[string]*cl.Kernel{}	// Store pointers to all compiled kernels
 	initialized     = false                 // Initial state defaults to false
+	ClCUnits	int			// Get number of compute units available
+	ClWGSize	int			// Get maximum size of work group per compute unit
 )
 
 // Locks to an OS thread and initializes CUDA for that thread.
@@ -106,7 +108,15 @@ func Init(gpu, platformId int) {
 	ClCtx = context
 	ClCmdQueue = queue
 	ClProgram = program
-
+	// Set basic configuration for distributing
+	// work-items across compute units
+	ClCUnits, ClWGSize = 8, REDUCE_BLOCKSIZE
+	ClCUnits = ClDevice.MaxComputeUnits()
+	ClWGSize = ClDevice.MaxWorkGroupSize()
+	reducecfg.Grid[0] = ClWGSize
+	reducecfg.Block[0] = ClWGSize
+	reduceintcfg.Grid[0] = ClWGSize*ClCUnits
+	reduceintcfg.Block[0] = ClWGSize
 }
 
 func ReleaseAndClean() {

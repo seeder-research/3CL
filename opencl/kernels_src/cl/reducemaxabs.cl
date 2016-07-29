@@ -26,10 +26,8 @@ reducemaxabs(__global float* __restrict src, __global float* __restrict dst, flo
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 
-	barrier(CLK_GLOBAL_MEM_FENCE);
 	if (local_idx == 0) {
-		dst[0] = max(dst[0], scratch[0]);
-		barrier(CLK_GLOBAL_MEM_FENCE);
+		dst[get_group_id(0)] = scratch[0];
 	}
 }
 
