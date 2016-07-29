@@ -25,8 +25,6 @@ reducemaxabs(__global float* __restrict src, __global float* __restrict dst, flo
 		// barrier for syncing work group
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
-	if (local_idx == 0) {
-		dst[0] = (dst[0] < scratch[0]) ? scratch[0] : dst[0];
-	}
+	dst[0] = (dst[0] < scratch[local_idx]) ? scratch[local_idx] : dst[0];
 }
 

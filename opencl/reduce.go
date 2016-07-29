@@ -1,8 +1,8 @@
 package opencl
 
 import (
-	"math"
-//	"log"
+//	"math"
+	"testing"
 	"fmt"
 	"unsafe"
 
@@ -13,7 +13,7 @@ import (
 
 // Block size for reduce kernels.
 const REDUCE_BLOCKSIZE = 512
-
+/*
 // Sum of all elements.
 func Sum(in *data.Slice) float32 {
 	util.Argument(in.NComp() == 1)
@@ -43,11 +43,14 @@ func Dot(a, b *data.Slice) float32 {
         }
 	return copyback(out)
 }
-
+*/
 // Maximum of absolute values of all elements.
-func MaxAbs(in *data.Slice) float32 {
+func MaxAbs(in *data.Slice, t *testing.T) float32 {
+	t.Logf("Arrived in MaxAbs")
 	util.Argument(in.NComp() == 1)
+	t.Logf("Before output buffer returned")
 	out := reduceBuf(0)
+	t.Logf("After output buffer returned")
         bar, events := make([](*cl.Event), 1), make([](*cl.Event), 1)
         events[0] = in.GetEvent(0)
 	bar[0] = k_reducemaxabs_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, events)
@@ -56,7 +59,7 @@ func MaxAbs(in *data.Slice) float32 {
         }
 	return copyback(out)
 }
-
+/*
 // Maximum of the norms of all vectors (x[i], y[i], z[i]).
 // 	max_i sqrt( x[i]*x[i] + y[i]*y[i] + z[i]*z[i] )
 func MaxVecNorm(v *data.Slice) float64 {
@@ -87,7 +90,7 @@ func MaxVecDiff(x, y *data.Slice) float64 {
         }
 	return math.Sqrt(float64(copyback(out)))
 }
-
+*/
 var reduceBuffers chan (*cl.MemObject) // pool of 1-float OpenCL buffers for reduce
 
 // return a 1-float OPENCL reduction buffer from a pool

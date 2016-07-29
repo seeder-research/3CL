@@ -73,11 +73,22 @@ func TestReduceDot(t *testing.T) {
 }
 */
 func TestReduceMaxAbs(t *testing.T) {
-	result := MaxAbs(in1)
+	initTest()
+	testArray := data.NewSlice(in1.NComp(), in1.Size())
+	data.Copy(testArray, in1)
+	cpuArray := testArray.Host()
+	chk0 := len(cpuArray)
+	t.Logf("Number of components in CPU array = %d ", chk0)
+	for i, arr := range cpuArray {
+		for j, val := range arr {
+			t.Logf("cpuArray[%d][%d] = %f ", i, j, val)
+		}
+	}
+	result := MaxAbs(in1, t)
 	if result != 999 {
 		t.Error("got:", result)
 	}
-	result = MaxAbs(in2)
+	result = MaxAbs(in2, t)
 	if result != 999.99 {
 		t.Error("got:", result)
 	}
