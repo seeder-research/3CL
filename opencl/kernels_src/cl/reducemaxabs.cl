@@ -8,7 +8,7 @@ reducemaxabs(__global float* __restrict src, __global float* __restrict dst, flo
 	// Loop over input elements in chunks and store max in each chunk into local memory
 	while (global_idx < n) {
 		float element = fabs(src[global_idx]);
-		currVal = (currVal < element) ? element : currVal;
+		currVal = max(currVal, element);
 		global_idx += get_global_size(0);
 	}
 
@@ -20,11 +20,16 @@ reducemaxabs(__global float* __restrict src, __global float* __restrict dst, flo
 		if (local_idx < offset) {
 			float other = scratch[local_idx + offset];
 			float mine = scratch[local_idx];
-			scratch[local_idx] = (mine < other) ? other : mine;
+			scratch[local_idx] = max(mine, other);
 		}
 		// barrier for syncing work group
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
-	dst[0] = (dst[0] < scratch[local_idx]) ? scratch[local_idx] : dst[0];
+
+	barrier(CLK_GLOBAL_MEM_FENCE);
+	if (local_idx == 0) {
+		dst[0] = max(dst[0], scratch[0]);
+		barrier(CLK_GLOBAL_MEM_FENCE);
+	}
 }
 

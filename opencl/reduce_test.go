@@ -79,11 +79,13 @@ func TestReduceMaxAbs(t *testing.T) {
 	cpuArray := testArray.Host()
 	chk0 := len(cpuArray)
 	t.Logf("Number of components in CPU array = %d ", chk0)
+/*
 	for i, arr := range cpuArray {
 		for j, val := range arr {
 			t.Logf("cpuArray[%d][%d] = %f ", i, j, val)
 		}
 	}
+*/
 	result := MaxAbs(in1, t)
 	if result != 999 {
 		t.Error("got:", result)

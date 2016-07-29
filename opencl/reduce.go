@@ -51,13 +51,11 @@ func MaxAbs(in *data.Slice, t *testing.T) float32 {
 	t.Logf("Before output buffer returned")
 	out := reduceBuf(0)
 	t.Logf("After output buffer returned")
-        bar, events := make([](*cl.Event), 1), make([](*cl.Event), 1)
-        events[0] = in.GetEvent(0)
 	t.Logf("Before kernel launch")
 	t.Logf("Compute MaxAbs over %d elements ", in.Len())
-	bar[0] = k_reducemaxabs_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, events)
+	k_reducemaxabs_async(in.DevPtr(0), out, 0, in.Len(), reducecfg, [](*cl.Event){in.GetEvent(0)})
 	t.Logf("After kernel launch")
-        if err := cl.WaitForEvents(bar); err != nil {
+        if err := ClCmdQueue.Finish(); err != nil {
                 fmt.Printf("WaitForEvents failed in maxabs: %+v \n", err)
         }
 	return copyback(out)
@@ -138,4 +136,4 @@ func initReduceBuf() {
 // launch configuration for reduce kernels
 // 8 is typ. number of multiprocessors.
 // could be improved but takes hardly ~1% of execution time
-var reducecfg = &config{Grid: []int{8*REDUCE_BLOCKSIZE, 1, 1}, Block: []int{REDUCE_BLOCKSIZE, 1, 1}}
+var reducecfg = &config{Grid: []int{REDUCE_BLOCKSIZE, 1, 1}, Block: []int{REDUCE_BLOCKSIZE, 1, 1}}
