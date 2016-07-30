@@ -48,14 +48,12 @@ func TestReduceSum(t *testing.T) {
 		t.Error("got:", result)
 	}
 }
-/*
-func TestReduceDot(t *testing.T) {
-	initTest()
 
+func TestReduceDot(t *testing.T) {
 	// test for 1 comp
 	a := toGPU([]float32{1, 2, 3, 4, 5})
 	b := toGPU([]float32{5, 4, 3, -1, 2})
-	result := Dot(a, b)
+	result := Dot(a, b, t)
 	if result != 5+8+9-4+10 {
 		t.Error("got:", result)
 	}
@@ -65,9 +63,10 @@ func TestReduceDot(t *testing.T) {
 	mesh := [3]int{1, 1, N}
 	c := NewSlice(3, mesh)
 	d := NewSlice(3, mesh)
+	t.Logf("Got this far")
 	Memset(c, 1, 2, 3)
 	Memset(d, 4, 5, 6)
-	result = Dot(c, d)
+	result = Dot(c, d, t)
 	if result != N*(4+10+18) {
 		t.Error("got:", result)
 	}
@@ -83,7 +82,7 @@ func TestReduceMaxAbs(t *testing.T) {
 		t.Error("got:", result)
 	}
 }
-*/
+
 func sliceFromList(arr [][]float32, size [3]int) *data.Slice {
 	ptrs := make([]unsafe.Pointer, len(arr))
 	for i := range ptrs {

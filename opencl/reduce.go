@@ -2,7 +2,7 @@ package opencl
 
 import (
 //	"math"
-//	"testing"
+	"testing"
 	"fmt"
 	"unsafe"
 
@@ -31,25 +31,21 @@ func Sum(in *data.Slice) float32 {
 }
 
 // Dot product.
-func Dot(a, b *data.Slice) float32 {
+func Dot(a, b *data.Slice, t *testing.T) float32 {
 	nComp := a.NComp()
 	util.Argument(nComp == b.NComp())
 	out, intermed := reduceBuf(0)
 	// not async over components
-	bar0, bar1, events := make([](*cl.Event), nComp), make([](*cl.Event), nComp), make([](*cl.Event), 2)
 	for c := 0; c < nComp; c++ {
-		events[0], events[1] = a.GetEvent(c), b.GetEvent(c)
-		bar0[c] = k_reducedot_async(a.DevPtr(c), b.DevPtr(c), intermed, 0, a.Len(), reduceintcfg, events) // all components add to intermed
+		t.Logf("Iterating index: %d ", c)
+		barInt := k_reducedot_async(a.DevPtr(c), b.DevPtr(c), intermed, 0, a.Len(), reduceintcfg, []*cl.Event{a.GetEvent(c), b.GetEvent(c)}) // all components add to intermed
+                bar := k_reducesum_async(intermed, out, 0, ClCUnits, reducecfg, []*cl.Event{barInt}) // all components add to out
+		t.Logf("Succeeded: %d ", c)
+	        if err := cl.WaitForEvents([]*cl.Event{bar}); err != nil {
+                	fmt.Printf("WaitForEvents failed at index %d in dot: %+v \n", c, err)
+        	}
 	}
-        if err := cl.WaitForEvents(bar0); err != nil {
-                fmt.Printf("First WaitForEvents failed in dot: %+v \n", err)
-        }
-        for c := 0; c < nComp; c++ {
-                bar1[c] = k_reducesum_async(intermed, out, 0, ClCUnits, reducecfg, []*cl.Event{bar0[c]}) // all components add to out
-        }
-        if err := cl.WaitForEvents(bar1); err != nil {
-                fmt.Printf("Second WaitForEvents failed in dot: %+v \n", err)
-        }
+	reduceIntBuffers <- (*cl.MemObject)(intermed)
  	return copyback(out)
 }
 
