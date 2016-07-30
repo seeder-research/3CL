@@ -1,6 +1,7 @@
 package opencl
 
 import (
+	"os"
 	"testing"
 	"unsafe"
 
@@ -12,23 +13,17 @@ import (
 var in1, in2, in3 *data.Slice
 
 func initTest() {
-	if in1 != nil {
-		return
+	inh1 := make([]float32, 1000)
+	for i := range inh1 {
+		inh1[i] = float32(i)
 	}
-	{
-		inh1 := make([]float32, 1000)
-		for i := range inh1 {
-			inh1[i] = float32(i)
-		}
-		in1 = toGPU(inh1)
+	in1 = toGPU(inh1)
+
+	inh2 := make([]float32, 100000)
+	for i := range inh2 {
+		inh2[i] = -float32(i) / 100
 	}
-	{
-		inh2 := make([]float32, 100000)
-		for i := range inh2 {
-			inh2[i] = -float32(i) / 100
-		}
-		in2 = toGPU(inh2)
-	}
+	in2 = toGPU(inh2)
 }
 
 func toGPU(list []float32) *data.Slice {
@@ -39,11 +34,15 @@ func toGPU(list []float32) *data.Slice {
 	return d
 }
 
-func TestReduceSum(t *testing.T) {
+func TestMain(m *testing.M) {
 	Init(0, 0)
-
 	initTest()
+	code := m.Run()
+	ReleaseAndClean()
+	os.Exit(code)
+}
 
+func TestReduceSum(t *testing.T) {
 	result := Sum(in1)
 	if result != 499500 {
 		t.Error("got:", result)
@@ -73,7 +72,7 @@ func TestReduceDot(t *testing.T) {
 		t.Error("got:", result)
 	}
 }
-*/
+
 func TestReduceMaxAbs(t *testing.T) {
 	result := MaxAbs(in1)
 	if result != 999 {
@@ -84,7 +83,7 @@ func TestReduceMaxAbs(t *testing.T) {
 		t.Error("got:", result)
 	}
 }
-
+*/
 func sliceFromList(arr [][]float32, size [3]int) *data.Slice {
 	ptrs := make([]unsafe.Pointer, len(arr))
 	for i := range ptrs {
