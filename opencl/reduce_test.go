@@ -53,7 +53,7 @@ func TestReduceDot(t *testing.T) {
 	// test for 1 comp
 	a := toGPU([]float32{1, 2, 3, 4, 5})
 	b := toGPU([]float32{5, 4, 3, -1, 2})
-	result := Dot(a, b, t)
+	result := Dot(a, b)
 	if result != 5+8+9-4+10 {
 		t.Error("got:", result)
 	}
@@ -66,7 +66,7 @@ func TestReduceDot(t *testing.T) {
 	t.Logf("Got this far")
 	Memset(c, 1, 2, 3)
 	Memset(d, 4, 5, 6)
-	result = Dot(c, d, t)
+	result = Dot(c, d)
 	if result != N*(4+10+18) {
 		t.Error("got:", result)
 	}

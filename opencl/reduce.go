@@ -2,7 +2,7 @@ package opencl
 
 import (
 //	"math"
-	"testing"
+//	"testing"
 	"fmt"
 	"unsafe"
 
@@ -31,22 +31,22 @@ func Sum(in *data.Slice) float32 {
 }
 
 // Dot product.
-func Dot(a, b *data.Slice, t *testing.T) float32 {
+func Dot(a, b *data.Slice) float32 {
 	nComp := a.NComp()
 	util.Argument(nComp == b.NComp())
-	out, intermed := reduceBuf(0)
+	result := float32(0)
 	// not async over components
 	for c := 0; c < nComp; c++ {
-		t.Logf("Iterating index: %d ", c)
+		out, intermed := reduceBuf(0)
 		barInt := k_reducedot_async(a.DevPtr(c), b.DevPtr(c), intermed, 0, a.Len(), reduceintcfg, []*cl.Event{a.GetEvent(c), b.GetEvent(c)}) // all components add to intermed
                 bar := k_reducesum_async(intermed, out, 0, ClCUnits, reducecfg, []*cl.Event{barInt}) // all components add to out
-		t.Logf("Succeeded: %d ", c)
 	        if err := cl.WaitForEvents([]*cl.Event{bar}); err != nil {
                 	fmt.Printf("WaitForEvents failed at index %d in dot: %+v \n", c, err)
         	}
+		reduceIntBuffers <- (*cl.MemObject)(intermed)
+ 		result += copyback(out)
 	}
-	reduceIntBuffers <- (*cl.MemObject)(intermed)
- 	return copyback(out)
+	return result
 }
 
 // Maximum of absolute values of all elements.
