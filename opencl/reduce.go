@@ -1,8 +1,7 @@
 package opencl
 
 import (
-//	"math"
-//	"testing"
+	"math"
 	"fmt"
 	"unsafe"
 
@@ -19,12 +18,9 @@ func Sum(in *data.Slice) float32 {
 	util.Argument(in.NComp() == 1)
 	out, intermed := reduceBuf(0)
 	intEvent := k_reducesum_async(in.DevPtr(0), intermed, 0, in.Len(), reduceintcfg, [](*cl.Event){in.GetEvent(0)})
-        if err := cl.WaitForEvents([]*cl.Event{intEvent}); err != nil {
-                fmt.Printf("First WaitForEvents failed in sum: %+v \n", err)
-        }
 	event := k_reducesum_async(intermed, out, 0, ClCUnits, reducecfg, [](*cl.Event){intEvent})
         if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
-                fmt.Printf("Second WaitForEvents failed in sum: %+v \n", err)
+                fmt.Printf("WaitForEvents failed in sum: %+v \n", err)
         }
 	reduceIntBuffers <- (*cl.MemObject)(intermed)
 	return copyback(out)
@@ -54,43 +50,37 @@ func MaxAbs(in *data.Slice) float32 {
 	util.Argument(in.NComp() == 1)
 	out, intermed := reduceBuf(0)
 	intEvent := k_reducemaxabs_async(in.DevPtr(0), intermed, 0, in.Len(), reduceintcfg, [](*cl.Event){in.GetEvent(0)})
-        if err := cl.WaitForEvents([]*cl.Event{intEvent}); err != nil {
-                fmt.Printf("First WaitForEvents failed in maxabs: %+v \n", err)
-        }
 	event := k_reducemaxabs_async(intermed, out, 0, ClCUnits, reducecfg, [](*cl.Event){intEvent})
         if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
-                fmt.Printf("Second WaitForEvents failed in maxabs: %+v \n", err)
+                fmt.Printf("WaitForEvents failed in maxabs: %+v \n", err)
         }
 	reduceIntBuffers <- (*cl.MemObject)(intermed)
 	return copyback(out)
 }
-/*
+
 // Maximum of the norms of all vectors (x[i], y[i], z[i]).
 // 	max_i sqrt( x[i]*x[i] + y[i]*y[i] + z[i]*z[i] )
 func MaxVecNorm(v *data.Slice) float64 {
-	out := reduceBuf(0)
-        bar, events := make([](*cl.Event), 1), make([](*cl.Event), 3)
-        events[0], events[1], events[2] = v.GetEvent(0), v.GetEvent(1), v.GetEvent(2)
-	bar[0] = k_reducemaxvecnorm2_async(v.DevPtr(0), v.DevPtr(1), v.DevPtr(2), out, 0, v.Len(), reducecfg, events)
-        if err := cl.WaitForEvents(bar); err != nil {
+	out, intermed := reduceBuf(0)
+	intEvent := k_reducemaxvecnorm2_async(v.DevPtr(0), v.DevPtr(1), v.DevPtr(2), intermed, 0, v.Len(), reduceintcfg, [](*cl.Event){v.GetEvent(0), v.GetEvent(1), v.GetEvent(2)})
+	event := k_reducemaxabs_async(intermed, out, 0, ClCUnits, reducecfg, [](*cl.Event){intEvent})
+        if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
                 fmt.Printf("WaitForEvents failed in maxvecnorm: %+v \n", err)
         }
 	return math.Sqrt(float64(copyback(out)))
 }
-*/
+
 // Maximum of the norms of the difference between all vectors (x1,y1,z1) and (x2,y2,z2)
 // 	(dx, dy, dz) = (x1, y1, z1) - (x2, y2, z2)
 // 	max_i sqrt( dx[i]*dx[i] + dy[i]*dy[i] + dz[i]*dz[i] )
 func MaxVecDiff(x, y *data.Slice) float64 {
 	util.Argument(x.Len() == y.Len())
-	out := reduceBuf(0)
-        bar, events := make([](*cl.Event), 1), make([](*cl.Event), 6)
-        events[0], events[1], events[2] = x.GetEvent(0), x.GetEvent(1), x.GetEvent(2)
-        events[3], events[4], events[5] = y.GetEvent(0), y.GetEvent(1), y.GetEvent(2)
-  	bar[0] = k_reducemaxvecdiff2_async(x.DevPtr(0), x.DevPtr(1), x.DevPtr(2),
+	out, intermed := reduceBuf(0)
+  	intEvent := k_reducemaxvecdiff2_async(x.DevPtr(0), x.DevPtr(1), x.DevPtr(2),
 		y.DevPtr(0), y.DevPtr(1), y.DevPtr(2),
-		out, 0, x.Len(), reducecfg, events)
-        if err := cl.WaitForEvents(bar); err != nil {
+		intermed, 0, x.Len(), reduceintcfg, [](*cl.Event){x.GetEvent(0), x.GetEvent(1), x.GetEvent(2), y.GetEvent(0), y.GetEvent(1), y.GetEvent(2)})
+	event := k_reducemaxabs_async(intermed, out, 0, ClCUnits, reducecfg, [](*cl.Event){intEvent})
+        if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
                 fmt.Printf("WaitForEvents failed in maxvecdiff: %+v \n", err)
         }
 	return math.Sqrt(float64(copyback(out)))
