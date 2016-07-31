@@ -1,5 +1,6 @@
 __kernel void
-reducemaxdiff(__global float* __restrict src1, __global float* __restrict  src2, __global float* __restrict dst, float initVal, int n, __local float* scratch) {
+reducemaxdiff(__global float* __restrict src1, __global float* __restrict  src2, __global float* __restrict dst,
+	      float initVal, int n, __local float* scratch) {
 	// Initialize memory
 	int global_idx =  get_global_id(0);
 	int local_idx = get_local_id(0);
@@ -7,7 +8,7 @@ reducemaxdiff(__global float* __restrict src1, __global float* __restrict  src2,
 
 	// Loop over input elements in chunks and accumulate each chunk into local memory
 	while (global_idx < n) {
-		float element = fabs(x1[global_idx] - x2[global_idx]));
+		float element = fabs(src1[global_idx] - src2[global_idx]);
 		currVal = fmax(currVal, element);
 		global_idx += get_global_size(0);
 	}

@@ -9,9 +9,9 @@ reducemaxvecdiff2(__global float* __restrict x1, __global float* __restrict y1, 
 
 	// Loop over input elements in chunks and accumulate each chunk into local memory
 	while (global_idx < n) {
-		float dx = x1[i] - x2[i];
-		float dy = y1[i] - y2[i];
-		float dz = z1[i] - z2[i];
+		float dx = x1[global_idx] - x2[global_idx];
+		float dy = y1[global_idx] - y2[global_idx];
+		float dz = z1[global_idx] - z2[global_idx];
 		float element = dx*dx + dy*dy + dz*dz;
 		currVal = fmax(currVal, element);
 		global_idx += get_global_size(0);

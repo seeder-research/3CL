@@ -1,5 +1,6 @@
 __kernel void
-reducemaxvecnorm2(__global float* __restrict x, __global float* __restrict y, __global float* __restrict z, __global float* __restrict dst, float initVal, int n, __local float* scratch) {
+reducemaxvecnorm2(__global float* __restrict x, __global float* __restrict y, __global float* __restrict z, __global float* __restrict dst,
+		  float initVal, int n, __local float* scratch) {
 	// Initialize memory
 	int global_idx =  get_global_id(0);
 	int local_idx = get_local_id(0);
@@ -7,7 +8,7 @@ reducemaxvecnorm2(__global float* __restrict x, __global float* __restrict y, __
 
 	// Loop over input elements in chunks and accumulate each chunk into local memory
 	while (global_idx < n) {
-		float element = x[global_idx]*x[global_idx]) + (y[global_idx]*y[global_idx]) + (z[global_idx]*z[global_idx]);
+		float element = (x[global_idx]*x[global_idx]) + (y[global_idx]*y[global_idx]) + (z[global_idx]*z[global_idx]);
 		currVal = fmax(currVal, element);
 		global_idx += get_global_size(0);
 	}

@@ -1,7 +1,7 @@
 package opencl
 
 import (
-	"math"
+//	"math"
 	"fmt"
 	"unsafe"
 
@@ -57,7 +57,7 @@ func MaxAbs(in *data.Slice) float32 {
 	reduceIntBuffers <- (*cl.MemObject)(intermed)
 	return copyback(out)
 }
-
+/*
 // Maximum of the norms of all vectors (x[i], y[i], z[i]).
 // 	max_i sqrt( x[i]*x[i] + y[i]*y[i] + z[i]*z[i] )
 func MaxVecNorm(v *data.Slice) float64 {
@@ -85,7 +85,7 @@ func MaxVecDiff(x, y *data.Slice) float64 {
         }
 	return math.Sqrt(float64(copyback(out)))
 }
-
+*/
 var reduceBuffers chan (*cl.MemObject) // pool of 1-float OpenCL buffers for reduce
 var reduceIntBuffers chan (*cl.MemObject) // pool of 1-float OpenCL buffers for reduce
 
