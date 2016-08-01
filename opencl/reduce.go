@@ -28,13 +28,13 @@ func Sum(in *data.Slice) float32 {
 
 // Dot product.
 func Dot(a, b *data.Slice) float32 {
-	nComp := a.NComp()
-	util.Argument(nComp == b.NComp())
+	util.Argument(a.NComp() == b.NComp())
+	util.Argument(a.Len() == b.Len())
 	result := float32(0)
 	// not async over components
-	for c := 0; c < nComp; c++ {
+	for c := 0; c < a.NComp(); c++ {
 		out, intermed := reduceBuf(0)
-		barInt := k_reducedot_async(a.DevPtr(c), b.DevPtr(c), intermed, 0, a.Len(), reduceintcfg, []*cl.Event{a.GetEvent(c), b.GetEvent(c)}) // all components add to intermed
+		barInt := k_reducedot_async(a.DevPtr(c), b.DevPtr(c), intermed, 0, a.Len(), reduceintcfg, [](*cl.Event){a.GetEvent(c), b.GetEvent(c)}) // all components add to intermed
                 bar := k_reducesum_async(intermed, out, 0, ClCUnits, reducecfg, []*cl.Event{barInt}) // all components add to out
 	        if err := cl.WaitForEvents([]*cl.Event{bar}); err != nil {
                 	fmt.Printf("WaitForEvents failed at index %d in dot: %+v \n", c, err)
@@ -58,9 +58,28 @@ func MaxAbs(in *data.Slice) float32 {
 	return copyback(out)
 }
 
+// Maximum element-wise difference
+func MaxDiff(a, b *data.Slice) []float32 {
+        util.Argument(a.NComp() == b.NComp())
+        util.Argument(a.Len() == b.Len())
+	returnVal := make([]float32, a.NComp())
+	for c := 0; c < a.NComp(); c++ {
+        	out, intermed := reduceBuf(0)
+        	intEvent := k_reducemaxdiff_async(a.DevPtr(c), b.DevPtr(c), intermed, 0, a.Len(), reduceintcfg, [](*cl.Event){a.GetEvent(c), b.GetEvent(c)})
+        	event := k_reducemaxabs_async(intermed, out, 0, ClCUnits, reducecfg, [](*cl.Event){intEvent})
+        	if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
+                	fmt.Printf("WaitForEvents failed in maxabs: %+v \n", err)
+        	}
+        	reduceIntBuffers <- (*cl.MemObject)(intermed)
+		returnVal[c] = copyback(out)
+	}
+        return returnVal
+}
+
 // Maximum of the norms of all vectors (x[i], y[i], z[i]).
 // 	max_i sqrt( x[i]*x[i] + y[i]*y[i] + z[i]*z[i] )
 func MaxVecNorm(v *data.Slice) float64 {
+        util.Argument(v.NComp() == 3)
 	out, intermed := reduceBuf(0)
 	intEvent := k_reducemaxvecnorm2_async(v.DevPtr(0), v.DevPtr(1), v.DevPtr(2), intermed, 0, v.Len(), reduceintcfg, [](*cl.Event){v.GetEvent(0), v.GetEvent(1), v.GetEvent(2)})
 	event := k_reducemaxabs_async(intermed, out, 0, ClCUnits, reducecfg, [](*cl.Event){intEvent})
@@ -75,6 +94,8 @@ func MaxVecNorm(v *data.Slice) float64 {
 // 	max_i sqrt( dx[i]*dx[i] + dy[i]*dy[i] + dz[i]*dz[i] )
 func MaxVecDiff(x, y *data.Slice) float64 {
 	util.Argument(x.Len() == y.Len())
+        util.Argument(x.NComp() == 3)
+        util.Argument(y.NComp() == 3)
 	out, intermed := reduceBuf(0)
   	intEvent := k_reducemaxvecdiff2_async(x.DevPtr(0), x.DevPtr(1), x.DevPtr(2),
 		y.DevPtr(0), y.DevPtr(1), y.DevPtr(2),
