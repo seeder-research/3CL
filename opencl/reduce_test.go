@@ -83,7 +83,7 @@ func TestReduceMaxAbs(t *testing.T) {
 	}
 }
 
-func TestReduceMaxDiff(t *testing.T) {
+func TestReduceMaxVecDiff(t *testing.T) {
 	const N = 32
 	mesh := [3]int{1, 1, N}
 	a := NewSlice(3, mesh)
@@ -92,14 +92,36 @@ func TestReduceMaxDiff(t *testing.T) {
 	Memset(a, 1, 2, 3)
 	Memset(b, 4, 5, 6)
 	result := MaxVecDiff(a, b)
+	if result != math.Sqrt(9+9+9) {
+		t.Error("got:", result)
+	}
 	// Change only one element in b
 	SetElem(b, 0, 5, 6)
 	SetElem(b, 1, 5, 7)
-	SetElem(b, 2, 5, 8)
+	SetElem(b, 2, 5, 9)
 	result = MaxVecDiff(a, b)
-	if result != math.Sqrt(75) {
+	if result != math.Sqrt(25+25+36) {
 		t.Error("got:", result)
 	}
+}
+
+func TestReduceMaxNorm(t *testing.T) {
+        const N = 32
+        mesh := [3]int{1, 1, N}
+        a := NewSlice(3, mesh)
+        Memset(a, 1, 2, 3)
+ 	result := MaxVecNorm(a)
+	if result != math.Sqrt(1+4+9) {
+		t.Error("got:", result)
+	}
+        // Change only one element in a
+        SetElem(a, 0, 5, 6)
+        SetElem(a, 1, 5, 7)
+        SetElem(a, 2, 5, 8)
+        result = MaxVecNorm(a)
+        if result != math.Sqrt(36+49+64) {
+                t.Error("got:", result)
+        }
 }
 
 func sliceFromList(arr [][]float32, size [3]int) *data.Slice {
