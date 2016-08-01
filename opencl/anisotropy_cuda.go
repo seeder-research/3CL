@@ -16,7 +16,7 @@ func AddCubicAnisotropy(Beff, m *data.Slice, k1_red, k2_red, k3_red LUTPtr, c1, 
 	N := Beff.Len()
 	cfg := make1DConf(N)
 
-	k_addcubicanisotropy_async(
+	event := k_addcubicanisotropy_async(
 		Beff.DevPtr(X), Beff.DevPtr(Y), Beff.DevPtr(Z),
 		m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
 		unsafe.Pointer(k1_red), unsafe.Pointer(k2_red), unsafe.Pointer(k3_red),
@@ -24,6 +24,13 @@ func AddCubicAnisotropy(Beff, m *data.Slice, k1_red, k2_red, k3_red LUTPtr, c1, 
 		c2[X], c2[Y], c2[Z],
 		regions.Ptr, N, cfg, [](*cl.Event){Beff.GetEvent(X), 
 		Beff.GetEvent(Y), Beff.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z)})
+
+	Beff.SetEvent(X, event)
+	Beff.SetEvent(Y, event)
+	Beff.SetEvent(Z, event)
+	m.SetEvent(X, event)
+	m.SetEvent(Y, event)
+	m.SetEvent(Z, event)
 }
 
 // Add uniaxial magnetocrystalline anisotropy field to Beff.
@@ -34,10 +41,17 @@ func AddUniaxialAnisotropy(Beff, m *data.Slice, k1_red, k2_red LUTPtr, u LUTPtrs
 	N := Beff.Len()
 	cfg := make1DConf(N)
 
-	k_adduniaxialanisotropy_async(Beff.DevPtr(X), Beff.DevPtr(Y), Beff.DevPtr(Z),
+	event := k_adduniaxialanisotropy_async(Beff.DevPtr(X), Beff.DevPtr(Y), Beff.DevPtr(Z),
 		m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
 		unsafe.Pointer(k1_red), unsafe.Pointer(k2_red),
 		u[X], u[Y], u[Z],
 		regions.Ptr, N, cfg, [](*cl.Event){Beff.GetEvent(X),
                 Beff.GetEvent(Y), Beff.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z)})
+
+	Beff.SetEvent(X, event)
+	Beff.SetEvent(Y, event)
+	Beff.SetEvent(Z, event)
+	m.SetEvent(X, event)
+	m.SetEvent(Y, event)
+	m.SetEvent(Z, event)
 }
