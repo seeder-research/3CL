@@ -88,10 +88,16 @@ func TestReduceMaxDiff(t *testing.T) {
 	mesh := [3]int{1, 1, N}
 	a := NewSlice(3, mesh)
 	b := NewSlice(3, mesh)
+	// Set all elements in a and b
 	Memset(a, 1, 2, 3)
 	Memset(b, 4, 5, 6)
 	result := MaxVecDiff(a, b)
-	if result != math.Sqrt(27) {
+	// Change only one element in b
+	SetElem(b, 0, 5, 6)
+	SetElem(b, 1, 5, 7)
+	SetElem(b, 2, 5, 8)
+	result = MaxVecDiff(a, b)
+	if result != math.Sqrt(75) {
 		t.Error("got:", result)
 	}
 }

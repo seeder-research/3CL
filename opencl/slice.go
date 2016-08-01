@@ -199,17 +199,21 @@ func SetCell(s *data.Slice, comp int, ix, iy, iz int, value float32) {
 
 func SetElem(s *data.Slice, comp int, index int, value float32) {
 	f := value
-	if _, err := ClCmdQueue.EnqueueWriteBuffer((*cl.MemObject)(s.DevPtr(comp)), false, cl.Size_t(index*SIZEOF_FLOAT32), SIZEOF_FLOAT32, unsafe.Pointer(&f), nil); err != nil {
+	event, err := ClCmdQueue.EnqueueWriteBuffer((*cl.MemObject)(s.DevPtr(comp)), false, cl.Size_t(index*SIZEOF_FLOAT32), SIZEOF_FLOAT32, unsafe.Pointer(&f), [](*cl.Event){s.GetEvent(comp)})
+	if err != nil {
 		fmt.Printf("EnqueueWriteBuffer failed: %+v \n", err)
 		return
 	}
+	s.SetEvent(comp, event)
 }
 
 func GetElem(s *data.Slice, comp int, index int) float32 {
 	var f float32
-        if _, err := ClCmdQueue.EnqueueReadBuffer((*cl.MemObject)(s.DevPtr(comp)), false, cl.Size_t(index*SIZEOF_FLOAT32), SIZEOF_FLOAT32, unsafe.Pointer(&f), nil); err != nil {
+        event, err := ClCmdQueue.EnqueueReadBuffer((*cl.MemObject)(s.DevPtr(comp)), false, cl.Size_t(index*SIZEOF_FLOAT32), SIZEOF_FLOAT32, unsafe.Pointer(&f), [](*cl.Event){s.GetEvent(comp)})
+	if err != nil {
                 fmt.Printf("EnqueueReadBuffer failed: %+v \n", err)
         }
+	s.SetEvent(comp, event)
 	return f
 }
 
