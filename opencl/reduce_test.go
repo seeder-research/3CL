@@ -118,7 +118,20 @@ func TestReduceMaxDiff(t *testing.T) {
 	Memset(b1, 3, 6, 9)
 	result = MaxDiff(a1, b1)
 	if ((result[0] != 2) || (result[1] != 4) || (result[2] != 6)) {
-		t.Error("got:", result)
+		t.Error("got:")
+		t.Error("result[0]: ", result[0])
+		t.Error("result[1]: ", result[1])
+		t.Error("result[2]: ", result[2])
+	}
+	SetElem(b1, 0, 19, 325)
+	SetElem(b1, 1, 19, 48)
+	SetElem(b1, 2, 19, 831)
+        result = MaxDiff(a1, b1)
+	if ((result[0] != 324) || (result[1] != 46) || (result[2] != 828)) {
+		t.Error("got:")
+		t.Error("result[0]: ", result[0])
+		t.Error("result[1]: ", result[1])
+		t.Error("result[2]: ", result[2])
 	}
 }
 
