@@ -1,9 +1,11 @@
-package cuda
+package opencl
 
 import (
+	"fmt"
 	"unsafe"
 
-	"github.com/mumax/3/data"
+	"github.com/mumax/3cl/opencl/cl"
+	"github.com/mumax/3cl/data"
 )
 
 // Landau-Lifshitz torque divided by gamma0:
@@ -16,10 +18,23 @@ func LLTorque(torque, m, B *data.Slice, alpha LUTPtr, regions *Bytes) {
 	N := torque.Len()
 	cfg := make1DConf(N)
 
-	k_lltorque_async(torque.DevPtr(X), torque.DevPtr(Y), torque.DevPtr(Z),
+	event := k_lltorque_async(torque.DevPtr(X), torque.DevPtr(Y), torque.DevPtr(Z),
 		m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
 		B.DevPtr(X), B.DevPtr(Y), B.DevPtr(Z),
-		unsafe.Pointer(alpha), regions.Ptr, N, cfg)
+		unsafe.Pointer(alpha), regions.Ptr, N, cfg, [](*cl.Event){torque.GetEvent(X),
+		torque.GetEvent(Y), torque.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y),
+		m.GetEvent(Z), B.GetEvent(X), B.GetEvent(Y), B.GetEvent(Z)})
+	torque.SetEvent(X, event)
+	torque.SetEvent(Y, event)
+	torque.SetEvent(Z, event)
+	m.SetEvent(X, event)
+	m.SetEvent(Y, event)
+	m.SetEvent(Z, event)
+	B.SetEvent(X, event)
+	B.SetEvent(Y, event)
+	B.SetEvent(Z, event)
+	err := cl.WaitForEvents([](*cl.Event){event})
+	if err != nil { fmt.Printf("WaitForEvents failed in lltorque: %+v \n", err) }
 }
 
 // Landau-Lifshitz torque with precession disabled.
@@ -28,7 +43,20 @@ func LLNoPrecess(torque, m, B *data.Slice) {
 	N := torque.Len()
 	cfg := make1DConf(N)
 
-	k_llnoprecess_async(torque.DevPtr(X), torque.DevPtr(Y), torque.DevPtr(Z),
+	event := k_llnoprecess_async(torque.DevPtr(X), torque.DevPtr(Y), torque.DevPtr(Z),
 		m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
-		B.DevPtr(X), B.DevPtr(Y), B.DevPtr(Z), N, cfg)
+		B.DevPtr(X), B.DevPtr(Y), B.DevPtr(Z), N, cfg, [](*cl.Event){torque.GetEvent(X),
+                torque.GetEvent(Y), torque.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y),
+                m.GetEvent(Z), B.GetEvent(X), B.GetEvent(Y), B.GetEvent(Z)})
+        torque.SetEvent(X, event)
+        torque.SetEvent(Y, event)
+        torque.SetEvent(Z, event)
+        m.SetEvent(X, event)
+        m.SetEvent(Y, event)
+        m.SetEvent(Z, event)
+        B.SetEvent(X, event)
+        B.SetEvent(Y, event)
+        B.SetEvent(Z, event)
+        err := cl.WaitForEvents([](*cl.Event){event})
+        if err != nil { fmt.Printf("WaitForEvents failed in lltorque: %+v \n", err) }
 }

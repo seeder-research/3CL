@@ -1,6 +1,7 @@
 package opencl
 
 import (
+	"fmt"
 	"unsafe"
 
 	"github.com/mumax/3cl/opencl/cl"
@@ -30,4 +31,6 @@ func AddDMI(Beff *data.Slice, m *data.Slice, Aex_red, Dex_red SymmLUT, regions *
         m.SetEvent(X, event)
         m.SetEvent(Y, event)
         m.SetEvent(Z, event)
+	err := cl.WaitForEvents([](*cl.Event){event})
+	if err != nil { fmt.Printf("WaitForEvents failed in adddmi: %+v \n", err) }
 }

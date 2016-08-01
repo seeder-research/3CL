@@ -21,7 +21,5 @@ func Divide(dst, a, b *data.Slice) {
 			       [](*cl.Event){dst.GetEvent(c), a.GetEvent(c), b.GetEvent(c)})
 	}
 	err := cl.WaitForEvents(bar)
-	if err != nil {
-		fmt.Printf("WaitForEvents failed in divide: %+v \n", err)
-	}
+	if err != nil { fmt.Printf("WaitForEvents failed in divide: %+v \n", err) }
 }

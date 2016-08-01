@@ -1,6 +1,8 @@
 package opencl
 
 import (
+	"fmt"
+
 	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/util"
@@ -26,4 +28,6 @@ func AddDotProduct(dst *data.Slice, prefactor float32, a, b *data.Slice) {
 	b.SetEvent(X, event)
 	b.SetEvent(Y, event)
 	b.SetEvent(Z, event)
+	err := cl.WaitForEvents([](*cl.Event){event})
+	if err != nil { fmt.Printf("WaitForEvents failed in adddotproduct: %+v \n", err) }
 }

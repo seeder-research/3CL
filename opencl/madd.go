@@ -22,14 +22,8 @@ func Mul(dst, a, b *data.Slice) {
 		a.SetEvent(c, eventList[c])
 		b.SetEvent(c, eventList[c])
 	}
-	bar, err := ClCmdQueue.EnqueueBarrierWithWaitList(eventList)
-	if err != nil {
-		fmt.Printf("EnqueueBarrierWithWaitList failed in mul: %+v \n", err)
-	}
-	err = cl.WaitForEvents([]*cl.Event{bar})
-	if err != nil {
-		fmt.Printf("WaitForEvents failed in mul: %+v \n", err)
-	}
+	err := cl.WaitForEvents(eventList)
+	if err != nil { fmt.Printf("WaitForEvents failed in mul: %+v \n", err) }
 }
 
 // multiply-add: dst[i] = src1[i] * factor1 + src2[i] * factor2
@@ -48,14 +42,8 @@ func Madd2(dst, src1, src2 *data.Slice, factor1, factor2 float32) {
 		src1.SetEvent(c, eventList[c])
 		src2.SetEvent(c, eventList[c])
 	}
-	bar, err := ClCmdQueue.EnqueueBarrierWithWaitList(eventList)
-	if err != nil {
-		fmt.Printf("EnqueueBarrierWithWaitList failed in madd2: %+v \n", err)
-	}
-	err = cl.WaitForEvents([]*cl.Event{bar})
-	if err != nil {
-		fmt.Printf("WaitForEvents failed in madd2: %+v \n", err)
-	}
+	err := cl.WaitForEvents(eventList)
+	if err != nil {	fmt.Printf("WaitForEvents failed in madd2: %+v \n", err) }
 }
 
 // multiply-add: dst[i] = src1[i] * factor1 + src2[i] * factor2 + src3 * factor3
@@ -76,12 +64,6 @@ func Madd3(dst, src1, src2, src3 *data.Slice, factor1, factor2, factor3 float32)
 		src2.SetEvent(c, eventList[c])
 		src3.SetEvent(c, eventList[c])
 	}
-	bar, err := ClCmdQueue.EnqueueBarrierWithWaitList(eventList)
-	if err != nil {
-		fmt.Printf("EnqueueBarrierWithWaitList failed in madd3: %+v \n", err)
-	}
-	err = cl.WaitForEvents([]*cl.Event{bar})
-	if err != nil {
-		fmt.Printf("WaitForEvents failed in madd3: %+v \n", err)
-	}
+	err := cl.WaitForEvents(eventList)
+	if err != nil { fmt.Printf("WaitForEvents failed in madd3: %+v \n", err) }
 }

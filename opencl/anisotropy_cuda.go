@@ -1,6 +1,7 @@
 package opencl
 
 import (
+	"fmt"
 	"unsafe"
 
 	"github.com/mumax/3cl/opencl/cl"
@@ -31,6 +32,8 @@ func AddCubicAnisotropy(Beff, m *data.Slice, k1_red, k2_red, k3_red LUTPtr, c1, 
 	m.SetEvent(X, event)
 	m.SetEvent(Y, event)
 	m.SetEvent(Z, event)
+	err := cl.WaitForEvents([](*cl.Event){event})
+	if err != nil { fmt.Printf("WaitForEvents failed in addcubicanisotropy: %+v \n", err) }
 }
 
 // Add uniaxial magnetocrystalline anisotropy field to Beff.
@@ -54,4 +57,6 @@ func AddUniaxialAnisotropy(Beff, m *data.Slice, k1_red, k2_red LUTPtr, u LUTPtrs
 	m.SetEvent(X, event)
 	m.SetEvent(Y, event)
 	m.SetEvent(Z, event)
+	err := cl.WaitForEvents([](*cl.Event){event})
+	if err != nil { fmt.Printf("WaitForEvents failed in addcubicanisotropy: %+v \n", err) }
 }

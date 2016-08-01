@@ -24,10 +24,12 @@ func NewBytes(Len cl.Size_t) *Bytes {
 		panic(err)
 	}
 	zeroPattern := uint8(0)
-	_, err = ClCmdQueue.EnqueueFillBuffer(ptr, unsafe.Pointer(&zeroPattern), 1, 0, cl.Size_t(Len), nil)
+	var event *cl.Event
+	event, err = ClCmdQueue.EnqueueFillBuffer(ptr, unsafe.Pointer(&zeroPattern), 1, 0, cl.Size_t(Len), nil)
 	if err != nil {
 		panic(err)
 	}
+	err = cl.WaitForEvents([](*cl.Event){event})
 	return &Bytes{unsafe.Pointer(ptr), Len}
 }
 
@@ -56,8 +58,13 @@ func (dst *Bytes) Set(index int, value byte) {
 		log.Panic("Bytes.Set: index out of range:", index)
 	}
 	src := value
-	if _, err := ClCmdQueue.EnqueueWriteBuffer((*cl.MemObject)(dst.Ptr), false, cl.Size_t(index), 1, unsafe.Pointer(&src), nil); err != nil {
+	event, err := ClCmdQueue.EnqueueWriteBuffer((*cl.MemObject)(dst.Ptr), false, cl.Size_t(index), 1, unsafe.Pointer(&src), nil);
+	if err != nil {
 		panic(err)
+	}
+	err = cl.WaitForEvents([](*cl.Event){event})
+	if err != nil {
+		log.Panic("WaitForEvents failed in Bytes.Set():", err)
 	}
 }
 
@@ -68,9 +75,14 @@ func (src *Bytes) Get(index int) byte {
 		log.Panic("Bytes.Set: index out of range:", index)
 	}
 	dst := make([]byte, 1)
-	if _, err := ClCmdQueue.EnqueueReadBufferByte((*cl.MemObject)(src.Ptr), false, cl.Size_t(index), dst, nil); err != nil {
+	event , err := ClCmdQueue.EnqueueReadBufferByte((*cl.MemObject)(src.Ptr), false, cl.Size_t(index), dst, nil);
+	if err != nil {
 		panic(err)
 	}
+        err = cl.WaitForEvents([](*cl.Event){event})
+        if err != nil {
+                log.Panic("WaitForEvents failed in Bytes.Set():", err)
+        }
 	return dst[0]
 }
 

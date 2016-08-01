@@ -1,6 +1,7 @@
 package opencl
 
 import (
+	"fmt"
 	"unsafe"
 
 	"github.com/mumax/3cl/opencl/cl"
@@ -32,6 +33,8 @@ func AddExchange(B, m *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data.M
 	m.SetEvent(X, event)
 	m.SetEvent(Y, event)
 	m.SetEvent(Z, event)
+	err := cl.WaitForEvents([](*cl.Event){event})
+	if err != nil { fmt.Printf("WaitForEvents failed in addexchange: %+v", err) }
 }
 
 // Finds the average exchange strength around each cell, for debugging.
@@ -46,4 +49,6 @@ func ExchangeDecode(dst *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data
 	event := k_exchangedecode_async(dst.DevPtr(0), unsafe.Pointer(Aex_red), regions.Ptr,
 					wx, wy, wz, N[X], N[Y], N[Z], pbc, cfg, [](*cl.Event){dst.GetEvent(0)})
 	dst.SetEvent(0, event)
+        err := cl.WaitForEvents([](*cl.Event){event})
+        if err != nil { fmt.Printf("WaitForEvents failed in addexchange: %+v", err) }
 }
