@@ -26,17 +26,19 @@ func newSlice(nComp int, size [3]int, memType int8) *data.Slice {
 	bytes := int64(length) * SIZEOF_FLOAT32
 	ptrs := make([]unsafe.Pointer, nComp)
 	initVal := float32(0.0)
+	fillWait := make([]*cl.Event, nComp)
 	for c := range ptrs {
 		tmp_buf, err := ClCtx.CreateEmptyBuffer(cl.MemReadWrite, cl.Size_t(bytes))
 		if err != nil { fmt.Printf("CreateEmptyBuffer failed: %+v \n", err) }
 		ptrs[c] = unsafe.Pointer(tmp_buf)
-		var fillWait *cl.Event
-		fillWait, err = ClCmdQueue.EnqueueFillBuffer(tmp_buf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, cl.Size_t(bytes), nil)
+		fillWait[c], err = ClCmdQueue.EnqueueFillBuffer(tmp_buf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, cl.Size_t(bytes), nil)
 		if err != nil { fmt.Printf("CreateEmptyBuffer failed: %+v \n", err) }
-		err = cl.WaitForEvents([]*cl.Event{fillWait})
+		err = cl.WaitForEvents([]*cl.Event{fillWait[c]})
 		if err != nil { fmt.Printf("Wait for EnqueueFillBuffer failed: %+v \n", err) }
 	}
-	return data.SliceFromPtrs(size, memType, ptrs)
+	returnPtr := data.SliceFromPtrs(size, memType, ptrs)
+	returnPtr.SetEvents(fillWait)
+	return returnPtr
 }
 
 // wrappers for data.EnableGPU arguments
@@ -153,13 +155,16 @@ func MemCpy(dst, src unsafe.Pointer, bytes cl.Size_t) []*cl.Event {
 // Memset sets the Slice's components to the specified values.
 // To be carefully used on unified slice (need sync)
 func Memset(s *data.Slice, val ...float32) {
-        eventList := make([](*cl.Event),1)
+        eventList := make([](*cl.Event),s.NComp())
 	err := cl.WaitForEvents(nil)
  
 	if Synchronous { // debug
-		eventList[0], err = ClCmdQueue.EnqueueBarrierWithWaitList(nil)
-		err = cl.WaitForEvents(eventList)
-                if err != nil {
+		for c := range eventList {
+			eventList[c] = s.GetEvent(c)
+		}
+		eventBar, errBar := ClCmdQueue.EnqueueBarrierWithWaitList(eventList)
+		errBar = cl.WaitForEvents([](*cl.Event){eventBar})
+                if errBar != nil {
                         fmt.Printf("First WaitForEvents in MemSet failed: %+v \n", err)
                 }
 		timer.Start("memset")
@@ -167,16 +172,16 @@ func Memset(s *data.Slice, val ...float32) {
 	util.Argument(len(val) == s.NComp())
 	eventListFill := make([](*cl.Event),len(val))
 	for c, v := range val {
-		eventListFill[c], err = ClCmdQueue.EnqueueFillBuffer((*cl.MemObject)(s.DevPtr(c)), unsafe.Pointer(&v), SIZEOF_FLOAT32, 0, cl.Size_t(s.Len()*SIZEOF_FLOAT32), nil)
+		eventListFill[c], err = ClCmdQueue.EnqueueFillBuffer((*cl.MemObject)(s.DevPtr(c)), unsafe.Pointer(&v), SIZEOF_FLOAT32, 0, cl.Size_t(s.Len()*SIZEOF_FLOAT32), [](*cl.Event){s.GetEvent(c)})
 		s.SetEvent(c, eventListFill[c])
 		if err != nil {
 			fmt.Printf("EnqueueFillBuffer failed: %+v \n", err)
 		}
 	}
 	if Synchronous { //debug
-		eventList[0], err = ClCmdQueue.EnqueueBarrierWithWaitList(eventListFill)
-		err = cl.WaitForEvents(eventList)
-                if err != nil {
+		eventBar, errBar := ClCmdQueue.EnqueueBarrierWithWaitList(eventListFill)
+		errBar = cl.WaitForEvents([](*cl.Event){eventBar})
+                if errBar != nil {
                         fmt.Printf("Second WaitForEvents in MemSet failed: %+v \n", err)
                 }
 		timer.Stop("memset")

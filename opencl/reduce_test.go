@@ -1,6 +1,7 @@
 package opencl
 
 import (
+	"math"
 	"os"
 	"testing"
 	"unsafe"
@@ -63,7 +64,6 @@ func TestReduceDot(t *testing.T) {
 	mesh := [3]int{1, 1, N}
 	c := NewSlice(3, mesh)
 	d := NewSlice(3, mesh)
-	t.Logf("Got this far")
 	Memset(c, 1, 2, 3)
 	Memset(d, 4, 5, 6)
 	result = Dot(c, d)
@@ -79,6 +79,19 @@ func TestReduceMaxAbs(t *testing.T) {
 	}
 	result = MaxAbs(in2)
 	if result != 999.99 {
+		t.Error("got:", result)
+	}
+}
+
+func TestReduceMaxDiff(t *testing.T) {
+	const N = 32
+	mesh := [3]int{1, 1, N}
+	a := NewSlice(3, mesh)
+	b := NewSlice(3, mesh)
+	Memset(a, 1, 2, 3)
+	Memset(b, 4, 5, 6)
+	result := MaxVecDiff(a, b)
+	if result != math.Sqrt(27) {
 		t.Error("got:", result)
 	}
 }

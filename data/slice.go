@@ -212,7 +212,7 @@ func (s *Slice) HostCopy() *Slice {
 
 //Associate a list of events to the slice
 func (s *Slice) SetEvents(events []*cl.Event) {
-	if len(s.event) != len(events) {
+	if s.NComp() != len(events) {
 		log.Panic("size of event list does not match number of components in slice")
 	}
 	for idx, event := range events {
