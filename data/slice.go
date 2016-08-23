@@ -28,12 +28,12 @@ type Slice struct {
 // otherwise, it could be removed in favor of memCpy only.
 var (
 	memFree, memFreeHost		func(unsafe.Pointer)
-	memCpy, memCpyDtoH, memCpyHtoD	func(dst, src unsafe.Pointer, bytes cl.Size_t) []*cl.Event
+	memCpy, memCpyDtoH, memCpyHtoD	func(dst, src unsafe.Pointer, bytes int) []*cl.Event
 )
 
 // Internal: enables slices on GPU. Called upon opencl init.
 func EnableGPU(free, freeHost func(unsafe.Pointer),
-	cpy, cpyDtoH, cpyHtoD func(dst, src unsafe.Pointer, bytes cl.Size_t) []*cl.Event) {
+	cpy, cpyDtoH, cpyHtoD func(dst, src unsafe.Pointer, bytes int) []*cl.Event) {
 	memFree = free
 	memFreeHost = freeHost
 	memCpy = cpy
@@ -235,24 +235,24 @@ func Copy(dst, src *Slice) {
 		panic(fmt.Sprintf("slice copy: illegal sizes: dst: %vx%v, src: %vx%v", dst.NComp(), dst.Len(), src.NComp(), src.Len()))
 	}
 	d, s := dst.GPUAccess(), src.GPUAccess()
-	bytes := SIZEOF_FLOAT32 * int64(dst.Len())
+	bytes := SIZEOF_FLOAT32 * dst.Len()
 	switch {
 	default:
 		panic("bug")
 	case d && s:
 		for c := 0; c < dst.NComp(); c++ {
-			eventsList := memCpy(dst.DevPtr(c), src.DevPtr(c), cl.Size_t(bytes))
+			eventsList := memCpy(dst.DevPtr(c), src.DevPtr(c), bytes)
 			dst.SetEvent(c, eventsList[0])
 			src.SetEvent(c, eventsList[1])
 		}
 	case s && !d:
 		for c := 0; c < dst.NComp(); c++ {
-			eventsList := memCpyDtoH(dst.ptr_[c], src.DevPtr(c), cl.Size_t(bytes))
+			eventsList := memCpyDtoH(dst.ptr_[c], src.DevPtr(c), bytes)
 			src.SetEvent(c, eventsList[0])
 		}
 	case !s && d:
 		for c := 0; c < dst.NComp(); c++ {
-			eventsList := memCpyHtoD(dst.DevPtr(c), src.ptr_[c], cl.Size_t(bytes))
+			eventsList := memCpyHtoD(dst.DevPtr(c), src.ptr_[c], bytes)
 			dst.SetEvent(c, eventsList[0])
 		}
 	case !d && !s:

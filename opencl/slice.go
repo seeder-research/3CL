@@ -23,15 +23,15 @@ func NewSlice(nComp int, size [3]int) *data.Slice {
 func newSlice(nComp int, size [3]int, memType int8) *data.Slice {
 	data.EnableGPU(memFree, memFree, MemCpy, MemCpyDtoH, MemCpyHtoD)
 	length := prod(size)
-	bytes := int64(length) * SIZEOF_FLOAT32
+	bytes := length * SIZEOF_FLOAT32
 	ptrs := make([]unsafe.Pointer, nComp)
 	initVal := float32(0.0)
 	fillWait := make([]*cl.Event, nComp)
 	for c := range ptrs {
-		tmp_buf, err := ClCtx.CreateEmptyBuffer(cl.MemReadWrite, cl.Size_t(bytes))
+		tmp_buf, err := ClCtx.CreateEmptyBuffer(cl.MemReadWrite, bytes)
 		if err != nil { fmt.Printf("CreateEmptyBuffer failed: %+v \n", err) }
 		ptrs[c] = unsafe.Pointer(tmp_buf)
-		fillWait[c], err = ClCmdQueue.EnqueueFillBuffer(tmp_buf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, cl.Size_t(bytes), nil)
+		fillWait[c], err = ClCmdQueue.EnqueueFillBuffer(tmp_buf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, bytes, nil)
 		if err != nil { fmt.Printf("CreateEmptyBuffer failed: %+v \n", err) }
 		err = cl.WaitForEvents([]*cl.Event{fillWait[c]})
 		if err != nil { fmt.Printf("Wait for EnqueueFillBuffer failed: %+v \n", err) }
@@ -48,7 +48,7 @@ func memFree(ptr unsafe.Pointer) {
 	buf.Release()
 }
 
-func MemCpyDtoH(dst, src unsafe.Pointer, bytes cl.Size_t) []*cl.Event {
+func MemCpyDtoH(dst, src unsafe.Pointer, bytes int) []*cl.Event {
 	// sync previous kernels
 	eventList := make([](*cl.Event),1)
 	waitList, err := ClCmdQueue.EnqueueBarrierWithWaitList(nil)
@@ -82,7 +82,7 @@ func MemCpyDtoH(dst, src unsafe.Pointer, bytes cl.Size_t) []*cl.Event {
 	return eventList
 }
 
-func MemCpyHtoD(dst, src unsafe.Pointer, bytes cl.Size_t) []*cl.Event {
+func MemCpyHtoD(dst, src unsafe.Pointer, bytes int) []*cl.Event {
 	// sync previous kernels
         eventList := make([](*cl.Event),1)
         waitList, err := ClCmdQueue.EnqueueBarrierWithWaitList(nil)
@@ -116,7 +116,7 @@ func MemCpyHtoD(dst, src unsafe.Pointer, bytes cl.Size_t) []*cl.Event {
 	return eventList
 }
 
-func MemCpy(dst, src unsafe.Pointer, bytes cl.Size_t) []*cl.Event {
+func MemCpy(dst, src unsafe.Pointer, bytes int) []*cl.Event {
 	// sync kernels
         eventList := make([](*cl.Event),1)
         waitList, err := ClCmdQueue.EnqueueBarrierWithWaitList(nil)
@@ -172,7 +172,7 @@ func Memset(s *data.Slice, val ...float32) {
 	util.Argument(len(val) == s.NComp())
 	eventListFill := make([](*cl.Event),len(val))
 	for c, v := range val {
-		eventListFill[c], err = ClCmdQueue.EnqueueFillBuffer((*cl.MemObject)(s.DevPtr(c)), unsafe.Pointer(&v), SIZEOF_FLOAT32, 0, cl.Size_t(s.Len()*SIZEOF_FLOAT32), [](*cl.Event){s.GetEvent(c)})
+		eventListFill[c], err = ClCmdQueue.EnqueueFillBuffer((*cl.MemObject)(s.DevPtr(c)), unsafe.Pointer(&v), SIZEOF_FLOAT32, 0, s.Len()*SIZEOF_FLOAT32, [](*cl.Event){s.GetEvent(c)})
 		s.SetEvent(c, eventListFill[c])
 		if err != nil {
 			fmt.Printf("EnqueueFillBuffer failed: %+v \n", err)
@@ -199,7 +199,7 @@ func SetCell(s *data.Slice, comp int, ix, iy, iz int, value float32) {
 
 func SetElem(s *data.Slice, comp int, index int, value float32) {
 	f := value
-	event, err := ClCmdQueue.EnqueueWriteBuffer((*cl.MemObject)(s.DevPtr(comp)), false, cl.Size_t(index*SIZEOF_FLOAT32), SIZEOF_FLOAT32, unsafe.Pointer(&f), [](*cl.Event){s.GetEvent(comp)})
+	event, err := ClCmdQueue.EnqueueWriteBuffer((*cl.MemObject)(s.DevPtr(comp)), false, index*SIZEOF_FLOAT32, SIZEOF_FLOAT32, unsafe.Pointer(&f), [](*cl.Event){s.GetEvent(comp)})
 	if err != nil {
 		fmt.Printf("EnqueueWriteBuffer failed: %+v \n", err)
 		return
@@ -209,7 +209,7 @@ func SetElem(s *data.Slice, comp int, index int, value float32) {
 
 func GetElem(s *data.Slice, comp int, index int) float32 {
 	var f float32
-        event, err := ClCmdQueue.EnqueueReadBuffer((*cl.MemObject)(s.DevPtr(comp)), false, cl.Size_t(index*SIZEOF_FLOAT32), SIZEOF_FLOAT32, unsafe.Pointer(&f), [](*cl.Event){s.GetEvent(comp)})
+        event, err := ClCmdQueue.EnqueueReadBuffer((*cl.MemObject)(s.DevPtr(comp)), false, index*SIZEOF_FLOAT32, SIZEOF_FLOAT32, unsafe.Pointer(&f), [](*cl.Event){s.GetEvent(comp)})
 	if err != nil {
                 fmt.Printf("EnqueueReadBuffer failed: %+v \n", err)
         }

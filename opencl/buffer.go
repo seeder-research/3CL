@@ -43,7 +43,7 @@ func Buffer(nComp int, size [3]int) *data.Slice {
 		if len(buf_check) >= buf_max {
 			log.Panic("too many buffers in use, possible memory leak")
 		}
-		tmpPtr, err := ClCtx.CreateEmptyBuffer(cl.MemReadWrite, cl.Size_t(SIZEOF_FLOAT32 * N))
+		tmpPtr, err := ClCtx.CreateEmptyBuffer(cl.MemReadWrite, SIZEOF_FLOAT32 * N)
 		if err != nil {
 			panic(err)
 		}

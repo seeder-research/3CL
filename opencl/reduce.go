@@ -118,7 +118,7 @@ func reduceBuf(initVal float32) (unsafe.Pointer, unsafe.Pointer) {
 	}
 	buf := <-reduceBuffers
 	interBuf := <-reduceIntBuffers
-	waitEvent, err := ClCmdQueue.EnqueueFillBuffer(buf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, cl.Size_t(SIZEOF_FLOAT32), nil)
+	waitEvent, err := ClCmdQueue.EnqueueFillBuffer(buf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, SIZEOF_FLOAT32, nil)
 	if err != nil {
 		fmt.Printf("reduceBuf failed: %+v \n", err)
 		return nil, nil
@@ -128,7 +128,7 @@ func reduceBuf(initVal float32) (unsafe.Pointer, unsafe.Pointer) {
                 fmt.Printf("First WaitForEvents in reduceBuf failed: %+v \n", err)
                 return nil, nil
         }
-	waitEvent, err = ClCmdQueue.EnqueueFillBuffer(interBuf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, cl.Size_t(ClCUnits*SIZEOF_FLOAT32), nil)
+	waitEvent, err = ClCmdQueue.EnqueueFillBuffer(interBuf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, ClCUnits*SIZEOF_FLOAT32, nil)
         if err != nil {
                 fmt.Printf("reduceBuf failed: %+v \n", err)
                 return nil, nil
@@ -155,8 +155,8 @@ func initReduceBuf() {
 	reduceBuffers = make(chan *cl.MemObject, N)
 	reduceIntBuffers = make(chan *cl.MemObject, N)
 	for i := 0; i < N; i++ {
-		reduceBuffers <- MemAlloc(cl.Size_t(1 * SIZEOF_FLOAT32))
-		reduceIntBuffers <- MemAlloc(cl.Size_t(ClCUnits * SIZEOF_FLOAT32))
+		reduceBuffers <- MemAlloc(SIZEOF_FLOAT32)
+		reduceIntBuffers <- MemAlloc(ClCUnits * SIZEOF_FLOAT32)
 	}
 }
 

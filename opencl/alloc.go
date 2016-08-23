@@ -9,7 +9,7 @@ import (
 )
 
 // Wrapper for cu.MemAlloc, fatal exit on out of memory.
-func MemAlloc(bytes cl.Size_t) *cl.MemObject {
+func MemAlloc(bytes int) *cl.MemObject {
 	memObj, err := ClCtx.CreateEmptyBuffer(cl.MemReadWrite, bytes)
 	if err == cl.ErrMemObjectAllocationFailure || err == cl.ErrOutOfResources {
 		log.Fatal(err)
