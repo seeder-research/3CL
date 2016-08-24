@@ -192,6 +192,10 @@ func (b *MemObject) Release() {
         releaseMemObject(b)
 }
 
+func (b *MemObject) ToCl() C.cl_mem {
+        return b.clMem
+}
+
 func (b *MemObject) GetType() (string, error) {
 	if b.clMem != nil {
 		var tmp C.cl_mem_object_type

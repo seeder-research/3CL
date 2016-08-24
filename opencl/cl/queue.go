@@ -85,6 +85,10 @@ func (ctx *Context) CreateCommandQueue(device *Device, properties CommandQueuePr
         return commandQueue, nil
 }
 
+func (q *CommandQueue) GetQueueID() C.cl_command_queue {
+	return q.clQueue
+}
+
 func (q *CommandQueue) GetQueueContext() (*Context, error) {
         if q.clQueue != nil {
 	 	var outContext	C.cl_context
