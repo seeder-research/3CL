@@ -108,12 +108,12 @@ func main() {
 
 	fmt.Printf("Begin first run of square kernel... \n");
 
-	input, err := context.CreateEmptyBuffer(cl.MemReadOnly, cl.Size_t(4*len(data)))
+	input, err := context.CreateEmptyBuffer(cl.MemReadOnly, 4*len(data))
 	if err != nil {
 		fmt.Printf("CreateBuffer failed for input: %+v \n", err)
 		return
 	}
-	output, err := context.CreateEmptyBuffer(cl.MemReadOnly, cl.Size_t(4*len(data)))
+	output, err := context.CreateEmptyBuffer(cl.MemReadOnly, 4*len(data))
 	if err != nil {
 		fmt.Printf("CreateBuffer failed for output: %+v \n", err)
 		return

@@ -84,12 +84,19 @@ func main() {
 		fmt.Printf("  Vendor: %s \n", d.Vendor())
 		fmt.Printf("  Version: %s \n", d.Version())
 	}
-	device, context, queue := opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
+//	device, context, queue := opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
 	kernels := opencl.KernList
 
 	// Name of non-existing kernel
 	kernelname := "unknown"
 
+	_, ok := kernels[kernelname]
+
+	if ok {
+		fmt.Printf("found kernel: %s \n", kernelname)
+	} else {
+		fmt.Printf("unable to find kernel: %s \n", kernelname)
+	}
 /*
 	input, err := context.CreateEmptyBuffer
 	if _, err := queue.EnqueueWriteBufferFloat32(input, true, 0, data[:], nil); err != nil {
