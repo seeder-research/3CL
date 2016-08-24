@@ -1,19 +1,21 @@
 package cl
 
-// #ifdef __APPLE__
-// #include "OpenCL/opencl.h"
-// #else
-// #include "headers/1.2/CL/opencl.h"
-// #endif
+/*
+#include "./opencl.h"
+*/
 import "C"
 
 import "unsafe"
 
+//////////////// Constants ////////////////
 const maxPlatforms = 32
 
+//////////////// Abstract Types ////////////////
 type Platform struct {
 	id C.cl_platform_id
 }
+
+//////////////// Basic Functions ////////////////
 
 // Obtain the list of platforms available.
 func GetPlatforms() ([]*Platform, error) {
@@ -29,6 +31,7 @@ func GetPlatforms() ([]*Platform, error) {
 	return platforms, nil
 }
 
+//////////////// Abstract Functions ////////////////
 func (p *Platform) GetDevices(deviceType DeviceType) ([]*Device, error) {
 	return GetDevices(p, deviceType)
 }
@@ -81,3 +84,4 @@ func (p *Platform) Extensions() string {
 		return str
 	}
 }
+

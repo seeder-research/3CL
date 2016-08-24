@@ -1,10 +1,77 @@
 package cl
 
-// #ifdef __APPLE__
-// #include "OpenCL/opencl.h"
-// #else
-// #include "headers/1.2/CL/opencl.h"
-// #endif
+/*
+#include "./opencl.h"
+
+
+static cl_device_partition_property * partitionDeviceEqually(unsigned int n) {
+	cl_device_partition_property *properties = malloc(n * sizeof(cl_device_partition_property));
+	properties[0] = CL_DEVICE_PARTITION_EQUALLY;
+	properties[1] = (cl_device_partition_property)(n);
+	properties[2] = CL_DEVICE_PARTITION_BY_COUNTS_LIST_END;
+	return properties;
+}
+
+static cl_device_partition_property * partitionDeviceByCounts(unsigned int *n, unsigned int num_counts) {
+	cl_device_partition_property *properties = malloc((num_counts + 3) * sizeof(cl_device_partition_property));
+	properties[0] = CL_DEVICE_PARTITION_BY_COUNTS;
+	int idx;
+	for (idx = 0; idx < num_counts; idx++) {
+		properties[idx+1] = (cl_device_partition_property)(*(n+idx));
+	}
+	properties[num_counts+1] = CL_DEVICE_PARTITION_BY_COUNTS_LIST_END;
+	properties[num_counts+2] = 0;
+	return properties;
+}
+
+static cl_device_partition_property * partitionDeviceByNuma() {
+        cl_device_partition_property *properties = malloc(3 * sizeof(cl_device_partition_property));
+        properties[0] = CL_DEVICE_PARTITION_EQUALLY;
+        properties[1] = (cl_device_partition_property)(CL_DEVICE_AFFINITY_DOMAIN_NUMA);
+        properties[2] = CL_DEVICE_PARTITION_BY_COUNTS_LIST_END;
+        return properties;
+}
+
+static cl_device_partition_property * partitionDeviceByL4Cache() {
+        cl_device_partition_property *properties = malloc(3 * sizeof(cl_device_partition_property));
+        properties[0] = CL_DEVICE_PARTITION_EQUALLY;
+        properties[1] = (cl_device_partition_property)(CL_DEVICE_AFFINITY_DOMAIN_L4_CACHE);
+        properties[2] = CL_DEVICE_PARTITION_BY_COUNTS_LIST_END;
+        return properties;
+}
+
+static cl_device_partition_property * partitionDeviceByL3Cache() {
+        cl_device_partition_property *properties = malloc(3 * sizeof(cl_device_partition_property));
+        properties[0] = CL_DEVICE_PARTITION_EQUALLY;
+        properties[1] = (cl_device_partition_property)(CL_DEVICE_AFFINITY_DOMAIN_L3_CACHE);
+        properties[2] = CL_DEVICE_PARTITION_BY_COUNTS_LIST_END;
+        return properties;
+}
+
+static cl_device_partition_property * partitionDeviceByL2Cache() {
+        cl_device_partition_property *properties = malloc(3 * sizeof(cl_device_partition_property));
+        properties[0] = CL_DEVICE_PARTITION_EQUALLY;
+        properties[1] = (cl_device_partition_property)(CL_DEVICE_AFFINITY_DOMAIN_L2_CACHE);
+        properties[2] = CL_DEVICE_PARTITION_BY_COUNTS_LIST_END;
+        return properties;
+}
+
+static cl_device_partition_property * partitionDeviceByL1Cache() {
+        cl_device_partition_property *properties = malloc(3 * sizeof(cl_device_partition_property));
+        properties[0] = CL_DEVICE_PARTITION_EQUALLY;
+        properties[1] = (cl_device_partition_property)(CL_DEVICE_AFFINITY_DOMAIN_L1_CACHE);
+        properties[2] = CL_DEVICE_PARTITION_BY_COUNTS_LIST_END;
+        return properties;
+}
+
+static cl_device_partition_property * partitionDeviceByNextPartitionable() {
+        cl_device_partition_property *properties = malloc(3 * sizeof(cl_device_partition_property));
+        properties[0] = CL_DEVICE_PARTITION_EQUALLY;
+        properties[1] = (cl_device_partition_property)(CL_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE);
+        properties[2] = CL_DEVICE_PARTITION_BY_COUNTS_LIST_END;
+        return properties;
+}
+*/
 import "C"
 
 import (
@@ -12,14 +79,17 @@ import (
 	"unsafe"
 )
 
+//////////////// Constants ////////////////
 const maxDeviceCount = 64
 
+//////////////// Basic Types ////////////////
 type DeviceType uint
 
 const (
 	DeviceTypeCPU         DeviceType = C.CL_DEVICE_TYPE_CPU
 	DeviceTypeGPU         DeviceType = C.CL_DEVICE_TYPE_GPU
 	DeviceTypeAccelerator DeviceType = C.CL_DEVICE_TYPE_ACCELERATOR
+	DeviceTypeCustom      DeviceType = C.CL_DEVICE_TYPE_CUSTOM
 	DeviceTypeDefault     DeviceType = C.CL_DEVICE_TYPE_DEFAULT
 	DeviceTypeAll         DeviceType = C.CL_DEVICE_TYPE_ALL
 )
@@ -33,7 +103,6 @@ const (
 	FPConfigRoundToZero    FPConfig = C.CL_FP_ROUND_TO_ZERO    // round to zero rounding mode supported
 	FPConfigRoundToInf     FPConfig = C.CL_FP_ROUND_TO_INF     // round to positive and negative infinity rounding modes supported
 	FPConfigFMA            FPConfig = C.CL_FP_FMA              // IEEE754-2008 fused multiply-add is supported
-	FPConfigSoftFloat      FPConfig = C.CL_FP_SOFT_FLOAT       // Basic floating-point operations (such as addition, subtraction, multiplication) are implemented in software
 )
 
 var fpConfigNameMap = map[FPConfig]string{
@@ -43,7 +112,6 @@ var fpConfigNameMap = map[FPConfig]string{
 	FPConfigRoundToZero:    "RoundToZero",
 	FPConfigRoundToInf:     "RoundToInf",
 	FPConfigFMA:            "FMA",
-	FPConfigSoftFloat:      "SoftFloat",
 }
 
 func (c FPConfig) String() string {
@@ -79,10 +147,15 @@ func (dt DeviceType) String() string {
 	return strings.Join(parts, "|")
 }
 
+//////////////// Abstract Types ////////////////
 type Device struct {
 	id C.cl_device_id
 }
 
+//////////////// Golang Types ////////////////
+type CLDevice C.cl_device_id
+
+//////////////// Basic Functions ////////////////
 func buildDeviceIdList(devices []*Device) []C.cl_device_id {
 	deviceIds := make([]C.cl_device_id, len(devices))
 	for i, d := range devices {
@@ -114,6 +187,7 @@ func GetDevices(platform *Platform, deviceType DeviceType) ([]*Device, error) {
 	return devices, nil
 }
 
+//////////////// Abstract Functions ////////////////
 func (d *Device) nullableId() C.cl_device_id {
 	if d == nil {
 		return nil
@@ -124,7 +198,7 @@ func (d *Device) nullableId() C.cl_device_id {
 func (d *Device) GetInfoString(param C.cl_device_info, panicOnError bool) (string, error) {
 	var strC [1024]C.char
 	var strN C.size_t
-	if err := C.clGetDeviceInfo(d.id, param, 1024, unsafe.Pointer(&strC), &strN); err != C.CL_SUCCESS {
+	if err := C.clGetDeviceInfo(d.nullableId(), param, 1024, unsafe.Pointer(&strC), &strN); err != C.CL_SUCCESS {
 		if panicOnError {
 			panic("Should never fail")
 		}
@@ -138,7 +212,7 @@ func (d *Device) GetInfoString(param C.cl_device_info, panicOnError bool) (strin
 
 func (d *Device) getInfoUint(param C.cl_device_info, panicOnError bool) (uint, error) {
 	var val C.cl_uint
-	if err := C.clGetDeviceInfo(d.id, param, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
+	if err := C.clGetDeviceInfo(d.nullableId(), param, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
 		if panicOnError {
 			panic("Should never fail")
 		}
@@ -149,7 +223,7 @@ func (d *Device) getInfoUint(param C.cl_device_info, panicOnError bool) (uint, e
 
 func (d *Device) getInfoSize(param C.cl_device_info, panicOnError bool) (int, error) {
 	var val C.size_t
-	if err := C.clGetDeviceInfo(d.id, param, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
+	if err := C.clGetDeviceInfo(d.nullableId(), param, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
 		if panicOnError {
 			panic("Should never fail")
 		}
@@ -160,7 +234,7 @@ func (d *Device) getInfoSize(param C.cl_device_info, panicOnError bool) (int, er
 
 func (d *Device) getInfoUlong(param C.cl_device_info, panicOnError bool) (int64, error) {
 	var val C.cl_ulong
-	if err := C.clGetDeviceInfo(d.id, param, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
+	if err := C.clGetDeviceInfo(d.nullableId(), param, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
 		if panicOnError {
 			panic("Should never fail")
 		}
@@ -171,7 +245,7 @@ func (d *Device) getInfoUlong(param C.cl_device_info, panicOnError bool) (int64,
 
 func (d *Device) getInfoBool(param C.cl_device_info, panicOnError bool) (bool, error) {
 	var val C.cl_bool
-	if err := C.clGetDeviceInfo(d.id, param, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
+	if err := C.clGetDeviceInfo(d.nullableId(), param, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
 		if panicOnError {
 			panic("Should never fail")
 		}
@@ -185,18 +259,26 @@ func (d *Device) Name() string {
 	return str
 }
 
+func (d *Device) Platform() *Platform {
+	var devicePlatform C.cl_platform_id
+	if err := C.clGetDeviceInfo(d.nullableId(), C.CL_DEVICE_PLATFORM, C.size_t(unsafe.Sizeof(devicePlatform)), unsafe.Pointer(&devicePlatform), nil); err != C.CL_SUCCESS {
+		panic("Failed to get device platform")
+	}
+	return &Platform{id: devicePlatform}
+}
+
 func (d *Device) Vendor() string {
 	str, _ := d.GetInfoString(C.CL_DEVICE_VENDOR, true)
 	return str
 }
 
-func (d *Device) Extensions() string {
-	str, _ := d.GetInfoString(C.CL_DEVICE_EXTENSIONS, true)
-	return str
+func (d *Device) VendorId() int {
+	val, _ := d.getInfoUint(C.CL_DEVICE_VENDOR_ID, true)
+	return int(val)
 }
 
-func (d *Device) OpenCLCVersion() string {
-	str, _ := d.GetInfoString(C.CL_DEVICE_OPENCL_C_VERSION, true)
+func (d *Device) Extensions() string {
+	str, _ := d.GetInfoString(C.CL_DEVICE_EXTENSIONS, true)
 	return str
 }
 
@@ -212,6 +294,11 @@ func (d *Device) Version() string {
 
 func (d *Device) DriverVersion() string {
 	str, _ := d.GetInfoString(C.CL_DRIVER_VERSION, true)
+	return str
+}
+
+func (d *Device) OpenCLCVersion() string {
+	str, _ := d.GetInfoString(C.CL_DEVICE_OPENCL_C_VERSION, true)
 	return str
 }
 
@@ -285,38 +372,9 @@ func (d *Device) MemBaseAddrAlign() int {
 	return int(val)
 }
 
-func (d *Device) NativeVectorWidthChar() int {
-	val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR, true)
-	return int(val)
-}
-
-func (d *Device) NativeVectorWidthShort() int {
-	val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT, true)
-	return int(val)
-}
-
-func (d *Device) NativeVectorWidthInt() int {
-	val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_INT, true)
-	return int(val)
-}
-
-func (d *Device) NativeVectorWidthLong() int {
-	val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG, true)
-	return int(val)
-}
-
-func (d *Device) NativeVectorWidthFloat() int {
-	val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT, true)
-	return int(val)
-}
-
-func (d *Device) NativeVectorWidthDouble() int {
-	val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE, true)
-	return int(val)
-}
-
-func (d *Device) NativeVectorWidthHalf() int {
-	val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF, true)
+// Min of bytes for the smallest alignment that can be used for any data type
+func (d *Device) MinDataTypeAlignSize() int {
+	val, _ := d.getInfoUint(C.CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE, true)
 	return int(val)
 }
 
@@ -402,8 +460,19 @@ func (d *Device) GlobalMemSize() int64 {
 	return val
 }
 
+// Size of global device cache in bytes.
+func (d *Device) GlobalMemCacheSize() int64 {
+	val, _ := d.getInfoUlong(C.CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, true)
+	return val
+}
+
 func (d *Device) Available() bool {
 	val, _ := d.getInfoBool(C.CL_DEVICE_AVAILABLE, true)
+	return val
+}
+
+func (d *Device) HostUnifiedMemory() bool {
+	val, _ := d.getInfoBool(C.CL_DEVICE_HOST_UNIFIED_MEMORY, true)
 	return val
 }
 
@@ -425,11 +494,6 @@ func (d *Device) ErrorCorrectionSupport() bool {
 	return val
 }
 
-func (d *Device) HostUnifiedMemory() bool {
-	val, _ := d.getInfoBool(C.CL_DEVICE_HOST_UNIFIED_MEMORY, true)
-	return val
-}
-
 func (d *Device) ImageSupport() bool {
 	val, _ := d.getInfoBool(C.CL_DEVICE_IMAGE_SUPPORT, true)
 	return val
@@ -446,8 +510,17 @@ func (d *Device) Type() DeviceType {
 // Describes double precision floating-point capability of the OpenCL device
 func (d *Device) DoubleFPConfig() FPConfig {
 	var fpConfig C.cl_device_fp_config
-	if err := C.clGetDeviceInfo(d.id, C.CL_DEVICE_DOUBLE_FP_CONFIG, C.size_t(unsafe.Sizeof(fpConfig)), unsafe.Pointer(&fpConfig), nil); err != C.CL_SUCCESS {
+	if err := C.clGetDeviceInfo(d.nullableId(), C.CL_DEVICE_DOUBLE_FP_CONFIG, C.size_t(unsafe.Sizeof(fpConfig)), unsafe.Pointer(&fpConfig), nil); err != C.CL_SUCCESS {
 		panic("Failed to get double FP config")
+	}
+	return FPConfig(fpConfig)
+}
+
+// Describes single precision floating-point capability of the OpenCL device
+func (d *Device) SingleFPConfig() FPConfig {
+	var fpConfig C.cl_device_fp_config
+	if err := C.clGetDeviceInfo(d.nullableId(), C.CL_DEVICE_SINGLE_FP_CONFIG, C.size_t(unsafe.Sizeof(fpConfig)), unsafe.Pointer(&fpConfig), nil); err != C.CL_SUCCESS {
+		panic("Failed to get single FP config")
 	}
 	return FPConfig(fpConfig)
 }
@@ -484,7 +557,7 @@ func (d *Device) ExecutionCapabilities() ExecCapability {
 
 func (d *Device) GlobalMemCacheType() MemCacheType {
 	var memType C.cl_device_mem_cache_type
-	if err := C.clGetDeviceInfo(d.id, C.CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, C.size_t(unsafe.Sizeof(memType)), unsafe.Pointer(&memType), nil); err != C.CL_SUCCESS {
+	if err := C.clGetDeviceInfo(d.nullableId(), C.CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, C.size_t(unsafe.Sizeof(memType)), unsafe.Pointer(&memType), nil); err != C.CL_SUCCESS {
 		return MemCacheType(C.CL_NONE)
 	}
 	return MemCacheType(memType)
@@ -498,7 +571,7 @@ func (d *Device) GlobalMemCacheType() MemCacheType {
 func (d *Device) MaxWorkItemSizes() []int {
 	dims := d.MaxWorkItemDimensions()
 	sizes := make([]C.size_t, dims)
-	if err := C.clGetDeviceInfo(d.id, C.CL_DEVICE_MAX_WORK_ITEM_SIZES, C.size_t(int(unsafe.Sizeof(sizes[0]))*dims), unsafe.Pointer(&sizes[0]), nil); err != C.CL_SUCCESS {
+	if err := C.clGetDeviceInfo(d.nullableId(), C.CL_DEVICE_MAX_WORK_ITEM_SIZES, C.size_t(int(unsafe.Sizeof(sizes[0]))*dims), unsafe.Pointer(&sizes[0]), nil); err != C.CL_SUCCESS {
 		panic("Failed to get max work item sizes")
 	}
 	intSizes := make([]int, dims)
@@ -507,3 +580,295 @@ func (d *Device) MaxWorkItemSizes() []int {
 	}
 	return intSizes
 }
+
+// Native vector width size for built-in char type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector.
+func (d *Device) NativeVectorWidthChar() int {
+        val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR, true)
+        return int(val)
+}
+
+// Native vector width size for built-in short type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector.
+func (d *Device) NativeVectorWidthShort() int {
+        val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT, true)
+        return int(val)
+}
+
+// Native vector width size for built-in int type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector.
+func (d *Device) NativeVectorWidthInt() int {
+        val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_INT, true)
+        return int(val)
+}
+
+// Native vector width size for built-in long type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector.
+func (d *Device) NativeVectorWidthLong() int {
+        val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG, true)
+        return int(val)
+}
+
+// Native vector width size for built-in float type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector.
+func (d *Device) NativeVectorWidthFloat() int {
+        val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT, true)
+        return int(val)
+}
+
+// Native vector width size for built-in double type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector. Must return 0 when cl_khr_fp64 is unsupported.
+func (d *Device) NativeVectorWidthDouble() int {
+        val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE, true)
+        return int(val)
+}
+
+// Native vector width size for built-in half type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector. Must return 0 when cl_khr_fp16 is unsupported.
+func (d *Device) NativeVectorWidthHalf() int {
+        val, _ := d.getInfoUint(C.CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF, true)
+        return int(val)
+}
+
+// Preferred native vector width size for built-in char type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector.
+func (d *Device) PreferredVectorWidthChar() int {
+	val, _ := d.getInfoUint(C.CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR, true)
+	return int(val)
+}
+
+// Preferred native vector width size for built-in short type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector.
+func (d *Device) PreferredVectorWidthShort() int {
+	val, _ := d.getInfoUint(C.CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT, true)
+	return int(val)
+}
+
+// Preferred native vector width size for built-in int type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector.
+func (d *Device) PreferredVectorWidthInt() int {
+	val, _ := d.getInfoUint(C.CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT, true)
+	return int(val)
+}
+
+// Preferred native vector width size for built-in long type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector.
+func (d *Device) PreferredVectorWidthLong() int {
+	val, _ := d.getInfoUint(C.CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG, true)
+	return int(val)
+}
+
+// Preferred native vector width size for built-in float type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector.
+func (d *Device) PreferredVectorWidthFloat() int {
+	val, _ := d.getInfoUint(C.CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT, true)
+	return int(val)
+}
+
+// Preferred native vector width size for built-in double type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector. Must return 0 when cl_khr_fp64 is unsupported.
+func (d *Device) PreferredVectorWidthDouble() int {
+	val, _ := d.getInfoUint(C.CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE, true)
+	return int(val)
+}
+
+// Preferred native vector width size for built-in double type that can be put into vectors.
+// The vector width is defined as the number of scalar elements that can be stored in
+// the vector. Must return 0 when cl_khr_fp16 is unsupported.
+func (d *Device) PreferredVectorWidthHalf() int {
+	val, _ := d.getInfoUint(C.CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF, true)
+	return int(val)
+}
+
+func (d *Device) QueueProperties() CommandQueueProperty {
+	var val C.cl_command_queue_properties
+	if err := C.clGetDeviceInfo(d.nullableId(), C.CL_DEVICE_QUEUE_PROPERTIES, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
+		panic("Should never fail")
+		return 0
+	}
+	return CommandQueueProperty(val)
+}
+
+func (d *Device) PartitionDeviceEqually(n int) ([]*Device, error) {
+	var deviceList []C.cl_device_id
+	var deviceCount C.cl_uint
+	defer C.free(deviceList)
+	defer C.free(deviceCount)
+	err := C.clCreateSubDevices(d.nullableId(), C.partitionDeviceEqually((C.uint)(n)), 1, &deviceList[0], &deviceCount)
+	if toError(err) != nil {
+		return nil, toError(err)
+	}
+	val := make([]*Device, int(deviceCount))
+	for idx := range val {
+		val[idx].id = deviceList[idx]
+	}
+	return val, nil
+}
+
+func (d *Device) PartitionDeviceByCounts(n []int) ([]*Device, error) {
+        var deviceList []C.cl_device_id
+        var deviceCount C.cl_uint
+        defer C.free(deviceList)
+        defer C.free(deviceCount)
+
+        Counts := make([]C.uint, len(n))
+        defer C.free(Counts)
+        for ii, nn := range n {
+                Counts[ii] = (C.uint)(nn)
+        }
+        err := C.clCreateSubDevices(d.nullableId(), C.partitionDeviceByCounts(&Counts[0], (C.uint)(len(n))), 1, &deviceList[0], &deviceCount)
+        if toError(err) != nil {
+                return nil, toError(err)
+        }
+        val := make([]*Device, int(deviceCount))
+        for idx := range val {
+                val[idx].id = deviceList[idx]
+        }
+        return val, nil
+}
+
+func (d *Device) PartitionDeviceByNumaDomain(n []int) ([]*Device, error) {
+        var deviceList []C.cl_device_id
+        var deviceCount C.cl_uint
+        defer C.free(deviceList)
+        defer C.free(deviceCount)
+
+        Counts := make([]C.uint, len(n))
+        defer C.free(Counts)
+	for ii, nn := range n {
+		Counts[ii] = (C.uint)(nn)
+	}
+        err := C.clCreateSubDevices(d.nullableId(), C.partitionDeviceByNuma(), 1, &deviceList[0], &deviceCount)
+        if toError(err) != nil {
+                return nil, toError(err)
+        }
+        val := make([]*Device, int(deviceCount))
+        for idx := range val {
+                val[idx].id = deviceList[idx]
+        }
+        return val, nil
+}
+
+func (d *Device) PartitionDeviceByL4CacheDomain(n []int) ([]*Device, error) {
+        var deviceList []C.cl_device_id
+        var deviceCount C.cl_uint
+        defer C.free(deviceList)
+        defer C.free(deviceCount)
+
+        Counts := make([]C.uint, len(n))
+        defer C.free(Counts)
+        for ii, nn := range n {
+                Counts[ii] = (C.uint)(nn)
+        }
+        err := C.clCreateSubDevices(d.nullableId(), C.partitionDeviceByL4Cache(), 1, &deviceList[0], &deviceCount)
+        if toError(err) != nil {
+                return nil, toError(err)
+        }
+        val := make([]*Device, int(deviceCount))
+        for idx := range val {
+                val[idx].id = deviceList[idx]
+        }
+        return val, nil
+}
+
+func (d *Device) PartitionDeviceByL3CacheDomain(n []int) ([]*Device, error) {
+        var deviceList []C.cl_device_id
+        var deviceCount C.cl_uint
+        defer C.free(deviceList)
+        defer C.free(deviceCount)
+
+        Counts := make([]C.uint, len(n))
+        defer C.free(Counts)
+        for ii, nn := range n {
+                Counts[ii] = (C.uint)(nn)
+        }
+        err := C.clCreateSubDevices(d.nullableId(), C.partitionDeviceByL3Cache(), 1, &deviceList[0], &deviceCount)
+        if toError(err) != nil {
+                return nil, toError(err)
+        }
+        val := make([]*Device, int(deviceCount))
+        for idx := range val {
+                val[idx].id = deviceList[idx]
+        }
+        return val, nil
+}
+
+func (d *Device) PartitionDeviceByL2CacheDomain(n []int) ([]*Device, error) {
+        var deviceList []C.cl_device_id
+        var deviceCount C.cl_uint
+        defer C.free(deviceList)
+        defer C.free(deviceCount)
+
+        Counts := make([]C.uint, len(n))
+        defer C.free(Counts)
+        for ii, nn := range n {
+                Counts[ii] = (C.uint)(nn)
+        }
+        err := C.clCreateSubDevices(d.nullableId(), C.partitionDeviceByL2Cache(), 1, &deviceList[0], &deviceCount)
+        if toError(err) != nil {
+                return nil, toError(err)
+        }
+        val := make([]*Device, int(deviceCount))
+        for idx := range val {
+                val[idx].id = deviceList[idx]
+        }
+        return val, nil
+}
+
+func (d *Device) PartitionDeviceByL1CacheDomain(n []int) ([]*Device, error) {
+        var deviceList []C.cl_device_id
+        var deviceCount C.cl_uint
+        defer C.free(deviceList)
+        defer C.free(deviceCount)
+
+        Counts := make([]C.uint, len(n))
+        defer C.free(Counts)
+        for ii, nn := range n {
+                Counts[ii] = (C.uint)(nn)
+        }
+        err := C.clCreateSubDevices(d.nullableId(), C.partitionDeviceByL1Cache(), 1, &deviceList[0], &deviceCount)
+        if toError(err) != nil {
+                return nil, toError(err)
+        }
+        val := make([]*Device, int(deviceCount))
+        for idx := range val {
+                val[idx].id = deviceList[idx]
+        }
+        return val, nil
+}
+
+func (d *Device) PartitionDeviceByNextPartitionableDomain(n []int) ([]*Device, error) {
+        var deviceList []C.cl_device_id
+        var deviceCount C.cl_uint
+        defer C.free(deviceList)
+        defer C.free(deviceCount)
+
+        Counts := make([]C.uint, len(n))
+        defer C.free(Counts)
+        for ii, nn := range n {
+                Counts[ii] = (C.uint)(nn)
+        }
+        err := C.clCreateSubDevices(d.nullableId(), C.partitionDeviceByNextPartitionable(), 1, &deviceList[0], &deviceCount)
+        if toError(err) != nil {
+                return nil, toError(err)
+        }
+        val := make([]*Device, int(deviceCount))
+        for idx := range val {
+                val[idx].id = deviceList[idx]
+        }
+        return val, nil
+}
+

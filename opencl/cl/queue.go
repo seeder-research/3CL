@@ -1,14 +1,16 @@
 package cl
 
-// #ifdef __APPLE__
-// #include "OpenCL/opencl.h"
-// #else
-// #include "headers/1.2/CL/opencl.h"
-// #endif
+/*
+#include "./opencl.h"
+*/
 import "C"
 
-import "unsafe"
+import (
+	"runtime"
+	"unsafe"
+)
 
+//////////////// Basic Types ////////////////
 type CommandQueueProperty int
 
 const (
@@ -16,9 +18,29 @@ const (
 	CommandQueueProfilingEnable          CommandQueueProperty = C.CL_QUEUE_PROFILING_ENABLE
 )
 
+type CommandQueueInfo int
+
+const (
+	CommandQueueContext		CommandQueueInfo = C.CL_QUEUE_CONTEXT
+	CommandQueueDevice		CommandQueueInfo = C.CL_QUEUE_DEVICE
+	CommandQueueReferenceCount	CommandQueueInfo = C.CL_QUEUE_REFERENCE_COUNT
+	CommandQueueProperties		CommandQueueInfo = C.CL_QUEUE_PROPERTIES
+)
+
+//////////////// Abstract Types ////////////////
 type CommandQueue struct {
 	clQueue C.cl_command_queue
 	device  *Device
+}
+
+//////////////// Golang Types ////////////////
+type CLCommandQueueProperties	C.cl_command_queue_properties
+
+//////////////// Basic Functions ////////////////
+func retainCommandQueue(q *CommandQueue) {
+        if q.clQueue != nil {
+                C.clRetainCommandQueue(q.clQueue)
+        }
 }
 
 func releaseCommandQueue(q *CommandQueue) {
@@ -26,6 +48,12 @@ func releaseCommandQueue(q *CommandQueue) {
 		C.clReleaseCommandQueue(q.clQueue)
 		q.clQueue = nil
 	}
+}
+
+//////////////// Abstract Functions ////////////////
+// Call clRetainCommandQueue on the CommandQueue.
+func (q *CommandQueue) Retain() {
+        retainCommandQueue(q)
 }
 
 // Call clReleaseCommandQueue on the CommandQueue. Using the CommandQueue after Release will cause a panick.
@@ -43,163 +71,53 @@ func (q *CommandQueue) Flush() error {
 	return toError(C.clFlush(q.clQueue))
 }
 
-// Enqueues a command to map a region of the buffer object given by buffer into the host address space and returns a pointer to this mapped region.
-func (q *CommandQueue) EnqueueMapBuffer(buffer *MemObject, blocking bool, flags MapFlag, offset, size Size_t, eventWaitList []*Event) (*MappedMemObject, *Event, error) {
-	var event C.cl_event
-	var err C.cl_int
-	ptr := C.clEnqueueMapBuffer(q.clQueue, buffer.clMem, clBool(blocking), flags.toCl(), C.size_t(offset), C.size_t(size), C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event, &err)
-	if err != C.CL_SUCCESS {
-		return nil, nil, toError(err)
+func (ctx *Context) CreateCommandQueue(device *Device, properties CommandQueueProperty) (*CommandQueue, error) {
+        var err C.cl_int
+        clQueue := C.clCreateCommandQueue(ctx.clContext, device.id, C.cl_command_queue_properties(properties), &err)
+        if err != C.CL_SUCCESS {
+                return nil, toError(err)
+        }
+        if clQueue == nil {
+                return nil, ErrUnknown
+        }
+        commandQueue := &CommandQueue{clQueue: clQueue, device: device}
+        runtime.SetFinalizer(commandQueue, releaseCommandQueue)
+        return commandQueue, nil
+}
+
+func (q *CommandQueue) GetQueueContext() (*Context, error) {
+        if q.clQueue != nil {
+	 	var outContext	C.cl_context
+		err := C.clGetCommandQueueInfo(q.clQueue, C.CL_QUEUE_CONTEXT, C.size_t(unsafe.Sizeof(outContext)), unsafe.Pointer(&outContext), nil)
+		return &Context{clContext: outContext, devices: nil}, toError(err)
 	}
-	ev := newEvent(event)
-	if ptr == nil {
-		return nil, ev, ErrUnknown
-	}
-	return &MappedMemObject{ptr: ptr, size: size}, ev, nil
+	return nil, toError(C.CL_INVALID_COMMAND_QUEUE)
 }
 
-// Enqueues a command to map a region of an image object into the host address space and returns a pointer to this mapped region.
-func (q *CommandQueue) EnqueueMapImage(buffer *MemObject, blocking bool, flags MapFlag, origin, region [3]int, eventWaitList []*Event) (*MappedMemObject, *Event, error) {
-	cOrigin := sizeT3(origin)
-	cRegion := sizeT3(region)
-	var event C.cl_event
-	var err C.cl_int
-	var rowPitch, slicePitch C.size_t
-	ptr := C.clEnqueueMapImage(q.clQueue, buffer.clMem, clBool(blocking), flags.toCl(), &cOrigin[0], &cRegion[0], &rowPitch, &slicePitch, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event, &err)
-	if err != C.CL_SUCCESS {
-		return nil, nil, toError(err)
-	}
-	ev := newEvent(event)
-	if ptr == nil {
-		return nil, ev, ErrUnknown
-	}
-	size := Size_t(0) // TODO: could calculate this
-	return &MappedMemObject{ptr: ptr, size: size, rowPitch: Size_t(rowPitch), slicePitch: Size_t(slicePitch)}, ev, nil
+func (q *CommandQueue) GetQueueDevice() (*Device, error) {
+        if q.clQueue != nil {
+ 	        var outDevice	C.cl_device_id
+        	err := C.clGetCommandQueueInfo(q.clQueue, C.CL_QUEUE_DEVICE, C.size_t(unsafe.Sizeof(outDevice)), unsafe.Pointer(&outDevice), nil)
+	        return &Device{id: outDevice}, toError(err)
+        }
+        return nil, toError(C.CL_INVALID_COMMAND_QUEUE)
 }
 
-// Enqueues a command to unmap a previously mapped region of a memory object.
-func (q *CommandQueue) EnqueueUnmapMemObject(buffer *MemObject, mappedObj *MappedMemObject, eventWaitList []*Event) (*Event, error) {
-	var event C.cl_event
-	if err := C.clEnqueueUnmapMemObject(q.clQueue, buffer.clMem, mappedObj.ptr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event); err != C.CL_SUCCESS {
-		return nil, toError(err)
-	}
-	return newEvent(event), nil
+func (q *CommandQueue) GetQueueReferenceCount() (CLUint, error) {
+        if q.clQueue != nil {
+ 	        var outCount	C.cl_uint
+        	err := C.clGetCommandQueueInfo(q.clQueue, C.CL_QUEUE_REFERENCE_COUNT, C.size_t(unsafe.Sizeof(outCount)), unsafe.Pointer(&outCount), nil)
+	        return CLUint(outCount), toError(err)
+        }
+        return 0, toError(C.CL_INVALID_COMMAND_QUEUE)
 }
 
-// Enqueues a command to copy a buffer object to another buffer object.
-func (q *CommandQueue) EnqueueCopyBuffer(srcBuffer, dstBuffer *MemObject, srcOffset, dstOffset, byteCount Size_t, eventWaitList []*Event) (*Event, error) {
-	var event C.cl_event
-	err := toError(C.clEnqueueCopyBuffer(q.clQueue, srcBuffer.clMem, dstBuffer.clMem, C.size_t(srcOffset), C.size_t(dstOffset), C.size_t(byteCount), C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
-	return newEvent(event), err
+func (q *CommandQueue) GetQueueProperties() (CommandQueueProperty, error) {
+        if q.clQueue != nil {
+ 	        var outVar    CommandQueueProperty
+        	err := C.clGetCommandQueueInfo(q.clQueue, C.CL_QUEUE_PROPERTIES, C.size_t(unsafe.Sizeof(outVar)), unsafe.Pointer(&outVar), nil)
+	        return outVar, toError(err)
+        }
+        return 0, toError(C.CL_INVALID_COMMAND_QUEUE)
 }
 
-// Enqueue commands to write to a buffer object from host memory.
-func (q *CommandQueue) EnqueueWriteBuffer(buffer *MemObject, blocking bool, offset, dataSize Size_t, dataPtr unsafe.Pointer, eventWaitList []*Event) (*Event, error) {
-	var event C.cl_event
-	err := toError(C.clEnqueueWriteBuffer(q.clQueue, buffer.clMem, clBool(blocking), C.size_t(offset), C.size_t(dataSize), dataPtr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
-	return newEvent(event), err
-}
-
-func (q *CommandQueue) EnqueueWriteBufferByte(buffer *MemObject, blocking bool, offset Size_t, data []byte, eventWaitList []*Event) (*Event, error) {
-	dataPtr := unsafe.Pointer(&data[0])
-	dataSize := Size_t(int(unsafe.Sizeof(data[0])) * len(data))
-	return q.EnqueueWriteBuffer(buffer, blocking, offset, dataSize, dataPtr, eventWaitList)
-}
-
-func (q *CommandQueue) EnqueueWriteBufferFloat32(buffer *MemObject, blocking bool, offset Size_t, data []float32, eventWaitList []*Event) (*Event, error) {
-	dataPtr := unsafe.Pointer(&data[0])
-	dataSize := Size_t(int(unsafe.Sizeof(data[0])) * len(data))
-	return q.EnqueueWriteBuffer(buffer, blocking, offset, dataSize, dataPtr, eventWaitList)
-}
-
-// Enqueue commands to read from a buffer object to host memory.
-func (q *CommandQueue) EnqueueReadBuffer(buffer *MemObject, blocking bool, offset, dataSize Size_t, dataPtr unsafe.Pointer, eventWaitList []*Event) (*Event, error) {
-	var event C.cl_event
-	err := toError(C.clEnqueueReadBuffer(q.clQueue, buffer.clMem, clBool(blocking), C.size_t(offset), C.size_t(dataSize), dataPtr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
-	return newEvent(event), err
-}
-
-func (q *CommandQueue) EnqueueReadBufferByte(buffer *MemObject, blocking bool, offset Size_t, data []byte, eventWaitList []*Event) (*Event, error) {
-	dataPtr := unsafe.Pointer(&data[0])
-	dataSize := Size_t(int(unsafe.Sizeof(data[0])) * len(data))
-	return q.EnqueueReadBuffer(buffer, blocking, offset, dataSize, dataPtr, eventWaitList)
-}
-
-func (q *CommandQueue) EnqueueReadBufferFloat32(buffer *MemObject, blocking bool, offset Size_t, data []float32, eventWaitList []*Event) (*Event, error) {
-	dataPtr := unsafe.Pointer(&data[0])
-	dataSize := Size_t(int(unsafe.Sizeof(data[0])) * len(data))
-	return q.EnqueueReadBuffer(buffer, blocking, offset, dataSize, dataPtr, eventWaitList)
-}
-
-// Enqueues a command to execute a kernel on a device.
-func (q *CommandQueue) EnqueueNDRangeKernel(kernel *Kernel, globalWorkOffset, globalWorkSize, localWorkSize []int, eventWaitList []*Event) (*Event, error) {
-	workDim := len(globalWorkSize)
-	var globalWorkOffsetList []C.size_t
-	var globalWorkOffsetPtr *C.size_t
-	if globalWorkOffset != nil {
-		globalWorkOffsetList = make([]C.size_t, len(globalWorkOffset))
-		for i, off := range globalWorkOffset {
-			globalWorkOffsetList[i] = C.size_t(off)
-		}
-		globalWorkOffsetPtr = &globalWorkOffsetList[0]
-	}
-	var globalWorkSizeList []C.size_t
-	var globalWorkSizePtr *C.size_t
-	if globalWorkSize != nil {
-		globalWorkSizeList = make([]C.size_t, len(globalWorkSize))
-		for i, off := range globalWorkSize {
-			globalWorkSizeList[i] = C.size_t(off)
-		}
-		globalWorkSizePtr = &globalWorkSizeList[0]
-	}
-	var localWorkSizeList []C.size_t
-	var localWorkSizePtr *C.size_t
-	if localWorkSize != nil {
-		localWorkSizeList = make([]C.size_t, len(localWorkSize))
-		for i, off := range localWorkSize {
-			localWorkSizeList[i] = C.size_t(off)
-		}
-		localWorkSizePtr = &localWorkSizeList[0]
-	}
-	var event C.cl_event
-	err := toError(C.clEnqueueNDRangeKernel(q.clQueue, kernel.clKernel, C.cl_uint(workDim), globalWorkOffsetPtr, globalWorkSizePtr, localWorkSizePtr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
-	return newEvent(event), err
-}
-
-// Enqueues a command to read from a 2D or 3D image object to host memory.
-func (q *CommandQueue) EnqueueReadImage(image *MemObject, blocking bool, origin, region [3]int, rowPitch, slicePitch Size_t, data []byte, eventWaitList []*Event) (*Event, error) {
-	cOrigin := sizeT3(origin)
-	cRegion := sizeT3(region)
-	var event C.cl_event
-	err := toError(C.clEnqueueReadImage(q.clQueue, image.clMem, clBool(blocking), &cOrigin[0], &cRegion[0], C.size_t(rowPitch), C.size_t(slicePitch), unsafe.Pointer(&data[0]), C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
-	return newEvent(event), err
-}
-
-// Enqueues a command to write from a 2D or 3D image object to host memory.
-func (q *CommandQueue) EnqueueWriteImage(image *MemObject, blocking bool, origin, region [3]int, rowPitch, slicePitch Size_t, data []byte, eventWaitList []*Event) (*Event, error) {
-	cOrigin := sizeT3(origin)
-	cRegion := sizeT3(region)
-	var event C.cl_event
-	err := toError(C.clEnqueueWriteImage(q.clQueue, image.clMem, clBool(blocking), &cOrigin[0], &cRegion[0], C.size_t(rowPitch), C.size_t(slicePitch), unsafe.Pointer(&data[0]), C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
-	return newEvent(event), err
-}
-
-func (q *CommandQueue) EnqueueFillBuffer(buffer *MemObject, pattern unsafe.Pointer, patternSize, offset, size Size_t, eventWaitList []*Event) (*Event, error) {
-	var event C.cl_event
-	err := toError(C.clEnqueueFillBuffer(q.clQueue, buffer.clMem, pattern, C.size_t(patternSize), C.size_t(offset), C.size_t(size), C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
-	return newEvent(event), err
-}
-
-// A synchronization point that enqueues a barrier operation.
-func (q *CommandQueue) EnqueueBarrierWithWaitList(eventWaitList []*Event) (*Event, error) {
-	var event C.cl_event
-	err := toError(C.clEnqueueBarrierWithWaitList(q.clQueue, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
-	return newEvent(event), err
-}
-
-// Enqueues a marker command which waits for either a list of events to complete, or all previously enqueued commands to complete.
-func (q *CommandQueue) EnqueueMarkerWithWaitList(eventWaitList []*Event) (*Event, error) {
-	var event C.cl_event
-	err := toError(C.clEnqueueMarkerWithWaitList(q.clQueue, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
-	return newEvent(event), err
-}
