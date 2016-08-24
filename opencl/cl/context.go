@@ -26,6 +26,12 @@ static cl_context CLCreateContextFromType(      const cl_context_properties *   
 static cl_context_properties platform_id_convert(cl_platform_id id) {
         return (cl_context_properties)(id);
 }
+
+static cl_context FromVoidToClContext(void *memptr){
+	cl_context * val;
+	val = memptr;
+	return (*val);
+}
 */
 import "C"
 
@@ -154,6 +160,10 @@ func CreateContextFromTypeUnsafe(properties *C.cl_context_properties, device_typ
         return context, nil
 }
 
+func NewDevlessContext(ctx_ptr unsafe.Pointer) *Context {
+	return &Context{clContext: C.FromVoidToClContext(ctx_ptr), devices: nil}
+}
+
 ////////////////// Abstract Functions ////////////////
 func (ctx *Context) Release() {
 	releaseContext(ctx)
@@ -161,6 +171,14 @@ func (ctx *Context) Release() {
 
 func (ctx *Context) Retain() {
         retainContext(ctx)
+}
+
+func (ctx *Context) ToCl() unsafe.Pointer {
+	if ctx != nil {
+		val := ctx.clContext
+		return unsafe.Pointer(&val)
+	}
+	return nil
 }
 
 func (ctx *Context) GetReferenceCount() (int, error) {
