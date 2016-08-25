@@ -89,7 +89,6 @@ func main() {
 	context, queue := opencl.ClCtx, opencl.ClCmdQueue
 	kernels := opencl.KernList
 	kernelObj := kernels["square"]
-	fmt.Printf("Reached here! \n")
 	totalArgs, err := kernelObj.NumArgs()
 	if err != nil {
 		fmt.Printf("Failed to get number of arguments of kernel: $+v \n", err)

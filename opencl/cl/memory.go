@@ -206,10 +206,6 @@ func (b *MemObject) GetType() (string, error) {
 		switch {
 		case MemObjectType(tmp) == MemObjectTypeBuffer:
 			return "Buffer", nil
-		case MemObjectType(tmp) == MemObjectTypeImage2D:
-			return "Image2D", nil
-		case MemObjectType(tmp) == MemObjectTypeImage3D:
-			return "Image3D", nil
 		default:
 			return "Unknown", nil
 		}
