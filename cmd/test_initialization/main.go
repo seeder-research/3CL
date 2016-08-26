@@ -89,4 +89,12 @@ func PrintKernelInfo(name string) {
 			fmt.Printf("Kernel arg %d: %s \n", i, name)
 		}
 	}
+
+	fmt.Printf("freeing resources \n")
+	for _, krn := range opencl.KernList {
+		krn.Release()
+	}
+	opencl.ClProgram.Release()
+	opencl.ClCmdQueue.Release()
+	opencl.ClCtx.Release()
 }

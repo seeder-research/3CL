@@ -233,5 +233,13 @@ func main() {
 	}
 
 	fmt.Printf("Finished tests on square\n")
+
+	fmt.Printf("freeing resources \n")
+	input.Release()
+	output.Release()
+	kernelObj.Release()
+	program.Release()
+	queue.Release()
+	context.Release()
 }
 

@@ -235,12 +235,3 @@ type Dim3 struct {
 	Z	int
 }
 
-var gl_sharing_ext	bool
-var dx9_sharing_ext	bool
-var d3d10_sharing_ext	bool
-var d3d11_sharing_ext	bool
-
-var getGlCommandType func(C.cl_command_type) (bool, CommandType)
-var getDX9CommandType func(C.cl_command_type) (bool, CommandType)
-var getD3D10CommandType func(C.cl_command_type) (bool, CommandType)
-var getD3D11CommandType func(C.cl_command_type) (bool, CommandType)

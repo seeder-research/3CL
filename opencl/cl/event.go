@@ -163,30 +163,6 @@ func (e *Event) GetCommandType() (CommandType, error) {
         	var status C.cl_command_type
 		var err C.cl_int
 	        err = C.clGetEventInfo(e.clEvent, C.CL_EVENT_COMMAND_TYPE, C.size_t(unsafe.Sizeof(status)), unsafe.Pointer(&status), nil)
-		if gl_sharing_ext {
-			check, gl_command_type := getGlCommandType(status)
-			if check {
-				return gl_command_type, toError(err)
-			}
-		}
-		if dx9_sharing_ext {
-			check, dx9_command_type := getDX9CommandType(status)
-			if check {
-				return dx9_command_type, toError(err)
-			}
-		}
-		if d3d10_sharing_ext {
-			check, d3d10_command_type := getD3D10CommandType(status)
-			if check {
-				return d3d10_command_type, toError(err)
-			}
-		}
-		if d3d11_sharing_ext {
-			check, d3d11_command_type := getD3D11CommandType(status)
-			if check {
-				return d3d11_command_type, toError(err)
-			}
-		}
         	switch status {
 	        case C.CL_COMMAND_NDRANGE_KERNEL:
         	        return CommandNDRangeKernel, toError(err)

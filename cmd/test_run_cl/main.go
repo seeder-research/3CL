@@ -84,7 +84,7 @@ func main() {
 		fmt.Printf("  Vendor: %s \n", d.Vendor())
 		fmt.Printf("  Version: %s \n", d.Version())
 	}
-	device, context, queue := opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
+	program, device, context, queue := opencl.ClProgram, opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
 	kernels := opencl.KernList
 
 	kernelObj := kernels["square"]
@@ -212,5 +212,15 @@ func main() {
 
 	fmt.Printf("Finished tests on square\n")
 
+	fmt.Printf("freeing resources \n")
+	input.Release()
+	output.Release()
+	for _, krn := range kernels {
+		krn.Release()
+	}
+
+	program.Release()
+	queue.Release()
+	context.Release()
 }
 

@@ -240,5 +240,11 @@ func main() {
 
 	fmt.Printf("Finished tests on buffer\n")
 
+	fmt.Printf("freeing resources \n")
+	input.Release()
+	kernelObj.Release()
+	program.Release()
+	queue.Release()
+	context.Release()
 }
 

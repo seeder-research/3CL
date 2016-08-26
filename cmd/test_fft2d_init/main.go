@@ -2,18 +2,21 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
+	"github.com/mumax/3cl/opencl/clFFT"
+	"math/rand"
 	"unsafe"
 )
 
 func main() {
-	var data,origData [128]float32
+	var data [1024]float32
 	for i := 0; i < len(data); i++ {
 		data[i] = rand.Float32()
-		origData[i] = data[i]
 	}
+
+	N0, N1 := 8, 8
+	X := make([]float32, 2*N0*N1)
 
 	opencl.Init(0, 0)
 	platforms := opencl.ClPlatforms
@@ -86,144 +89,110 @@ func main() {
 		fmt.Printf("  Vendor: %s \n", d.Vendor())
 		fmt.Printf("  Version: %s \n", d.Version())
 	}
-	context, queue := opencl.ClCtx, opencl.ClCmdQueue
+	program, context, queue := opencl.ClProgram, opencl.ClCtx, opencl.ClCmdQueue
 	kernels := opencl.KernList
-	kernelObj := kernels["square"]
-	totalArgs, err := kernelObj.NumArgs()
-	if err != nil {
-		fmt.Printf("Failed to get number of arguments of kernel: $+v \n", err)
-	} else {
-		fmt.Printf("Number of arguments in kernel : %d \n", totalArgs)
+
+	fmt.Printf("Initializing clFFT library \n")
+	if err := clFFT.SetupCLFFT(); err != nil {
+		fmt.Printf("failed to initialize clFFT \n")
 	}
-	for i := 0; i < totalArgs; i++ {
-		name, err := kernelObj.ArgName(i)
-		if err == cl.ErrUnsupported {
-			break
-		} else if err != nil {
-			fmt.Printf("GetKernelArgInfo for name failed: %+v \n", err)
-			break
-		} else {
-			fmt.Printf("Kernel arg %d: %s \n", i, name)
+
+	/* print input array */
+	fmt.Printf("\nPerforming fft on a two dimensional array of size N0 x N1 = %d x %d \n", N0, N1)
+	for i := 0; i < N0; i++ {
+	        for j := 0; j < N1; j++ {
+			x := float32(0.5)
+			y := float32(0.5)
+			idx := int(2*(j+i*N0))
+			X[idx] = x
+			X[idx+1] = y
+			fmt.Printf("(%f, %f) ", x, y)
 		}
+		fmt.Printf("\n")
+	}
+	fmt.Printf("\n\nfft result: \n")
+
+	/* Prepare OpenCL memory objects and place data inside them. */
+	bufX, errC := context.CreateEmptyBuffer(cl.MemWriteOnly, N0*N1*2*int(unsafe.Sizeof(X[0])))
+	bufOut, errCO := context.CreateEmptyBuffer(cl.MemReadOnly, N0*N1*2*int(unsafe.Sizeof(X[0])))
+
+	if errC != nil {
+		fmt.Printf("unable to create input buffer: %+v \n ", errC)
+	}
+	if errCO != nil {
+		fmt.Printf("unable to create output buffer: %+v \n ", errCO)
 	}
 
-	fmt.Printf("Begin first run of buffer tests... \n");
-
-	input, err := context.CreateEmptyBuffer(cl.MemReadWrite, 4*len(data))
-	if err != nil {
-		fmt.Printf("CreateBuffer failed for input: %+v \n", err)
-		return
-	}
-	if _, err := queue.EnqueueWriteBufferFloat32(input, true, 0, data[:], nil); err != nil {
-		fmt.Printf("EnqueueWriteBufferFloat32 failed: %+v \n", err)
-		return
-	}
-	if err := queue.Finish(); err != nil {
-		fmt.Printf("Finish failed: %+v \n", err)
-		return
+	if _, err := queue.EnqueueWriteBufferFloat32(bufX, true, 0, X[:], nil); err != nil {
+		fmt.Printf("failed to write data into buffer \n")
 	}
 
-	results := make([]float32, len(data))
-	if _, err := queue.EnqueueReadBufferFloat32(input, true, 0, results, nil); err != nil {
-		fmt.Printf("EnqueueReadBufferFloat32 failed: %+v \n", err)
-		return
+	flag := clFFT.CLFFTDim2D
+	fftPlanHandle, errF := clFFT.NewCLFFTPlan(context, flag, []int{N0, N1})
+	if errF != nil {
+		fmt.Printf("unable to create new fft plan \n")
+	}
+	errF = fftPlanHandle.SetSinglePrecision()
+	if errF != nil {
+		fmt.Printf("unable to set fft precision \n")
+	}
+	ArrLayout := clFFT.NewArrayLayout()
+	ArrLayout.SetInputLayout(clFFT.CLFFTLayoutComplexInterleaved)
+	ArrLayout.SetOutputLayout(clFFT.CLFFTLayoutComplexInterleaved)
+	errF = fftPlanHandle.SetResultOutOfPlace()
+	if errF != nil {
+		fmt.Printf("unable to set fft result location \n")
 	}
 
-	correct := 0
-	for i, v := range data {
-		if results[i] == v {
-			correct++
+	/* Bake the plan. */
+	errF = fftPlanHandle.BakePlanSimple([]*cl.CommandQueue{queue})
+	if errF != nil {
+		fmt.Printf("unable to bake fft plan: %+v \n", errF)
+	}
+
+	/* Execute the plan. */
+	_, errF = fftPlanHandle.EnqueueForwardTransform([]*cl.CommandQueue{queue}, nil, []*cl.MemObject{bufX}, []*cl.MemObject{bufOut}, nil)
+	if errF != nil {
+		fmt.Printf("unable to enqueue transform: %+v \n", errF)
+	}
+
+	errF = queue.Flush()
+	if errF != nil {
+		fmt.Printf("unable to flush queue: %+v \n", errF)
+	}
+
+	/* Fetch results of calculations. */
+	_, errF = queue.EnqueueReadBufferFloat32(bufOut, true, 0, X, nil)
+	errF = queue.Flush()
+	if errF != nil {
+		fmt.Printf("unable to read output buffer: %+v \n", errF)
+	}
+
+	/* print output array */
+	for i := 0; i<N0; i++ {
+		for j := 0; j<N1; j++ {
+			idx := int(2*(j+i*N0))
+			fmt.Printf("(%f, %f) ", X[idx], X[idx+1])
 		}
+		fmt.Printf("\n")
 	}
+	fmt.Printf("\n")
 
-	if correct != len(data) {
-		fmt.Printf("%d/%d correct values \n", correct, len(data))
-		return
-	}
+	fmt.Printf("Finished tests on clFFT\n")
+	fftPlanHandle.Destroy()
+	clFFT.TeardownCLFFT()
 
-	fmt.Printf("Modifying single entry of data... \n");
-
-	modTarget := 69;
-	modifiedData := make([]float32, 1);
-	origData[modTarget] *= -1.0;
-	modifiedData[0] = origData[modTarget];
-	target := unsafe.Pointer(&modifiedData[0]);
-	if _, err :=queue.EnqueueFillBuffer(input, target, 4*len(modifiedData), 4*modTarget, 4*len(modifiedData), nil); err != nil {
-		fmt.Printf("EnqueueFillBuffer failed: %+v \n", err)
-		return
-	}
-
-	fmt.Printf("Reading after first modification \n");
-
-	if _, err := queue.EnqueueReadBufferFloat32(input, true, 0, results, nil); err != nil {
-		fmt.Printf("EnqueueReadBufferFloat32 failed: %+v \n", err)
-		return
-	}
-
-	fmt.Printf("Comparing... \n");
-
-	correct = 0
-	for i, v := range origData {
-		if results[i] == v {
-			correct++
-		} else {
-			fmt.Printf("data[%d]: %f ; buffer: %f \n", i, v, results[i])
-		}
-	}
-
-	if correct != len(origData) {
-		fmt.Printf("%d/%d correct values \n", correct, len(origData))
-		return
-	}
-
-	fmt.Printf("Modifying a range of entries of data... \n");
-
-	modTarget = 49;
-	modElem := 5;
-	modifiedData = make([]float32, modElem);
-	for i, _ := range modifiedData {
-		idx := modTarget+i;
-		origData[idx] *= -0.5;
-		modifiedData[i] = origData[idx];
-		target = unsafe.Pointer(&modifiedData[i])
-		if _, err :=queue.EnqueueFillBuffer(input, target, 4, 4*idx, 4, nil); err != nil {
-			fmt.Printf("EnqueueFillBuffer failed: %+v \n", err)
-			return
-		}
-	}
-
-	fmt.Printf("Reading after second modification \n");
-
-	if _, err := queue.EnqueueReadBufferFloat32(input, true, 0, results, nil); err != nil {
-		fmt.Printf("EnqueueReadBufferFloat32 failed: %+v \n", err)
-		return
-	}
-
-	fmt.Printf("Comparing... \n");
-
-	correct = 0
-	for i, v := range origData {
-		if results[i] == v {
-			correct++
-		} else {
-			fmt.Printf("origData[%d]: %f ; buffer: %f \n", i, v, results[i])
-		}
-	}
-
-	if correct != len(data) {
-		fmt.Printf("%d/%d correct values \n", correct, len(origData))
-		return
-	}
-
-	fmt.Printf("Finished tests on buffer\n")
-
-	fmt.Printf("freeing resources \n")
-	input.Release()
+	fmt.Printf("Begin releasing resources\n")
 	for _, krn := range kernels {
 		krn.Release()
 	}
-	opencl.ClProgram.Release()
+
+	bufX.Release()
+	bufOut.Release()
+
+	program.Release()
+
 	queue.Release()
+
 	context.Release()
 }
-

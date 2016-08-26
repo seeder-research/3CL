@@ -345,14 +345,22 @@ func GetCLFFTVersion() (int, int, int) {
 	return int(major), int(minor), int(patch)
 }
 
-func NewCLFFTPlan(ctx *cl.Context, dim int, dLengths []int) (*ClFFTPlan, error) {
-	if dim < 1 {
-		panic("invalid dimensionality for creating clfft plan!")
+func NewCLFFTPlan(ctx *cl.Context, dim ClFFTDim, dLengths []int) (*ClFFTPlan, error) {
+	var dimInt int
+	switch dim {
+	default:
+		dimInt = 1
+	case CLFFTDim1D:
+		dimInt = 1
+	case CLFFTDim2D:
+		dimInt = 2
+	case CLFFTDim3D:
+		dimInt = 3
 	}
-	if len(dLengths) < dim {
-		panic("number of entries to define lengths differs from dimensionality for creating clfft plan!")
+	if len(dLengths) != dimInt {
+		return nil, ErrInvalidValue
 	}
-	cLengths := make([]C.size_t, dim)
+	cLengths := make([]C.size_t, dimInt)
 	for idx, val := range dLengths {
 		if val < 1 {
 			fmt.Printf("invalid length defined for dimension %d: ( %d ) \n", idx, val)
@@ -367,6 +375,10 @@ func NewCLFFTPlan(ctx *cl.Context, dim int, dLengths []int) (*ClFFTPlan, error) 
 	return &ClFFTPlan{outPlanHandle}, nil
 }
 
+func NewArrayLayout() (*ArrayLayouts) {
+	return &ArrayLayouts{inputs: CLFFTLayoutComplexInterleaved, outputs: CLFFTLayoutComplexInterleaved}
+}
+
 //////////////// Abstract Functions ////////////////
 func (FFTplan *ClFFTPlan) CopyPlan(ctx *cl.Context) (*ClFFTPlan, error) {
 	var outPlanHandle C.clfftPlanHandle
@@ -378,11 +390,11 @@ func (FFTplan *ClFFTPlan) CopyPlan(ctx *cl.Context) (*ClFFTPlan, error) {
 }
 
 func (FFTplan *ClFFTPlan) BakePlanSimple(CommQueues []*cl.CommandQueue) error {
-	QueueList := make([]C.cl_command_queue, len(CommQueues))
-	for idx, id := range CommQueues {
-		tmp := id.GetQueueID()
-		QueueList[idx] = C.FromVoidToClCommandQueue(unsafe.Pointer(tmp))
-	}
+        QueueList := make([]C.cl_command_queue, len(CommQueues))
+        for idx, id := range CommQueues {
+                tmp := id.GetQueueID()
+                QueueList[idx] = C.FromVoidToClCommandQueue(unsafe.Pointer(&tmp))
+        }
 	return toError(C.clfftBakePlan(FFTplan.clFFTHandle, C.cl_uint(len(QueueList)), &QueueList[0], nil, nil))
 }
 
@@ -390,7 +402,7 @@ func (FFTplan *ClFFTPlan) BakePlanUnsafe(CommQueues []*cl.CommandQueue, user_dat
         QueueList := make([]C.cl_command_queue, len(CommQueues))
         for idx, id := range CommQueues {
                 tmp := id.GetQueueID()
-                QueueList[idx] = C.FromVoidToClCommandQueue(unsafe.Pointer(tmp))
+                QueueList[idx] = C.FromVoidToClCommandQueue(unsafe.Pointer(&tmp))
         }
         return toError(C.CLFFTBakePlan(FFTplan.clFFTHandle, C.cl_uint(len(QueueList)), &QueueList[0], user_data))
 }
@@ -745,34 +757,111 @@ func (FFTplan *ClFFTPlan) EnqueueBackwardTransform(commQueues []*cl.CommandQueue
 }
 
 func (FFTplan *ClFFTPlan) EnqueueTransformUnsafe(commQueues []*cl.CommandQueue, InWaitEventsList []*cl.Event, input_buffers_list, output_buffers_list []*cl.MemObject, tmpBufferIn *cl.MemObject, TransformDirection ClFFTDirection) ([]C.cl_event, error) {
+	if commQueues == nil {
+		panic("Null queue pointer!")
+	}
 	queueLength := len(commQueues)
 	QueueList := make([]C.cl_command_queue, queueLength)
 	for idx, id := range commQueues {
-		QueueList[idx] = C.FromVoidToClCommandQueue(unsafe.Pointer(id.GetQueueID()))
+		tmp := id.GetQueueID()
+		QueueList[idx] = C.FromVoidToClCommandQueue(unsafe.Pointer(&tmp))
 	}
-	inWaitListLength := len(InWaitEventsList)
-	WaitEventsList := make([]C.cl_event, inWaitListLength)
-	for idx, id := range InWaitEventsList {
-		WaitEventsList[idx] = C.FromVoidToClEvent(unsafe.Pointer(id.ToCl()))
+
+	var WaitEventsPtr *C.cl_event
+	var WaitEventsList []C.cl_event
+	var inWaitListLength int
+	if InWaitEventsList == nil {
+		WaitEventsPtr = nil
+	} else {
+		inWaitListLength = len(InWaitEventsList)
+		WaitEventsList = make([]C.cl_event, inWaitListLength)
+		for idx, id := range InWaitEventsList {
+			tmp := id.ToCl()
+			WaitEventsList[idx] = C.FromVoidToClEvent(unsafe.Pointer(&tmp))
+		}
+		WaitEventsPtr = &WaitEventsList[0]
 	}
-	input_buffers_list_length := len(input_buffers_list)
-	input_buffers := make([]C.cl_mem, input_buffers_list_length)
-	for idx, id := range input_buffers_list {
-		input_buffers[idx] = C.FromVoidToClMem(unsafe.Pointer(id.ToCl()))
+
+	var input_buffers_ptr *C.cl_mem
+	var input_buffers []C.cl_mem
+	var input_buffers_list_length int
+	if input_buffers_list == nil {
+		input_buffers_ptr = nil
+	} else {
+		input_buffers_list_length = len(input_buffers_list)
+		input_buffers = make([]C.cl_mem, input_buffers_list_length)
+		for idx, id := range input_buffers_list {
+			tmp := id.ToCl()
+			input_buffers[idx] = C.FromVoidToClMem(unsafe.Pointer(&tmp))
+		}
+		input_buffers_ptr = &input_buffers[0]
 	}
-	output_buffers_list_length := len(output_buffers_list)
-	output_buffers := make([]C.cl_mem, output_buffers_list_length)
-	for idx, id := range output_buffers_list {
-		output_buffers[idx] = C.FromVoidToClMem(unsafe.Pointer(id.ToCl()))
+
+	var output_buffers_ptr *C.cl_mem
+	var output_buffers []C.cl_mem
+	var output_buffers_list_length int
+	if output_buffers_list == nil {
+		output_buffers_ptr = nil
+	} else {
+		output_buffers_list_length = len(output_buffers_list)
+		output_buffers = make([]C.cl_mem, output_buffers_list_length)
+		for idx, id := range output_buffers_list {
+			tmp := id.ToCl()
+			output_buffers[idx] = C.FromVoidToClMem(unsafe.Pointer(&tmp))
+		}
+		output_buffers_ptr = &output_buffers[0]
 	}
-	tmpBuffer := C.FromVoidToClMem(unsafe.Pointer(tmpBufferIn.ToCl()))
+
+	var tmpBufferPtr C.cl_mem
+	if tmpBufferIn != nil {
+		clBuffPtr := tmpBufferIn.ToCl()
+		tmpBuffer := C.FromVoidToClMem(unsafe.Pointer(&clBuffPtr))
+		tmpBufferPtr = tmpBuffer
+	} else {
+		tmpBufferPtr = nil
+	}
+
 	outEvent := make([]C.cl_event, queueLength)
 	err := toError(C.clfftEnqueueTransform(FFTplan.clFFTHandle, C.clfftDirection(TransformDirection), C.cl_uint(queueLength), &QueueList[0],
-						C.cl_uint(inWaitListLength), &WaitEventsList[0], &outEvent[0],
-						&input_buffers[0], &output_buffers[0], tmpBuffer))
+						C.cl_uint(inWaitListLength), WaitEventsPtr, &outEvent[0],
+						input_buffers_ptr, output_buffers_ptr, tmpBufferPtr))
 	if err != nil {
 		return []C.cl_event{}, err
 	}
 	return outEvent, nil
+}
+
+func (ArrLayout *ArrayLayouts) SetInputLayout(layout ClFFTLayout) {
+	switch layout {
+	default:
+		ArrLayout.inputs = CLFFTLayoutComplexInterleaved
+        case CLFFTLayoutComplexInterleaved:
+		ArrLayout.inputs = CLFFTLayoutComplexInterleaved
+        case CLFFTLayoutComplexPlanar:
+		ArrLayout.inputs = CLFFTLayoutComplexPlanar
+        case CLFFTLayoutHermitianInterleaved:
+		ArrLayout.inputs = CLFFTLayoutHermitianInterleaved
+        case CLFFTLayoutHermitianPlanar:
+		ArrLayout.inputs = CLFFTLayoutHermitianPlanar
+        case CLFFTLayoutReal:
+		ArrLayout.inputs = CLFFTLayoutReal
+	}
+}
+
+func (ArrLayout *ArrayLayouts) SetOutputLayout(layout ClFFTLayout) {
+        switch layout {
+        default:
+                ArrLayout.outputs = CLFFTLayoutComplexInterleaved
+        case CLFFTLayoutComplexInterleaved:
+                ArrLayout.outputs = CLFFTLayoutComplexInterleaved
+        case CLFFTLayoutComplexPlanar:
+                ArrLayout.outputs = CLFFTLayoutComplexPlanar
+        case CLFFTLayoutHermitianInterleaved:
+                ArrLayout.outputs = CLFFTLayoutHermitianInterleaved
+        case CLFFTLayoutHermitianPlanar:
+                ArrLayout.outputs = CLFFTLayoutHermitianPlanar
+        case CLFFTLayoutReal:
+                ArrLayout.outputs = CLFFTLayoutReal
+        }
 }
 
