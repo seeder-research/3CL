@@ -3,6 +3,7 @@
   It is also used to check the version of opencl installed
 */
 #include <stdlib.h>
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #define CL_USE_DEPRECATED_OPENCL_2_0_APIS
 #ifdef __APPLE__
 	#include <OpenCL/OpenCL.h>
