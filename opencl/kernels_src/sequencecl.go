@@ -5,8 +5,6 @@ package kernels_src
 var OCLHeadersList = []string{
 	"constants",
 	"stdint",
-	"clrng",
-	"clprobdist",
 	"stencil",
 	"float3",
 	"exchange",
