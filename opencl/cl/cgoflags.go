@@ -8,10 +8,12 @@ package cl
 ////default location:
 //#cgo LDFLAGS:-L/usr/lib/x86_64-linux-gnu/
 //#cgo CFLAGS: -I/usr/include
+//#cgo CFLAGS: -I/usr/local/clFFT/include
 //
 ////Ubuntu 15.04::
 //#cgo LDFLAGS:-L/usr/lib/x86_64-linux-gnu/
 //#cgo CFLAGS: -I/usr/include
+//#cgo CFLAGS: -I/usr/local/clFFT/include
 //
 ////arch linux:
 //#cgo LDFLAGS:-L/opt/lib64 -L/opt/lib

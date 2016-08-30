@@ -18,6 +18,7 @@ package cl
 
 /*
 #include "./opencl.h"
+#include <clFFT.h>
 */
 import "C"
 
@@ -155,11 +156,21 @@ var errorMap = map[C.cl_int]error{
         C.CL_LINKER_NOT_AVAILABLE:			ErrLinkerNotAvailable,
 }
 
-func toError(code C.cl_int) error {
-	if err, ok := errorMap[code]; ok {
-		return err
+func toError(code interface{}) error {
+	switch codeT := code.(type) {
+	default:
+		return ErrUnknown
+	case C.cl_int:
+                if err, ok := errorMap[codeT]; ok {
+                        return err
+                }
+                return ErrOther(codeT)
+	case C.clfftStatus:
+                if err, ok := errorMapFFT[codeT]; ok {
+                        return err
+                }
+                return ErrOtherFFT(codeT)
 	}
-	return ErrOther(code)
 }
 
 type ExecCapability int

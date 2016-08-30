@@ -13,12 +13,6 @@ static cl_int CLSetEventCallback(      cl_event		event,
                                        void *		user_args) {
 	return clSetEventCallback(event, callback_type, c_set_event_callback, user_args);
 }
-
-static cl_event FromVoidToClEvent(void *memptr){
-        cl_event * val;
-        val = memptr;
-        return *val;
-}
 */
 import "C"
 
@@ -112,10 +106,6 @@ func eventListPtr(el []*Event) *C.cl_event {
 	return (*C.cl_event)(&elist[0])
 }
 
-func NewEventFromCL(ptr unsafe.Pointer) *Event {
-	return &Event{C.FromVoidToClEvent(ptr)}
-}
-
 //////////////// Abstract Functions ///////////////
 func (e *Event) Release() {
         releaseEvent(e)
@@ -123,10 +113,6 @@ func (e *Event) Release() {
 
 func (e *Event) Retain() {
 	retainEvent(e)
-}
-
-func (e *Event) ToCl() C.cl_event{
-	return e.clEvent
 }
 
 func (e *Event) GetEventProfilingInfo(paramName ProfilingInfo) (int64, error) {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
-	"github.com/mumax/3cl/opencl/clFFT"
 	"math/rand"
 	"unsafe"
 )
@@ -93,7 +92,7 @@ func main() {
 	kernels := opencl.KernList
 
 	fmt.Printf("Initializing clFFT library \n")
-	if err := clFFT.SetupCLFFT(); err != nil {
+	if err := cl.SetupCLFFT(); err != nil {
 		fmt.Printf("failed to initialize clFFT \n")
 	}
 
@@ -127,8 +126,8 @@ func main() {
 		fmt.Printf("failed to write data into buffer \n")
 	}
 
-	flag := clFFT.CLFFTDim2D
-	fftPlanHandle, errF := clFFT.NewCLFFTPlan(context, flag, []int{N0, N1})
+	flag := cl.CLFFTDim2D
+	fftPlanHandle, errF := cl.NewCLFFTPlan(context, flag, []int{N0, N1})
 	if errF != nil {
 		fmt.Printf("unable to create new fft plan \n")
 	}
@@ -136,9 +135,9 @@ func main() {
 	if errF != nil {
 		fmt.Printf("unable to set fft precision \n")
 	}
-	ArrLayout := clFFT.NewArrayLayout()
-	ArrLayout.SetInputLayout(clFFT.CLFFTLayoutComplexInterleaved)
-	ArrLayout.SetOutputLayout(clFFT.CLFFTLayoutComplexInterleaved)
+	ArrLayout := cl.NewArrayLayout()
+	ArrLayout.SetInputLayout(cl.CLFFTLayoutComplexInterleaved)
+	ArrLayout.SetOutputLayout(cl.CLFFTLayoutComplexInterleaved)
 	errF = fftPlanHandle.SetResultOutOfPlace()
 	if errF != nil {
 		fmt.Printf("unable to set fft result location \n")
@@ -180,7 +179,7 @@ func main() {
 
 	fmt.Printf("Finished tests on clFFT\n")
 	fftPlanHandle.Destroy()
-	clFFT.TeardownCLFFT()
+	cl.TeardownCLFFT()
 
 	fmt.Printf("Begin releasing resources\n")
 	for _, krn := range kernels {

@@ -12,9 +12,10 @@ better control over the life cycle of resources while having a fall back
 to avoid leaks. This is similar to how file handles and such are handled
 in the Go standard packages.
 */
-package clFFT
+package cl
 
 /*
+#cgo LDFLAGS: -l clFFT -L/usr/local/clFFT/lib64
 #include <stdlib.h>
 #include <clFFT.h>
 
@@ -29,30 +30,6 @@ static clfftStatus CLFFTBakePlan(clfftPlanHandle	plHandle,
 				 void* user_data){
 	return clfftBakePlan(plHandle, numQueues, commQueueFFT, c_bakeplan_notify, user_data);
 }
-
-static cl_context FromVoidToClContext(void *memptr){
-	cl_context * val;
-	val = memptr;
-	return *val;
-}
-
-static cl_command_queue FromVoidToClCommandQueue(void *memptr){
-        cl_command_queue * val;
-        val = memptr;
-        return *val;
-}
-
-static cl_event FromVoidToClEvent(void *memptr){
-        cl_event * val;
-        val = memptr;
-        return *val;
-}
-
-static cl_mem FromVoidToClMem(void *memptr){
-        cl_mem * val;
-        val = memptr;
-        return *val;
-}
 */
 import "C"
 
@@ -60,76 +37,74 @@ import (
 	"errors"
 	"fmt"
 	"unsafe"
-
-	"github.com/mumax/3cl/opencl/cl"
 )
 
 //////////////// Basic Errors ////////////////
 
-var ErrUnsupported = errors.New("clFFT: unsupported")
+var ErrUnsupportedFFT = errors.New("clFFT: unsupported")
 
 var (
-	ErrUnknown = errors.New("clFFT: unknown error") // Generally an unexpected result from a clFFT function (e.g. CL_SUCCESS but null pointer)
+	ErrUnknownFFT = errors.New("clFFT: unknown error") // Generally an unexpected result from a clFFT function (e.g. CL_SUCCESS but null pointer)
 )
 
-type ErrOther int
+type ErrOtherFFT int
 
-func (e ErrOther) Error() string {
-	return fmt.Sprintf("clFFT: error %d", int(e))
+func (e ErrOtherFFT) Error() string {
+        return fmt.Sprintf("clFFT: error %d", int(e))
 }
 
 var (
-	ErrDeviceNotFound               = errors.New("clFFT: Device Not Found")
-	ErrDeviceNotAvailable           = errors.New("clFFT: Device Not Available")
-	ErrCompilerNotAvailable         = errors.New("clFFT: Compiler Not Available")
-	ErrMemObjectAllocationFailure   = errors.New("clFFT: Mem Object Allocation Failure")
-	ErrOutOfResources               = errors.New("clFFT: Out Of Resources")
-	ErrOutOfHostMemory              = errors.New("clFFT: Out Of Host Memory")
-	ErrProfilingInfoNotAvailable    = errors.New("clFFT: Profiling Info Not Available")
-	ErrMemCopyOverlap               = errors.New("clFFT: Mem Copy Overlap")
-	ErrImageFormatMismatch          = errors.New("clFFT: Image Format Mismatch")
-	ErrImageFormatNotSupported      = errors.New("clFFT: Image Format Not Supported")
-	ErrBuildProgramFailure          = errors.New("clFFT: Build Program Failure")
-	ErrMapFailure                   = errors.New("clFFT: Map Failure")
-	ErrInvalidValue                 = errors.New("clFFT: Invalid Value")
-	ErrInvalidDeviceType            = errors.New("clFFT: Invalid Device Type")
-	ErrInvalidPlatform              = errors.New("clFFT: Invalid Platform")
-	ErrInvalidDevice                = errors.New("clFFT: Invalid Device")
-	ErrInvalidContext               = errors.New("clFFT: Invalid Context")
-	ErrInvalidQueueProperties       = errors.New("clFFT: Invalid Queue Properties")
-	ErrInvalidCommandQueue          = errors.New("clFFT: Invalid Command Queue")
-	ErrInvalidHostPtr               = errors.New("clFFT: Invalid Host Ptr")
-	ErrInvalidMemObject             = errors.New("clFFT: Invalid Mem Object")
-	ErrInvalidImageFormatDescriptor = errors.New("clFFT: Invalid Image Format Descriptor")
-	ErrInvalidImageSize             = errors.New("clFFT: Invalid Image Size")
-	ErrInvalidSampler               = errors.New("clFFT: Invalid Sampler")
-	ErrInvalidBinary                = errors.New("clFFT: Invalid Binary")
-	ErrInvalidBuildOptions          = errors.New("clFFT: Invalid Build Options")
-	ErrInvalidProgram               = errors.New("clFFT: Invalid Program")
-	ErrInvalidProgramExecutable     = errors.New("clFFT: Invalid Program Executable")
-	ErrInvalidKernelName            = errors.New("clFFT: Invalid Kernel Name")
-	ErrInvalidKernelDefinition      = errors.New("clFFT: Invalid Kernel Definition")
-	ErrInvalidKernel                = errors.New("clFFT: Invalid Kernel")
-	ErrInvalidArgIndex              = errors.New("clFFT: Invalid Arg Index")
-	ErrInvalidArgValue              = errors.New("clFFT: Invalid Arg Value")
-	ErrInvalidArgSize               = errors.New("clFFT: Invalid Arg Size")
-	ErrInvalidKernelArgs            = errors.New("clFFT: Invalid Kernel Args")
-	ErrInvalidWorkDimension         = errors.New("clFFT: Invalid Work Dimension")
-	ErrInvalidWorkGroupSize         = errors.New("clFFT: Invalid Work Group Size")
-	ErrInvalidWorkItemSize          = errors.New("clFFT: Invalid Work Item Size")
-	ErrInvalidGlobalOffset          = errors.New("clFFT: Invalid Global Offset")
-	ErrInvalidEventWaitList         = errors.New("clFFT: Invalid Event Wait List")
-	ErrInvalidEvent                 = errors.New("clFFT: Invalid Event")
-	ErrInvalidOperation             = errors.New("clFFT: Invalid Operation")
-	ErrInvalidBufferSize            = errors.New("clFFT: Invalid Buffer Size")
-	ErrInvalidGlobalWorkSize        = errors.New("clFFT: Invalid Global Work Size")
-	ErrInvalidProperty              = errors.New("clFFT: Invalid Property")
-	ErrInvalidImageDescriptor       = errors.New("clFFT: Invalid Image Descriptor")
-	ErrInvalidCompilerOptions       = errors.New("clFFT: Invalid Compiler Options")
-	ErrInvalidLinkerOptions         = errors.New("clFFT: Invalid Linker Options")
-	ErrInvalidDevicePartitionCount  = errors.New("clFFT: Invalid Device Partition Count")
-	ErrInvalidGLObject              = errors.New("clFFT: Invalid GL Object")
-	ErrInvalidMipLevel              = errors.New("clFFT: Invalid Mip Level")
+	ErrFFTDeviceNotFound               = errors.New("clFFT: Device Not Found")
+	ErrFFTDeviceNotAvailable           = errors.New("clFFT: Device Not Available")
+	ErrFFTCompilerNotAvailable         = errors.New("clFFT: Compiler Not Available")
+	ErrFFTMemObjectAllocationFailure   = errors.New("clFFT: Mem Object Allocation Failure")
+	ErrFFTOutOfResources               = errors.New("clFFT: Out Of Resources")
+	ErrFFTOutOfHostMemory              = errors.New("clFFT: Out Of Host Memory")
+	ErrFFTProfilingInfoNotAvailable    = errors.New("clFFT: Profiling Info Not Available")
+	ErrFFTMemCopyOverlap               = errors.New("clFFT: Mem Copy Overlap")
+	ErrFFTImageFormatMismatch          = errors.New("clFFT: Image Format Mismatch")
+	ErrFFTImageFormatNotSupported      = errors.New("clFFT: Image Format Not Supported")
+	ErrFFTBuildProgramFailure          = errors.New("clFFT: Build Program Failure")
+	ErrFFTMapFailure                   = errors.New("clFFT: Map Failure")
+	ErrFFTInvalidValue                 = errors.New("clFFT: Invalid Value")
+	ErrFFTInvalidDeviceType            = errors.New("clFFT: Invalid Device Type")
+	ErrFFTInvalidPlatform              = errors.New("clFFT: Invalid Platform")
+	ErrFFTInvalidDevice                = errors.New("clFFT: Invalid Device")
+	ErrFFTInvalidContext               = errors.New("clFFT: Invalid Context")
+	ErrFFTInvalidQueueProperties       = errors.New("clFFT: Invalid Queue Properties")
+	ErrFFTInvalidCommandQueue          = errors.New("clFFT: Invalid Command Queue")
+	ErrFFTInvalidHostPtr               = errors.New("clFFT: Invalid Host Ptr")
+	ErrFFTInvalidMemObject             = errors.New("clFFT: Invalid Mem Object")
+	ErrFFTInvalidImageFormatDescriptor = errors.New("clFFT: Invalid Image Format Descriptor")
+	ErrFFTInvalidImageSize             = errors.New("clFFT: Invalid Image Size")
+	ErrFFTInvalidSampler               = errors.New("clFFT: Invalid Sampler")
+	ErrFFTInvalidBinary                = errors.New("clFFT: Invalid Binary")
+	ErrFFTInvalidBuildOptions          = errors.New("clFFT: Invalid Build Options")
+	ErrFFTInvalidProgram               = errors.New("clFFT: Invalid Program")
+	ErrFFTInvalidProgramExecutable     = errors.New("clFFT: Invalid Program Executable")
+	ErrFFTInvalidKernelName            = errors.New("clFFT: Invalid Kernel Name")
+	ErrFFTInvalidKernelDefinition      = errors.New("clFFT: Invalid Kernel Definition")
+	ErrFFTInvalidKernel                = errors.New("clFFT: Invalid Kernel")
+	ErrFFTInvalidArgIndex              = errors.New("clFFT: Invalid Arg Index")
+	ErrFFTInvalidArgValue              = errors.New("clFFT: Invalid Arg Value")
+	ErrFFTInvalidArgSize               = errors.New("clFFT: Invalid Arg Size")
+	ErrFFTInvalidKernelArgs            = errors.New("clFFT: Invalid Kernel Args")
+	ErrFFTInvalidWorkDimension         = errors.New("clFFT: Invalid Work Dimension")
+	ErrFFTInvalidWorkGroupSize         = errors.New("clFFT: Invalid Work Group Size")
+	ErrFFTInvalidWorkItemSize          = errors.New("clFFT: Invalid Work Item Size")
+	ErrFFTInvalidGlobalOffset          = errors.New("clFFT: Invalid Global Offset")
+	ErrFFTInvalidEventWaitList         = errors.New("clFFT: Invalid Event Wait List")
+	ErrFFTInvalidEvent                 = errors.New("clFFT: Invalid Event")
+	ErrFFTInvalidOperation             = errors.New("clFFT: Invalid Operation")
+	ErrFFTInvalidBufferSize            = errors.New("clFFT: Invalid Buffer Size")
+	ErrFFTInvalidGlobalWorkSize        = errors.New("clFFT: Invalid Global Work Size")
+	ErrFFTInvalidProperty              = errors.New("clFFT: Invalid Property")
+	ErrFFTInvalidImageDescriptor       = errors.New("clFFT: Invalid Image Descriptor")
+	ErrFFTInvalidCompilerOptions       = errors.New("clFFT: Invalid Compiler Options")
+	ErrFFTInvalidLinkerOptions         = errors.New("clFFT: Invalid Linker Options")
+	ErrFFTInvalidDevicePartitionCount  = errors.New("clFFT: Invalid Device Partition Count")
+	ErrFFTInvalidGLObject              = errors.New("clFFT: Invalid GL Object")
+	ErrFFTInvalidMipLevel              = errors.New("clFFT: Invalid Mip Level")
 	ErrCLFFTInvalidPlan             = errors.New("clFFT: Invalid Plan")
 
 	ErrCLFFTBugCheck                = errors.New("clFFT: Bug Check")
@@ -143,54 +118,54 @@ var (
 	ErrCLFFTEndStatus               = errors.New("clFFT: End Status")
 )
 
-var errorMap = map[C.clfftStatus]error{
+var errorMapFFT = map[C.clfftStatus]error{
 	C.CLFFT_SUCCESS:                         nil,
-	C.CLFFT_INVALID_GLOBAL_WORK_SIZE:        ErrInvalidGlobalWorkSize,
-	C.CLFFT_INVALID_MIP_LEVEL:               ErrInvalidMipLevel,
-	C.CLFFT_INVALID_BUFFER_SIZE:             ErrInvalidBufferSize,
-	C.CLFFT_INVALID_GL_OBJECT:               ErrInvalidGLObject,
-	C.CLFFT_INVALID_OPERATION:               ErrInvalidOperation,
-	C.CLFFT_INVALID_EVENT:                   ErrInvalidEvent,
-	C.CLFFT_INVALID_EVENT_WAIT_LIST:         ErrInvalidEventWaitList,
-	C.CLFFT_INVALID_GLOBAL_OFFSET:           ErrInvalidGlobalOffset,
-	C.CLFFT_INVALID_WORK_ITEM_SIZE:          ErrInvalidWorkItemSize,
-	C.CLFFT_INVALID_WORK_GROUP_SIZE:         ErrInvalidWorkGroupSize,
-	C.CLFFT_INVALID_WORK_DIMENSION:          ErrInvalidWorkDimension,
-	C.CLFFT_INVALID_KERNEL_ARGS:             ErrInvalidKernelArgs,
-	C.CLFFT_INVALID_ARG_SIZE:                ErrInvalidArgSize,
-	C.CLFFT_INVALID_ARG_VALUE:               ErrInvalidArgValue,
-	C.CLFFT_INVALID_ARG_INDEX:               ErrInvalidArgIndex,
-	C.CLFFT_INVALID_KERNEL:                  ErrInvalidKernel,
-	C.CLFFT_INVALID_KERNEL_DEFINITION:       ErrInvalidKernelDefinition,
-	C.CLFFT_INVALID_KERNEL_NAME:             ErrInvalidKernelName,
-	C.CLFFT_INVALID_PROGRAM_EXECUTABLE:      ErrInvalidProgramExecutable,
-	C.CLFFT_INVALID_PROGRAM:                 ErrInvalidProgram,
-	C.CLFFT_INVALID_BUILD_OPTIONS:           ErrInvalidBuildOptions,
-	C.CLFFT_INVALID_BINARY:                  ErrInvalidBinary,
-	C.CLFFT_INVALID_SAMPLER:                 ErrInvalidSampler,
-	C.CLFFT_INVALID_IMAGE_SIZE:              ErrInvalidImageSize,
-	C.CLFFT_INVALID_IMAGE_FORMAT_DESCRIPTOR: ErrInvalidImageFormatDescriptor,
-	C.CLFFT_INVALID_MEM_OBJECT:              ErrInvalidMemObject,
-	C.CLFFT_INVALID_HOST_PTR:                ErrInvalidHostPtr,
-	C.CLFFT_INVALID_COMMAND_QUEUE:           ErrInvalidCommandQueue,
-	C.CLFFT_INVALID_QUEUE_PROPERTIES:        ErrInvalidQueueProperties,
-	C.CLFFT_INVALID_CONTEXT:                 ErrInvalidContext,
-	C.CLFFT_INVALID_DEVICE:                  ErrInvalidDevice,
-	C.CLFFT_INVALID_PLATFORM:                ErrInvalidPlatform,
-	C.CLFFT_INVALID_DEVICE_TYPE:             ErrInvalidDeviceType,
-	C.CLFFT_INVALID_VALUE:                   ErrInvalidValue,
-	C.CLFFT_MAP_FAILURE:                     ErrMapFailure,
-	C.CLFFT_BUILD_PROGRAM_FAILURE:           ErrBuildProgramFailure,
-	C.CLFFT_IMAGE_FORMAT_NOT_SUPPORTED:      ErrImageFormatNotSupported,
-	C.CLFFT_IMAGE_FORMAT_MISMATCH:           ErrImageFormatMismatch,
-	C.CLFFT_MEM_COPY_OVERLAP:                ErrMemCopyOverlap,
-	C.CLFFT_PROFILING_INFO_NOT_AVAILABLE:    ErrProfilingInfoNotAvailable,
-	C.CLFFT_OUT_OF_HOST_MEMORY:              ErrOutOfHostMemory,
-	C.CLFFT_OUT_OF_RESOURCES:                ErrOutOfResources,
-	C.CLFFT_MEM_OBJECT_ALLOCATION_FAILURE:   ErrMemObjectAllocationFailure,
-	C.CLFFT_COMPILER_NOT_AVAILABLE:          ErrCompilerNotAvailable,
-	C.CLFFT_DEVICE_NOT_AVAILABLE:            ErrDeviceNotAvailable,
-	C.CLFFT_DEVICE_NOT_FOUND:                ErrDeviceNotFound,
+	C.CLFFT_INVALID_GLOBAL_WORK_SIZE:        ErrFFTInvalidGlobalWorkSize,
+	C.CLFFT_INVALID_MIP_LEVEL:               ErrFFTInvalidMipLevel,
+	C.CLFFT_INVALID_BUFFER_SIZE:             ErrFFTInvalidBufferSize,
+	C.CLFFT_INVALID_GL_OBJECT:               ErrFFTInvalidGLObject,
+	C.CLFFT_INVALID_OPERATION:               ErrFFTInvalidOperation,
+	C.CLFFT_INVALID_EVENT:                   ErrFFTInvalidEvent,
+	C.CLFFT_INVALID_EVENT_WAIT_LIST:         ErrFFTInvalidEventWaitList,
+	C.CLFFT_INVALID_GLOBAL_OFFSET:           ErrFFTInvalidGlobalOffset,
+	C.CLFFT_INVALID_WORK_ITEM_SIZE:          ErrFFTInvalidWorkItemSize,
+	C.CLFFT_INVALID_WORK_GROUP_SIZE:         ErrFFTInvalidWorkGroupSize,
+	C.CLFFT_INVALID_WORK_DIMENSION:          ErrFFTInvalidWorkDimension,
+	C.CLFFT_INVALID_KERNEL_ARGS:             ErrFFTInvalidKernelArgs,
+	C.CLFFT_INVALID_ARG_SIZE:                ErrFFTInvalidArgSize,
+	C.CLFFT_INVALID_ARG_VALUE:               ErrFFTInvalidArgValue,
+	C.CLFFT_INVALID_ARG_INDEX:               ErrFFTInvalidArgIndex,
+	C.CLFFT_INVALID_KERNEL:                  ErrFFTInvalidKernel,
+	C.CLFFT_INVALID_KERNEL_DEFINITION:       ErrFFTInvalidKernelDefinition,
+	C.CLFFT_INVALID_KERNEL_NAME:             ErrFFTInvalidKernelName,
+	C.CLFFT_INVALID_PROGRAM_EXECUTABLE:      ErrFFTInvalidProgramExecutable,
+	C.CLFFT_INVALID_PROGRAM:                 ErrFFTInvalidProgram,
+	C.CLFFT_INVALID_BUILD_OPTIONS:           ErrFFTInvalidBuildOptions,
+	C.CLFFT_INVALID_BINARY:                  ErrFFTInvalidBinary,
+	C.CLFFT_INVALID_SAMPLER:                 ErrFFTInvalidSampler,
+	C.CLFFT_INVALID_IMAGE_SIZE:              ErrFFTInvalidImageSize,
+	C.CLFFT_INVALID_IMAGE_FORMAT_DESCRIPTOR: ErrFFTInvalidImageFormatDescriptor,
+	C.CLFFT_INVALID_MEM_OBJECT:              ErrFFTInvalidMemObject,
+	C.CLFFT_INVALID_HOST_PTR:                ErrFFTInvalidHostPtr,
+	C.CLFFT_INVALID_COMMAND_QUEUE:           ErrFFTInvalidCommandQueue,
+	C.CLFFT_INVALID_QUEUE_PROPERTIES:        ErrFFTInvalidQueueProperties,
+	C.CLFFT_INVALID_CONTEXT:                 ErrFFTInvalidContext,
+	C.CLFFT_INVALID_DEVICE:                  ErrFFTInvalidDevice,
+	C.CLFFT_INVALID_PLATFORM:                ErrFFTInvalidPlatform,
+	C.CLFFT_INVALID_DEVICE_TYPE:             ErrFFTInvalidDeviceType,
+	C.CLFFT_INVALID_VALUE:                   ErrFFTInvalidValue,
+	C.CLFFT_MAP_FAILURE:                     ErrFFTMapFailure,
+	C.CLFFT_BUILD_PROGRAM_FAILURE:           ErrFFTBuildProgramFailure,
+	C.CLFFT_IMAGE_FORMAT_NOT_SUPPORTED:      ErrFFTImageFormatNotSupported,
+	C.CLFFT_IMAGE_FORMAT_MISMATCH:           ErrFFTImageFormatMismatch,
+	C.CLFFT_MEM_COPY_OVERLAP:                ErrFFTMemCopyOverlap,
+	C.CLFFT_PROFILING_INFO_NOT_AVAILABLE:    ErrFFTProfilingInfoNotAvailable,
+	C.CLFFT_OUT_OF_HOST_MEMORY:              ErrFFTOutOfHostMemory,
+	C.CLFFT_OUT_OF_RESOURCES:                ErrFFTOutOfResources,
+	C.CLFFT_MEM_OBJECT_ALLOCATION_FAILURE:   ErrFFTMemObjectAllocationFailure,
+	C.CLFFT_COMPILER_NOT_AVAILABLE:          ErrFFTCompilerNotAvailable,
+	C.CLFFT_DEVICE_NOT_AVAILABLE:            ErrFFTDeviceNotAvailable,
+	C.CLFFT_DEVICE_NOT_FOUND:                ErrFFTDeviceNotFound,
 	C.CLFFT_BUGCHECK:                        ErrCLFFTBugCheck,
 	C.CLFFT_NOTIMPLEMENTED:                  ErrCLFFTNotImplemented,
 	C.CLFFT_TRANSPOSED_NOTIMPLEMENTED:       ErrCLFFTTransposeNotImplemented,
@@ -201,13 +176,6 @@ var errorMap = map[C.clfftStatus]error{
 	C.CLFFT_DEVICE_NO_DOUBLE:                ErrCLFFTNoDouble,
 	C.CLFFT_DEVICE_MISMATCH:                 ErrCLFFTDeviceMismatch,
 	C.CLFFT_ENDSTATUS:                       ErrCLFFTEndStatus,
-}
-
-func toError(code C.clfftStatus) error {
-	if err, ok := errorMap[code]; ok {
-		return err
-	}
-	return ErrOther(code)
 }
 
 //////////////// Basic Types ////////////////
@@ -345,7 +313,7 @@ func GetCLFFTVersion() (int, int, int) {
 	return int(major), int(minor), int(patch)
 }
 
-func NewCLFFTPlan(ctx *cl.Context, dim ClFFTDim, dLengths []int) (*ClFFTPlan, error) {
+func NewCLFFTPlan(ctx *Context, dim ClFFTDim, dLengths []int) (*ClFFTPlan, error) {
 	var dimInt int
 	switch dim {
 	default:
@@ -368,7 +336,7 @@ func NewCLFFTPlan(ctx *cl.Context, dim ClFFTDim, dLengths []int) (*ClFFTPlan, er
 		cLengths[idx] = C.size_t(val)
 	}
 	var outPlanHandle C.clfftPlanHandle
-	if err := C.clfftCreateDefaultPlan(&outPlanHandle, (C.FromVoidToClContext(ctx.ToCl())), C.clfftDim(dim), &cLengths[0]); err != C.CLFFT_SUCCESS {
+	if err := C.clfftCreateDefaultPlan(&outPlanHandle, ctx.clContext, C.clfftDim(dim), &cLengths[0]); err != C.CLFFT_SUCCESS {
 		panic("failed to create default clfft plan!")
 		return nil, toError(err)
 	}
@@ -380,29 +348,27 @@ func NewArrayLayout() (*ArrayLayouts) {
 }
 
 //////////////// Abstract Functions ////////////////
-func (FFTplan *ClFFTPlan) CopyPlan(ctx *cl.Context) (*ClFFTPlan, error) {
+func (FFTplan *ClFFTPlan) CopyPlan(ctx *Context) (*ClFFTPlan, error) {
 	var outPlanHandle C.clfftPlanHandle
-	if err := C.clfftCopyPlan(&outPlanHandle, (C.FromVoidToClContext(ctx.ToCl())), FFTplan.clFFTHandle); err != C.CLFFT_SUCCESS {
+	if err := C.clfftCopyPlan(&outPlanHandle, ctx.clContext, FFTplan.clFFTHandle); err != C.CLFFT_SUCCESS {
 		panic("failed to copy clfft plan!")
 		return nil, toError(err)
 	}
 	return &ClFFTPlan{outPlanHandle}, nil
 }
 
-func (FFTplan *ClFFTPlan) BakePlanSimple(CommQueues []*cl.CommandQueue) error {
+func (FFTplan *ClFFTPlan) BakePlanSimple(CommQueues []*CommandQueue) error {
         QueueList := make([]C.cl_command_queue, len(CommQueues))
         for idx, id := range CommQueues {
-                tmp := id.GetQueueID()
-                QueueList[idx] = C.FromVoidToClCommandQueue(unsafe.Pointer(&tmp))
+                QueueList[idx] = id.clQueue
         }
 	return toError(C.clfftBakePlan(FFTplan.clFFTHandle, C.cl_uint(len(QueueList)), &QueueList[0], nil, nil))
 }
 
-func (FFTplan *ClFFTPlan) BakePlanUnsafe(CommQueues []*cl.CommandQueue, user_data unsafe.Pointer) error {
+func (FFTplan *ClFFTPlan) BakePlanUnsafe(CommQueues []*CommandQueue, user_data unsafe.Pointer) error {
         QueueList := make([]C.cl_command_queue, len(CommQueues))
         for idx, id := range CommQueues {
-                tmp := id.GetQueueID()
-                QueueList[idx] = C.FromVoidToClCommandQueue(unsafe.Pointer(&tmp))
+                QueueList[idx] = id.clQueue
         }
         return toError(C.CLFFTBakePlan(FFTplan.clFFTHandle, C.cl_uint(len(QueueList)), &QueueList[0], user_data))
 }
@@ -411,10 +377,10 @@ func (FFTplan *ClFFTPlan) Destroy() error {
 	return toError(C.clfftDestroyPlan(&FFTplan.clFFTHandle))
 }
 
-func (FFTplan *ClFFTPlan) GetContext() (*cl.Context, error) {
+func (FFTplan *ClFFTPlan) GetContext() (*Context, error) {
 	var outVal C.cl_context
 	err := C.clfftGetPlanContext(FFTplan.clFFTHandle, &outVal)
-	return cl.NewDevlessContext(unsafe.Pointer(&outVal)), toError(err)
+	return &Context{clContext: outVal, devices: nil}, toError(err)
 }
 
 func (FFTplan *ClFFTPlan) GetPrecision() (ClFFTPrecision, error) {
@@ -734,7 +700,7 @@ func (FFTplan *ClFFTPlan) GetTemporaryBufferSize() (int, error) {
 	return int(val), err
 }
 
-func (FFTplan *ClFFTPlan) SetPlanCallback(funcName string, funcString string, localMemSize int, cb_type ClFFTCallbackType, userdata *C.cl_mem, num_buffers int) error {
+func (FFTplan *ClFFTPlan) SetPlanCallback(funcName string, funcString string, localMemSize int, cb_type ClFFTCallbackType, userdata *MemObject, num_buffers int) error {
         cFname := make([]*C.char, 1)
         cfn := C.CString(funcName)
         cFname[0] = cfn
@@ -745,26 +711,25 @@ func (FFTplan *ClFFTPlan) SetPlanCallback(funcName string, funcString string, lo
         defer C.free(unsafe.Pointer(cfs))
 
 	return toError(C.clfftSetPlanCallback(FFTplan.clFFTHandle, cFname[0], cFstring[0], C.int(localMemSize),
-					      C.clfftCallbackType(cb_type), userdata, C.int(num_buffers)))
+					      C.clfftCallbackType(cb_type), &(userdata.clMem), C.int(num_buffers)))
 }
 
-func (FFTplan *ClFFTPlan) EnqueueForwardTransform(commQueues []*cl.CommandQueue, InWaitEventsList []*cl.Event, input_buffers_list, output_buffers_list []*cl.MemObject, tmpBufferIn *cl.MemObject) ([]C.cl_event, error) {
+func (FFTplan *ClFFTPlan) EnqueueForwardTransform(commQueues []*CommandQueue, InWaitEventsList []*Event, input_buffers_list, output_buffers_list []*MemObject, tmpBufferIn *MemObject) ([]*Event, error) {
 	return FFTplan.EnqueueTransformUnsafe(commQueues, InWaitEventsList, input_buffers_list, output_buffers_list, tmpBufferIn, ClFFTDirectionForward)
 }
 
-func (FFTplan *ClFFTPlan) EnqueueBackwardTransform(commQueues []*cl.CommandQueue, InWaitEventsList []*cl.Event, input_buffers_list, output_buffers_list []*cl.MemObject, tmpBufferIn *cl.MemObject) ([]C.cl_event, error) {
+func (FFTplan *ClFFTPlan) EnqueueBackwardTransform(commQueues []*CommandQueue, InWaitEventsList []*Event, input_buffers_list, output_buffers_list []*MemObject, tmpBufferIn *MemObject) ([]*Event, error) {
 	return FFTplan.EnqueueTransformUnsafe(commQueues, InWaitEventsList, input_buffers_list, output_buffers_list, tmpBufferIn, ClFFTDirectionBackward)
 }
 
-func (FFTplan *ClFFTPlan) EnqueueTransformUnsafe(commQueues []*cl.CommandQueue, InWaitEventsList []*cl.Event, input_buffers_list, output_buffers_list []*cl.MemObject, tmpBufferIn *cl.MemObject, TransformDirection ClFFTDirection) ([]C.cl_event, error) {
+func (FFTplan *ClFFTPlan) EnqueueTransformUnsafe(commQueues []*CommandQueue, InWaitEventsList []*Event, input_buffers_list, output_buffers_list []*MemObject, tmpBufferIn *MemObject, TransformDirection ClFFTDirection) ([]*Event, error) {
 	if commQueues == nil {
 		panic("Null queue pointer!")
 	}
 	queueLength := len(commQueues)
 	QueueList := make([]C.cl_command_queue, queueLength)
 	for idx, id := range commQueues {
-		tmp := id.GetQueueID()
-		QueueList[idx] = C.FromVoidToClCommandQueue(unsafe.Pointer(&tmp))
+		QueueList[idx] = id.clQueue
 	}
 
 	var WaitEventsPtr *C.cl_event
@@ -776,8 +741,7 @@ func (FFTplan *ClFFTPlan) EnqueueTransformUnsafe(commQueues []*cl.CommandQueue, 
 		inWaitListLength = len(InWaitEventsList)
 		WaitEventsList = make([]C.cl_event, inWaitListLength)
 		for idx, id := range InWaitEventsList {
-			tmp := id.ToCl()
-			WaitEventsList[idx] = C.FromVoidToClEvent(unsafe.Pointer(&tmp))
+			WaitEventsList[idx] = id.clEvent
 		}
 		WaitEventsPtr = &WaitEventsList[0]
 	}
@@ -791,8 +755,7 @@ func (FFTplan *ClFFTPlan) EnqueueTransformUnsafe(commQueues []*cl.CommandQueue, 
 		input_buffers_list_length = len(input_buffers_list)
 		input_buffers = make([]C.cl_mem, input_buffers_list_length)
 		for idx, id := range input_buffers_list {
-			tmp := id.ToCl()
-			input_buffers[idx] = C.FromVoidToClMem(unsafe.Pointer(&tmp))
+			input_buffers[idx] = id.clMem
 		}
 		input_buffers_ptr = &input_buffers[0]
 	}
@@ -806,29 +769,30 @@ func (FFTplan *ClFFTPlan) EnqueueTransformUnsafe(commQueues []*cl.CommandQueue, 
 		output_buffers_list_length = len(output_buffers_list)
 		output_buffers = make([]C.cl_mem, output_buffers_list_length)
 		for idx, id := range output_buffers_list {
-			tmp := id.ToCl()
-			output_buffers[idx] = C.FromVoidToClMem(unsafe.Pointer(&tmp))
+			output_buffers[idx] = id.clMem
 		}
 		output_buffers_ptr = &output_buffers[0]
 	}
 
 	var tmpBufferPtr C.cl_mem
 	if tmpBufferIn != nil {
-		clBuffPtr := tmpBufferIn.ToCl()
-		tmpBuffer := C.FromVoidToClMem(unsafe.Pointer(&clBuffPtr))
-		tmpBufferPtr = tmpBuffer
+		tmpBufferPtr = tmpBufferIn.clMem
 	} else {
 		tmpBufferPtr = nil
 	}
 
 	outEvent := make([]C.cl_event, queueLength)
+	EventsList := make([]*Event, queueLength)
 	err := toError(C.clfftEnqueueTransform(FFTplan.clFFTHandle, C.clfftDirection(TransformDirection), C.cl_uint(queueLength), &QueueList[0],
 						C.cl_uint(inWaitListLength), WaitEventsPtr, &outEvent[0],
 						input_buffers_ptr, output_buffers_ptr, tmpBufferPtr))
 	if err != nil {
-		return []C.cl_event{}, err
+		return []*Event{}, err
 	}
-	return outEvent, nil
+	for idx, ev := range outEvent {
+		EventsList[idx] = newEvent(ev)
+	}
+	return EventsList, nil
 }
 
 func (ArrLayout *ArrayLayouts) SetInputLayout(layout ClFFTLayout) {
@@ -863,5 +827,13 @@ func (ArrLayout *ArrayLayouts) SetOutputLayout(layout ClFFTLayout) {
         case CLFFTLayoutReal:
                 ArrLayout.outputs = CLFFTLayoutReal
         }
+}
+
+func (ArrDistance *ArrayDistances) SetInputDistance(x int) {
+	ArrDistance.inputs = x
+}
+
+func (ArrDistance *ArrayDistances) SetOutputDistance(x int) {
+	ArrDistance.outputs = x
 }
 
