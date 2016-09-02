@@ -1,0 +1,87 @@
+package opencl
+
+import (
+	"log"
+
+	"github.com/mumax/3cl/opencl/cl"
+//	"github.com/mumax/3cl/data"
+//	"github.com/mumax/3cl/timer"
+//	"github.com/mumax/3cl/util"
+)
+
+// 3D single-precission real-to-complex FFT plan.
+type fft3DR2CPlan struct {
+	fftplan
+	size [3]int
+}
+
+// 3D single-precission real-to-complex FFT plan.
+func newFFT3DR2C(Nx, Ny, Nz int) fft3DR2CPlan {
+	handle, err := cl.NewCLFFTPlan(ClCtx, cl.CLFFTDim3D, []int{Nx, Ny, Nz})
+	if err != nil {
+		log.Printf("Unable to create fft3dr2c plan \n")
+	}
+	arrLayout := cl.NewArrayLayout()
+	arrLayout.SetInputLayout(cl.CLFFTLayoutReal)
+	err = handle.SetLayouts(arrLayout)
+	if err != nil {
+		log.Printf("Unable to set buffer layouts of fft3dr2c plan \n")
+	}
+	err = handle.SetResultOutOfPlace()
+	if err != nil {
+		log.Printf("Unable to set placeness of fft3dr2c result \n")
+	}
+	err = handle.SetSinglePrecision()
+	if err != nil {
+		log.Printf("Unable to set precision of fft3dr2c plan \n")
+	}
+	err = handle.BakePlanSimple([]*cl.CommandQueue{ClCmdQueue})
+	if err != nil {
+		log.Printf("Unable to bake fft3dr2c plan \n")
+	}
+	return fft3DR2CPlan{fftplan{handle}, [3]int{Nx, Ny, Nz}}
+}
+/*
+// Execute the FFT plan, asynchronous.
+// src and dst are 3D arrays stored 1D arrays.
+func (p *fft3DR2CPlan) ExecAsync(src, dst *data.Slice) {
+	if Synchronous {
+		Sync()
+		timer.Start("fft")
+	}
+	util.Argument(src.NComp() == 1 && dst.NComp() == 1)
+	oksrclen := p.InputLen()
+	if src.Len() != oksrclen {
+		log.Panicf("fft size mismatch: expecting src len %v, got %v", oksrclen, src.Len())
+	}
+	okdstlen := p.OutputLen()
+	if dst.Len() != okdstlen {
+		log.Panicf("fft size mismatch: expecting dst len %v, got %v", okdstlen, dst.Len())
+	}
+	p.handle.ExecR2C(cu.DevicePtr(uintptr(src.DevPtr(0))), cu.DevicePtr(uintptr(dst.DevPtr(0))))
+	if Synchronous {
+		Sync()
+		timer.Stop("fft")
+	}
+}
+*/
+// 3D size of the input array.
+func (p *fft3DR2CPlan) InputSizeFloats() (Nx, Ny, Nz int) {
+	return p.size[X], p.size[Y], p.size[Z]
+}
+
+// 3D size of the output array.
+func (p *fft3DR2CPlan) OutputSizeFloats() (Nx, Ny, Nz int) {
+	return p.size[X] + 2, p.size[Y], p.size[Z]
+}
+
+// Required length of the (1D) input array.
+func (p *fft3DR2CPlan) InputLen() int {
+	return prod3(p.InputSizeFloats())
+}
+
+// Required length of the (1D) output array.
+func (p *fft3DR2CPlan) OutputLen() int {
+	return prod3(p.OutputSizeFloats())
+}
+
