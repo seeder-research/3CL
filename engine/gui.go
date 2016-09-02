@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"github.com/mumax/3cl/opencl"
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/gui"
 	"github.com/mumax/3cl/httpfs"
 	"github.com/mumax/3cl/util"
@@ -436,10 +435,6 @@ func (g *guistate) prepareOnUpdate() {
 				}
 			}
 
-			// gpu
-			memfree, _ := cl.MemGetInfo()
-			memfree /= (1024 * 1024)
-			g.Set("memfree", memfree)
 		})
 	})
 }

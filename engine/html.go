@@ -219,7 +219,7 @@ Region: {{.Number "region" -1 255 -1}} </br>
 <div style="font-size:0.9em; color:gray; text-align:center">
 
 {{.Data.Version}} <br/>
-{{.Data.GPUInfo}} ({{.Span "memfree" ""}} MB free) <br/>
+{{.Data.GPUInfo}} <br/>
 &copy; 2016 Xuanyao Fong, National University of Singapore.
 
 
