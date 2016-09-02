@@ -4,9 +4,9 @@ import (
 	"log"
 
 	"github.com/mumax/3cl/opencl/cl"
-//	"github.com/mumax/3cl/data"
-//	"github.com/mumax/3cl/timer"
-//	"github.com/mumax/3cl/util"
+	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/timer"
+	"github.com/mumax/3cl/util"
 )
 
 // 3D single-precission real-to-complex FFT plan.
@@ -35,18 +35,22 @@ func newFFT3DR2C(Nx, Ny, Nz int) fft3DR2CPlan {
 	if err != nil {
 		log.Printf("Unable to set precision of fft3dr2c plan \n")
 	}
+	err = handle.SetResultNoTranspose()
+	if err != nil {
+		log.Printf("Unable to set transpose of fft3dr2c result \n")
+	}
 	err = handle.BakePlanSimple([]*cl.CommandQueue{ClCmdQueue})
 	if err != nil {
 		log.Printf("Unable to bake fft3dr2c plan \n")
 	}
 	return fft3DR2CPlan{fftplan{handle}, [3]int{Nx, Ny, Nz}}
 }
-/*
+
 // Execute the FFT plan, asynchronous.
 // src and dst are 3D arrays stored 1D arrays.
-func (p *fft3DR2CPlan) ExecAsync(src, dst *data.Slice) {
+func (p *fft3DR2CPlan) ExecAsync(src, dst *data.Slice) ([]*cl.Event, error) {
 	if Synchronous {
-		Sync()
+                ClCmdQueue.Finish()
 		timer.Start("fft")
 	}
 	util.Argument(src.NComp() == 1 && dst.NComp() == 1)
@@ -58,13 +62,19 @@ func (p *fft3DR2CPlan) ExecAsync(src, dst *data.Slice) {
 	if dst.Len() != okdstlen {
 		log.Panicf("fft size mismatch: expecting dst len %v, got %v", okdstlen, dst.Len())
 	}
-	p.handle.ExecR2C(cu.DevicePtr(uintptr(src.DevPtr(0))), cu.DevicePtr(uintptr(dst.DevPtr(0))))
+	tmpPtr := src.DevPtr(0)
+	srcMemObj := *(*cl.MemObject)(tmpPtr)
+	tmpPtr = dst.DevPtr(0)
+	dstMemObj := *(*cl.MemObject)(tmpPtr)
+	eventsList, err := p.handle.EnqueueForwardTransform([]*cl.CommandQueue{ClCmdQueue}, []*cl.Event{src.GetEvent(0), dst.GetEvent(0)},
+					 []*cl.MemObject{&srcMemObj}, []*cl.MemObject{&dstMemObj}, nil)
 	if Synchronous {
-		Sync()
+                ClCmdQueue.Finish()
 		timer.Stop("fft")
 	}
+	return eventsList, err
 }
-*/
+
 // 3D size of the input array.
 func (p *fft3DR2CPlan) InputSizeFloats() (Nx, Ny, Nz int) {
 	return p.size[X], p.size[Y], p.size[Z]
