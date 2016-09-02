@@ -17,7 +17,7 @@ type fft3DR2CPlan struct {
 
 // 3D single-precission real-to-complex FFT plan.
 func newFFT3DR2C(Nx, Ny, Nz int) fft3DR2CPlan {
-	handle, err := cl.NewCLFFTPlan(ClCtx, cl.CLFFTDim3D, []int{Nx, Ny, Nz})
+	handle, err := cl.NewCLFFTPlan(ClCtx, cl.CLFFTDim3D, []int{Nz, Ny, Nx}) // new xyz swap
 	if err != nil {
 		log.Printf("Unable to create fft3dr2c plan \n")
 	}
