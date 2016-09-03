@@ -50,10 +50,10 @@ func SetMesh(Nx, Ny, Nz int, cellSizeX, cellSizeY, cellSizeZ float64, pbcx, pbcy
 		LogOut("resizing...")
 
 		// free everything
-//		conv_.Free()
-//		conv_ = nil
-//		mfmconv_.Free()
-//		mfmconv_ = nil
+		conv_.Free()
+		conv_ = nil
+		mfmconv_.Free()
+		mfmconv_ = nil
 		opencl.FreeBuffers()
 
 		// resize everything
@@ -67,8 +67,8 @@ func SetMesh(Nx, Ny, Nz int, cellSizeX, cellSizeY, cellSizeZ float64, pbcx, pbcy
 		// remove excitation extra terms if they don't fit anymore
 		// up to the user to add them again
 		if Mesh().Size() != prevSize {
-//			B_ext.RemoveExtraTerms()
-//			J.RemoveExtraTerms()
+			B_ext.RemoveExtraTerms()
+			J.RemoveExtraTerms()
 		}
 
 //		if Mesh().Size() != prevSize {
