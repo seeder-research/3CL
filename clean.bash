@@ -1,7 +1,11 @@
 #! /bin/bash
 
-rm -frv $GOPATH/pkg/*
-rm -frv $GOPATH/bin/*
+if [ -n "${GOPATH+set}" ]; then
+        if [ -n "${GOPATH}" ]; then
+        rm -frv $GOPATH/pkg/*
+        rm -frv $GOPATH/bin/*
+    fi
+fi
 rm -fv  opencl/*_wrapper.go
 rm -fv  opencl/kernels_src/opencl2go
 rm -fv  opencl/kernels_src/cl/ocl2go
