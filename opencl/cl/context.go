@@ -20,11 +20,22 @@ static cl_context CLCreateContextFromType(      const cl_context_properties *   
                                                                         cl_device_type                                  device_type,
                                                                         void *                                  user_data,
                                                                         cl_int *                                errcode_ret){
-    return clCreateContextFromType(properties, device_type, c_ctx_notify, user_data, errcode_ret);
+	return clCreateContextFromType(properties, device_type, c_ctx_notify, user_data, errcode_ret);
 }
 
-static cl_context_properties platform_id_convert(cl_platform_id id) {
-        return (cl_context_properties)(id);
+static cl_context CLCreateContextOnPlatform(      const cl_platform_id				id,
+                                                        cl_uint                                 num_devices,
+                                                        const cl_device_id *                    devices,
+                                                        cl_int *                                errcode_ret){
+	cl_context_properties properties[] = { CL_CONTEXT_PROPERTIES, (cl_context_properties)(id), 0 };
+	return clCreateContext(properties, num_devices, devices, NULL, NULL, errcode_ret);
+}
+
+static cl_context CLCreateContextFromTypeOnPlatform(      const cl_platform_id				id,
+                                                        	cl_device_type                          device_type,
+                                                        	cl_int *                                errcode_ret){
+	cl_context_properties properties[] = { CL_CONTEXT_PROPERTIES, (cl_context_properties)(id), 0 };
+	return clCreateContextFromType(properties, device_type, NULL, NULL, errcode_ret);
 }
 */
 import "C"
@@ -223,26 +234,43 @@ func (ctx *Context) GetProperties() ([]CLContextProperties, error) {
 
 func (p *Platform) CreateContext(devList []*Device) (*Context, error) {
 	if devList != nil {
-		var properties []C.cl_context_properties
-		defer C.free(properties)
-		properties = append(properties, C.CL_CONTEXT_PLATFORM)
-		properties = append(properties, (C.platform_id_convert(p.id)))
-		properties = append(properties, (C.cl_context_properties)(0))
-		ctx, err := CreateContextUnsafe(&properties[0], devList, nil, nil)
-		return ctx, err
+		deviceIds := buildDeviceIdList(devList)
+		var err C.cl_int
+		contxt := C.CLCreateContextOnPlatform(p.id, C.cl_uint(len(devList)), &deviceIds[0], &err)
+
+		if err != C.CL_SUCCESS {
+			return nil, toError(err)
+		}
+		if contxt == nil {
+			return nil, ErrUnknown
+		}
+		ctx := &Context{clContext: contxt, devices: devList}
+		return ctx, nil
 	}
 	return nil, toError(C.CL_INVALID_DEVICE)
 }
 
 func (p *Platform) CreateContextFromType(device_type DeviceType) (*Context, error) {
         if (device_type == DeviceTypeCPU || device_type == DeviceTypeGPU || device_type == DeviceTypeAccelerator || device_type == DeviceTypeDefault || device_type == DeviceTypeAll) {
-                var properties []C.cl_context_properties
-                defer C.free(properties)
-                properties = append(properties, C.CL_CONTEXT_PLATFORM)
-                properties = append(properties, (C.platform_id_convert(p.id)))
-                properties = append(properties, (C.cl_context_properties)(0))
-                ctx, err := CreateContextFromTypeUnsafe(&properties[0], device_type.toCl(), nil, nil)
-                return ctx, err
+		var err C.cl_int
+                contxt := CreateContextFromTypeOnPlatform(p.id, device_type.toCl(), &err)
+
+		if err != C.CL_SUCCESS {
+			return nil, toError(err)
+		}
+		if contxt == nil {
+			return nil, ErrUnknown
+		}
+		ctxTmp := &Context{clContext: contxt, devices: nil}
+		devList, errc := ctxTmp.GetDevices()
+		if errc != nil {
+			return nil, errc
+		}
+		if len(devList) <= 0 {
+			return nil, ErrUnknown
+		}
+		ctx := &Context{clContext: ctxTmp, devices: devList}
+		return ctx, nil
         }
         return nil, toError(C.CL_INVALID_DEVICE)
 }
