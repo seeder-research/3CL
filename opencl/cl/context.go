@@ -269,7 +269,7 @@ func (p *Platform) CreateContextFromType(device_type DeviceType) (*Context, erro
 		if len(devList) <= 0 {
 			return nil, ErrUnknown
 		}
-		ctx := &Context{clContext: ctxTmp, devices: devList}
+		ctx := &Context{clContext: contxt, devices: devList}
 		return ctx, nil
         }
         return nil, toError(C.CL_INVALID_DEVICE)
