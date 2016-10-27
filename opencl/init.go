@@ -83,7 +83,7 @@ func Init(gpu, platformId int) {
 	device := devices[deviceIndex]
 	ClDevices = devices
 	ClDevice = device
-	context, err := platform.CreateContext([]*cl.Device{device})
+	context, err := cl.CreateContext([]*cl.Device{device})
 	if err != nil {
 		fmt.Printf("CreateContext failed: %+v \n", err)
 	}
