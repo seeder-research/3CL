@@ -3,36 +3,36 @@ package opencl
 
 import (
 	"fmt"
-//	"log"
+	//	"log"
 	"runtime"
 
 	"github.com/mumax/3cl/opencl/cl"
-//	"github.com/mumax/3cl/util"
+	//	"github.com/mumax/3cl/util"
 )
 
 var (
-	Version     	string			// OpenCL version
-	DevName     	string     		// GPU name
-	TotalMem    	int64      		// total GPU memory
-	PlatformInfo	string     		// Human-readable OpenCL platform description
-	GPUInfo     	string     		// Human-readable GPU description
-	Synchronous 	bool       		// for debug: synchronize stream0 at every kernel launch
-	ClPlatforms     []*cl.Platform          // list of platforms available
-	ClPlatform      *cl.Platform            // platform the global OpenCL context is attached to
-	ClDevices       []*cl.Device            // list of devices global OpenCL context may be associated with
-	ClDevice        *cl.Device              // device associated with global OpenCL context
-	ClCtx       	*cl.Context 		// global OpenCL context
-	ClCmdQueue      *cl.CommandQueue        // command queue attached to global OpenCL context
-	ClProgram   	*cl.Program		// handle to program in the global OpenCL context
-	KernList    =	map[string]*cl.Kernel{}	// Store pointers to all compiled kernels
-	initialized     = false                 // Initial state defaults to false
-	ClCUnits	int			// Get number of compute units available
-	ClWGSize	int			// Get maximum size of work group per compute unit
+	Version      string                    // OpenCL version
+	DevName      string                    // GPU name
+	TotalMem     int64                     // total GPU memory
+	PlatformInfo string                    // Human-readable OpenCL platform description
+	GPUInfo      string                    // Human-readable GPU description
+	Synchronous  bool                      // for debug: synchronize stream0 at every kernel launch
+	ClPlatforms  []*cl.Platform            // list of platforms available
+	ClPlatform   *cl.Platform              // platform the global OpenCL context is attached to
+	ClDevices    []*cl.Device              // list of devices global OpenCL context may be associated with
+	ClDevice     *cl.Device                // device associated with global OpenCL context
+	ClCtx        *cl.Context               // global OpenCL context
+	ClCmdQueue   *cl.CommandQueue          // command queue attached to global OpenCL context
+	ClProgram    *cl.Program               // handle to program in the global OpenCL context
+	KernList     = map[string]*cl.Kernel{} // Store pointers to all compiled kernels
+	initialized  = false                   // Initial state defaults to false
+	ClCUnits     int                       // Get number of compute units available
+	ClWGSize     int                       // Get maximum size of work group per compute unit
 )
 
 // Locks to an OS thread and initializes CUDA for that thread.
 func Init(gpu, platformId int) {
-	if (initialized) {
+	if initialized {
 		fmt.Printf("Already initialized \n")
 		return // needed for tests
 	}
@@ -50,7 +50,7 @@ func Init(gpu, platformId int) {
 	PlatformVendor := platform.Vendor()
 	PlatformProfile := platform.Profile()
 	PlatformVersion := platform.Version()
-	PlatformInfo = fmt.Sprint("//   Name: ", PlatformName, "\n//   Vendor: ", PlatformVendor, "\n//   Profile: ", PlatformProfile, "\n//   Version: ", PlatformVersion,"\n")
+	PlatformInfo = fmt.Sprint("//   Name: ", PlatformName, "\n//   Vendor: ", PlatformVendor, "\n//   Profile: ", PlatformProfile, "\n//   Version: ", PlatformVersion, "\n")
 	ClPlatforms = platforms
 	ClPlatform = platform
 
@@ -66,14 +66,14 @@ func Init(gpu, platformId int) {
 	deviceIndex := -1
 
 	if gpu < len(devices) {
-	        deviceIndex = gpu
+		deviceIndex = gpu
 	} else {
-	        fmt.Println("GPU choice not selectable... falling back to first GPU found!")
+		fmt.Println("GPU choice not selectable... falling back to first GPU found!")
 		deviceIndex = 0
 	}
 
 	if deviceIndex < 0 {
-	   	deviceIndex = 0
+		deviceIndex = 0
 	}
 
 	DevName = devices[deviceIndex].Name()
@@ -102,7 +102,7 @@ func Init(gpu, platformId int) {
 	for _, kernname := range KernelNames {
 		KernList[kernname], err = program.CreateKernel(kernname)
 		if err != nil {
-		       fmt.Printf("CreateKernel failed: %+v \n", err)
+			fmt.Printf("CreateKernel failed: %+v \n", err)
 		}
 	}
 	ClCtx = context
@@ -115,7 +115,7 @@ func Init(gpu, platformId int) {
 	ClWGSize = ClDevice.MaxWorkGroupSize()
 	reducecfg.Grid[0] = ClWGSize
 	reducecfg.Block[0] = ClWGSize
-	reduceintcfg.Grid[0] = ClWGSize*ClCUnits
+	reduceintcfg.Grid[0] = ClWGSize * ClCUnits
 	reduceintcfg.Block[0] = ClWGSize
 }
 

@@ -29,4 +29,3 @@ package cl
 //#cgo windows CFLAGS: -IC:/Intel/opencl/include
 //#cgo windows CFLAGS: -IC:/Stuff/proj/goprojs/src/github.com/sources/clFFT/build/package/include
 import "C"
-
