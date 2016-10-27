@@ -27,15 +27,15 @@ static cl_context CLCreateContextOnPlatform(      const cl_platform_id				id,
                                                         cl_uint                                 num_devices,
                                                         const cl_device_id *                    devices,
                                                         cl_int *                                errcode_ret){
-	cl_context_properties properties[] = { CL_CONTEXT_PROPERTIES, (cl_context_properties)(id), 0 };
-	return clCreateContext(properties, num_devices, devices, NULL, NULL, errcode_ret);
+	cl_context_properties properties[3] = { CL_CONTEXT_PROPERTIES, (cl_context_properties)(id), 0 };
+	return clCreateContext(&properties[0], num_devices, devices, NULL, NULL, errcode_ret);
 }
 
 static cl_context CLCreateContextFromTypeOnPlatform(      const cl_platform_id				id,
                                                         	cl_device_type                          device_type,
                                                         	cl_int *                                errcode_ret){
-	cl_context_properties properties[] = { CL_CONTEXT_PROPERTIES, (cl_context_properties)(id), 0 };
-	return clCreateContextFromType(properties, device_type, NULL, NULL, errcode_ret);
+	cl_context_properties properties[3] = { CL_CONTEXT_PROPERTIES, (cl_context_properties)(id), 0 };
+	return clCreateContextFromType(&properties[0], device_type, NULL, NULL, errcode_ret);
 }
 */
 import "C"
