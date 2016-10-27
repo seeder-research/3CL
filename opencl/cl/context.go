@@ -253,7 +253,7 @@ func (p *Platform) CreateContext(devList []*Device) (*Context, error) {
 func (p *Platform) CreateContextFromType(device_type DeviceType) (*Context, error) {
         if (device_type == DeviceTypeCPU || device_type == DeviceTypeGPU || device_type == DeviceTypeAccelerator || device_type == DeviceTypeDefault || device_type == DeviceTypeAll) {
 		var err C.cl_int
-                contxt := CreateContextFromTypeOnPlatform(p.id, device_type.toCl(), &err)
+                contxt := C.CLCreateContextFromTypeOnPlatform(p.id, device_type.toCl(), &err)
 
 		if err != C.CL_SUCCESS {
 			return nil, toError(err)
