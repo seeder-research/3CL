@@ -293,8 +293,8 @@ func (p *Program) CompileProgram(devices []*Device, options string, program_head
 		chn := C.CString(ph.names)
 		cHeaders[idx] = chs.clProgram
 		cHeader_names[idx] = chn
-		defer C.free(chs)
-		defer C.free(chn)
+		defer C.free(unsafe.Pointer(&chs))
+		defer C.free(unsafe.Pointer(&chn))
 	}
 	err := C.clCompileProgram(p.clProgram, numDevices, deviceListPtr, cOptions, C.cl_uint(num_headers), &cHeaders[0], &cHeader_names[0], nil, nil)
 	if err != C.CL_SUCCESS {
@@ -353,8 +353,8 @@ func (p *Program) CompileProgramWithCallback(devices []*Device, options string, 
 		chn := C.CString(ph.names)
 		cHeaders[idx] = chs.clProgram
 		cHeader_names[idx] = chn
-		defer C.free(chs)
-		defer C.free(chn)
+		defer C.free(unsafe.Pointer(&chs))
+		defer C.free(unsafe.Pointer(&chn))
 	}
 	err := C.CLCompileProgram(p.clProgram, numDevices, deviceListPtr, cOptions, C.cl_uint(num_headers), &cHeaders[0], &cHeader_names[0], user_data)
 	if err != C.CL_SUCCESS {
@@ -656,9 +656,9 @@ func (ctx *Context) CreateProgramWithBinary(deviceList []*Device, program_length
 	var binary_in []*C.uchar
 	device_list_in := make([]C.cl_device_id, len(deviceList))
 	binary_lengths := make([]C.size_t, len(program_lengths))
-	defer C.free(binary_in)
-	defer C.free(binary_lengths)
-	defer C.free(device_list_in)
+	defer C.free(unsafe.Pointer(&binary_in))
+	defer C.free(unsafe.Pointer(&binary_lengths))
+	defer C.free(unsafe.Pointer(&device_list_in))
 	var binErr []C.cl_int
 	var err C.cl_int
         for i, bin_val := range program_binaries {

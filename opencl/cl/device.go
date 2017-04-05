@@ -705,8 +705,8 @@ func (d *Device) QueueProperties() CommandQueueProperty {
 func (d *Device) PartitionDeviceEqually(n int) ([]*Device, error) {
 	var deviceList []C.cl_device_id
 	var deviceCount C.cl_uint
-	defer C.free(deviceList)
-	defer C.free(deviceCount)
+	defer C.free(unsafe.Pointer(&deviceList))
+	defer C.free(unsafe.Pointer(&deviceCount))
 	err := C.clCreateSubDevices(d.nullableId(), C.partitionDeviceEqually((C.uint)(n)), 1, &deviceList[0], &deviceCount)
 	if toError(err) != nil {
 		return nil, toError(err)
@@ -721,11 +721,11 @@ func (d *Device) PartitionDeviceEqually(n int) ([]*Device, error) {
 func (d *Device) PartitionDeviceByCounts(n []int) ([]*Device, error) {
         var deviceList []C.cl_device_id
         var deviceCount C.cl_uint
-        defer C.free(deviceList)
-        defer C.free(deviceCount)
+        defer C.free(unsafe.Pointer(&deviceList))
+        defer C.free(unsafe.Pointer(&deviceCount))
 
         Counts := make([]C.uint, len(n))
-        defer C.free(Counts)
+        defer C.free(unsafe.Pointer(&Counts))
         for ii, nn := range n {
                 Counts[ii] = (C.uint)(nn)
         }
@@ -743,11 +743,11 @@ func (d *Device) PartitionDeviceByCounts(n []int) ([]*Device, error) {
 func (d *Device) PartitionDeviceByNumaDomain(n []int) ([]*Device, error) {
         var deviceList []C.cl_device_id
         var deviceCount C.cl_uint
-        defer C.free(deviceList)
-        defer C.free(deviceCount)
+        defer C.free(unsafe.Pointer(&deviceList))
+        defer C.free(unsafe.Pointer(&deviceCount))
 
         Counts := make([]C.uint, len(n))
-        defer C.free(Counts)
+        defer C.free(unsafe.Pointer(&Counts))
 	for ii, nn := range n {
 		Counts[ii] = (C.uint)(nn)
 	}
@@ -765,11 +765,11 @@ func (d *Device) PartitionDeviceByNumaDomain(n []int) ([]*Device, error) {
 func (d *Device) PartitionDeviceByL4CacheDomain(n []int) ([]*Device, error) {
         var deviceList []C.cl_device_id
         var deviceCount C.cl_uint
-        defer C.free(deviceList)
-        defer C.free(deviceCount)
+        defer C.free(unsafe.Pointer(&deviceList))
+        defer C.free(unsafe.Pointer(&deviceCount))
 
         Counts := make([]C.uint, len(n))
-        defer C.free(Counts)
+        defer C.free(unsafe.Pointer(&Counts))
         for ii, nn := range n {
                 Counts[ii] = (C.uint)(nn)
         }
@@ -787,11 +787,11 @@ func (d *Device) PartitionDeviceByL4CacheDomain(n []int) ([]*Device, error) {
 func (d *Device) PartitionDeviceByL3CacheDomain(n []int) ([]*Device, error) {
         var deviceList []C.cl_device_id
         var deviceCount C.cl_uint
-        defer C.free(deviceList)
-        defer C.free(deviceCount)
+        defer C.free(unsafe.Pointer(&deviceList))
+        defer C.free(unsafe.Pointer(&deviceCount))
 
         Counts := make([]C.uint, len(n))
-        defer C.free(Counts)
+        defer C.free(unsafe.Pointer(&Counts))
         for ii, nn := range n {
                 Counts[ii] = (C.uint)(nn)
         }
@@ -809,11 +809,11 @@ func (d *Device) PartitionDeviceByL3CacheDomain(n []int) ([]*Device, error) {
 func (d *Device) PartitionDeviceByL2CacheDomain(n []int) ([]*Device, error) {
         var deviceList []C.cl_device_id
         var deviceCount C.cl_uint
-        defer C.free(deviceList)
-        defer C.free(deviceCount)
+        defer C.free(unsafe.Pointer(&deviceList))
+        defer C.free(unsafe.Pointer(&deviceCount))
 
         Counts := make([]C.uint, len(n))
-        defer C.free(Counts)
+        defer C.free(unsafe.Pointer(&Counts))
         for ii, nn := range n {
                 Counts[ii] = (C.uint)(nn)
         }
@@ -831,11 +831,11 @@ func (d *Device) PartitionDeviceByL2CacheDomain(n []int) ([]*Device, error) {
 func (d *Device) PartitionDeviceByL1CacheDomain(n []int) ([]*Device, error) {
         var deviceList []C.cl_device_id
         var deviceCount C.cl_uint
-        defer C.free(deviceList)
-        defer C.free(deviceCount)
+        defer C.free(unsafe.Pointer(&deviceList))
+        defer C.free(unsafe.Pointer(&deviceCount))
 
         Counts := make([]C.uint, len(n))
-        defer C.free(Counts)
+        defer C.free(unsafe.Pointer(&Counts))
         for ii, nn := range n {
                 Counts[ii] = (C.uint)(nn)
         }
@@ -853,11 +853,11 @@ func (d *Device) PartitionDeviceByL1CacheDomain(n []int) ([]*Device, error) {
 func (d *Device) PartitionDeviceByNextPartitionableDomain(n []int) ([]*Device, error) {
         var deviceList []C.cl_device_id
         var deviceCount C.cl_uint
-        defer C.free(deviceList)
-        defer C.free(deviceCount)
+        defer C.free(unsafe.Pointer(&deviceList))
+        defer C.free(unsafe.Pointer(&deviceCount))
 
         Counts := make([]C.uint, len(n))
-        defer C.free(Counts)
+        defer C.free(unsafe.Pointer(&Counts))
         for ii, nn := range n {
                 Counts[ii] = (C.uint)(nn)
         }

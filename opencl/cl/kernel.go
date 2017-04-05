@@ -119,7 +119,7 @@ func (k *Kernel) SetArg(index int, arg interface{}) error {
 func (k *Kernel) ArgAddressQualifier(index int) (string, error) {
         var val C.cl_kernel_arg_address_qualifier
         var err C.cl_int
-        defer C.free(err)
+        defer C.free(unsafe.Pointer(&err))
         if err = C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_ADDRESS_QUALIFIER, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
                 return "", toError(err)
         }
@@ -140,7 +140,7 @@ func (k *Kernel) ArgAddressQualifier(index int) (string, error) {
 func (k *Kernel) ArgAccessQualifier(index int) (string, error) {
         var val C.cl_kernel_arg_access_qualifier
 	var err C.cl_int
-	defer C.free(err)
+	defer C.free(unsafe.Pointer(&err))
         if err = C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_ACCESS_QUALIFIER, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
                 return "", toError(err)
         }
@@ -241,7 +241,7 @@ func (k *Kernel) PreferredWorkGroupSizeMultiple(device *Device) (int, error) {
 
 func (k *Kernel) CompileWorkGroupSize(device *Device) ([3]int, error) {
 	var wgSize [3]C.size_t
-	defer C.free(wgSize)
+	defer C.free(unsafe.Pointer(&wgSize))
         if err := C.clGetKernelWorkGroupInfo(k.clKernel, device.nullableId(), C.CL_KERNEL_COMPILE_WORK_GROUP_SIZE, C.size_t(unsafe.Sizeof(wgSize)), unsafe.Pointer(&wgSize), nil); err != C.CL_SUCCESS {
 		return [3]int{-1, -1, -1}, toError(err)
 	}
