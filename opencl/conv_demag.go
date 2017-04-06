@@ -40,20 +40,20 @@ func NewDemag(inputSize, PBC [3]int, kernel [3][3]*data.Slice, test bool) *Demag
 // 	vol:  unitless mask used to scale m's length, may be nil
 // 	Bsat: saturation magnetization in Tesla
 // 	B:    resulting demag field, in Tesla
-func (c *DemagConvolution) Exec(B, m, vol *data.Slice, Bsat LUTPtr, regions *Bytes) {
+func (c *DemagConvolution) Exec(B, m, vol *data.Slice, Msat MSlice) {
 	util.Argument(B.Size() == c.inputSize && m.Size() == c.inputSize)
 	if c.is2D() {
-		c.exec2D(B, m, vol, Bsat, regions)
+		c.exec2D(B, m, vol, Msat)
 	} else {
-		c.exec3D(B, m, vol, Bsat, regions)
+		c.exec3D(B, m, vol, Msat)
 	}
 }
 
-func (c *DemagConvolution) exec3D(outp, inp, vol *data.Slice, Bsat LUTPtr, regions *Bytes) {
+func (c *DemagConvolution) exec3D(outp, inp, vol *data.Slice, Msat MSlice) {
 	events := make([][]*cl.Event, 3)
 	totalLen := 0
 	for i := 0; i < 3; i++ { // FW FFT
-		events[i] = c.fwFFT(i, inp, vol, Bsat, regions)
+		events[i] = c.fwFFT(i, inp, vol, Msat)
 		totalLen += len(events[i])
 	}
 	fullEventList := make([]*cl.Event, totalLen)
@@ -76,22 +76,22 @@ func (c *DemagConvolution) exec3D(outp, inp, vol *data.Slice, Bsat LUTPtr, regio
 	}
 }
 
-func (c *DemagConvolution) exec2D(outp, inp, vol *data.Slice, Bsat LUTPtr, regions *Bytes) {
+func (c *DemagConvolution) exec2D(outp, inp, vol *data.Slice, Msat MSlice) {
 	// Convolution is separated into
 	// a 1D convolution for z and a 2D convolution for xy.
 	// So only 2 FFT buffers are needed at the same time.
 	Nx, Ny := c.fftKernLogicSize[X], c.fftKernLogicSize[Y]
 
 	// Z
-	event := c.fwFFT(Z, inp, vol, Bsat, regions)
+	event := c.fwFFT(Z, inp, vol, Msat)
 	err := cl.WaitForEvents(event)
 	if err != nil { fmt.Printf("error waiting for forward fft to end in exec2d: %+v \n", err) }
 	kernMulRSymm2Dz_async(c.fftCBuf[Z], c.kern[Z][Z], Nx, Ny)
 	c.bwFFT(Z, outp)
 
 	// XY
-	event = c.fwFFT(X, inp, vol, Bsat, regions)
-	event0 := c.fwFFT(Y, inp, vol, Bsat, regions)
+	event = c.fwFFT(X, inp, vol, Msat)
+	event0 := c.fwFFT(Y, inp, vol, Msat)
 	offset := len(event)
 	totalLen := offset + len(event0)
 	fullEventList := make([]*cl.Event,totalLen)
@@ -124,10 +124,10 @@ func zero1_async(dst *data.Slice) {
 }
 
 // forward FFT component i
-func (c *DemagConvolution) fwFFT(i int, inp, vol *data.Slice, Bsat LUTPtr, regions *Bytes) []*cl.Event {
+func (c *DemagConvolution) fwFFT(i int, inp, vol *data.Slice, Msat MSlice) []*cl.Event {
 	zero1_async(c.fftRBuf[i])
 	in := inp.Comp(i)
-	copyPadMul(c.fftRBuf[i], in, vol, c.realKernSize, c.inputSize, Bsat, regions)
+	copyPadMul(c.fftRBuf[i], in, vol, c.realKernSize, c.inputSize, Msat)
 	event, err := c.fwPlan.ExecAsync(c.fftRBuf[i], c.fftCBuf[i])
 	if err != nil { fmt.Printf("Error enqueuing forward fft: %+v \n", err) }
 	return event

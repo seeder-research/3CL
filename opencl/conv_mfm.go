@@ -78,10 +78,10 @@ func (c *MFMConvolution) initFFTKern3D() {
 }
 
 // store MFM image in output, based on magnetization in inp.
-func (c *MFMConvolution) Exec(outp, inp, vol *data.Slice, Bsat LUTPtr, regions *Bytes) {
+func (c *MFMConvolution) Exec(outp, inp, vol *data.Slice, Msat MSlice) {
 	for i := 0; i < 3; i++ {
 		zero1_async(c.fftRBuf)
-		copyPadMul(c.fftRBuf, inp.Comp(i), vol, c.kernSize, c.size, Bsat, regions)
+		copyPadMul(c.fftRBuf, inp.Comp(i), vol, c.kernSize, c.size, Msat)
 		events, err := c.fwPlan.ExecAsync(c.fftRBuf, c.fftCBuf)
 		if err != nil { fmt.Printf("error enqueuing forward fft in mfmconv exec: %+v \n", err) }
                 err = cl.WaitForEvents(events)

@@ -10,10 +10,12 @@ var OCLHeadersList = []string{
 	"exchange",
 	"atomicf",
 	"reduce",
+	"amul",
 	"sum"	}
 
 var OCLKernelsList = []string{
 	"addcubicanisotropy",
+	"copypadmul2",
 	"crop",
 	"adddmibulk",
 	"adddmi",

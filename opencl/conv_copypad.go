@@ -2,7 +2,7 @@ package opencl
 
 import (
 	"fmt"
-	"unsafe"
+//	"unsafe"
 
 	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
@@ -28,18 +28,19 @@ func copyUnPad(dst, src *data.Slice, dstsize, srcsize [3]int) {
 // Copies src into dst, which is larger, and multiplies by vol*Bsat.
 // The remainder of dst is not filled with zeros.
 // Used to zero-pad magnetization before convolution and in the meanwhile multiply m by its length.
-func copyPadMul(dst, src, vol *data.Slice, dstsize, srcsize [3]int, Bsat LUTPtr, regions *Bytes) {
+func copyPadMul(dst, src, vol *data.Slice, dstsize, srcsize [3]int, Msat MSlice) {
 	util.Argument(dst.NComp() == 1 && src.NComp() == 1)
 	util.Assert(dst.Len() == prod(dstsize) && src.Len() == prod(srcsize))
 
 	cfg := make3DConf(srcsize)
 
-	event := k_copypadmul_async(dst.DevPtr(0), dstsize[X], dstsize[Y], dstsize[Z],
-		src.DevPtr(0), vol.DevPtr(0), srcsize[X], srcsize[Y], srcsize[Z],
-		unsafe.Pointer(Bsat), regions.Ptr, cfg, []*cl.Event{dst.GetEvent(0), src.GetEvent(0), vol.GetEvent(0)})
+	event := k_copypadmul2_async(dst.DevPtr(0), dstsize[X], dstsize[Y], dstsize[Z],
+		src.DevPtr(0), srcsize[X], srcsize[Y], srcsize[Z],
+		Msat.DevPtr(0), Msat.Mul(0), vol.DevPtr(0), cfg, []*cl.Event{dst.GetEvent(0), src.GetEvent(0), vol.GetEvent(0)})
 	dst.SetEvent(0, event)
 	src.SetEvent(0, event)
 	vol.SetEvent(0, event)
+	Msat.SetEvent(0, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
 	if err != nil { fmt.Printf("WaitForEvents failed in copypadmul: %+v \n", err) }
 }
