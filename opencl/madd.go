@@ -26,6 +26,25 @@ func Mul(dst, a, b *data.Slice) {
 	if err != nil { fmt.Printf("WaitForEvents failed in mul: %+v \n", err) }
 }
 
+// divide: dst[i] = a[i] / b[i]
+// divide-by-zero yields zero.
+func Div(dst, a, b *data.Slice) {
+	N := dst.Len()
+	nComp := dst.NComp()
+	util.Assert(a.Len() == N && a.NComp() == nComp && b.Len() == N && b.NComp() == nComp)
+	cfg := make1DConf(N)
+	eventList := make([]*cl.Event, nComp)
+	for c := 0; c < nComp; c++ {
+		eventList[c] = k_pointwise_div_async(dst.DevPtr(c), a.DevPtr(c), b.DevPtr(c), N, cfg,
+						[](*cl.Event){dst.GetEvent(c), a.GetEvent(c), b.GetEvent(c)})
+		dst.SetEvent(c, eventList[c])
+		a.SetEvent(c, eventList[c])
+		b.SetEvent(c, eventList[c])
+	}
+	err := cl.WaitForEvents(eventList)
+	if err != nil { fmt.Printf("WaitForEvents failed in div: %+v \n", err) }
+}
+
 // multiply-add: dst[i] = src1[i] * factor1 + src2[i] * factor2
 func Madd2(dst, src1, src2 *data.Slice, factor1, factor2 float32) {
 	N := dst.Len()

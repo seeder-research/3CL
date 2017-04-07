@@ -31,6 +31,7 @@ var OCLKernelsList = []string{
 	"lltorque",
 	"madd2",
 	"madd3",
+	"pointwise_div",
 	"reducedot",
 	"reducemaxabs",
 	"reducemaxdiff",
