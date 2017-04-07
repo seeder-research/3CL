@@ -2,7 +2,6 @@ package opencl
 
 import (
 	"fmt"
-	"unsafe"
 
 	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
@@ -13,14 +12,14 @@ import (
 // 	torque in Tesla
 // 	m normalized
 // 	B in Tesla
-func LLTorque(torque, m, B *data.Slice, alpha LUTPtr, regions *Bytes) {
+func LLTorque(torque, m, B *data.Slice, alpha MSlice) {
 	N := torque.Len()
 	cfg := make1DConf(N)
 
-	event := k_lltorque_async(torque.DevPtr(X), torque.DevPtr(Y), torque.DevPtr(Z),
+	event := k_lltorque2_async(torque.DevPtr(X), torque.DevPtr(Y), torque.DevPtr(Z),
 		m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
 		B.DevPtr(X), B.DevPtr(Y), B.DevPtr(Z),
-		unsafe.Pointer(alpha), regions.Ptr, N, cfg, [](*cl.Event){torque.GetEvent(X),
+		alpha.DevPtr(0), alpha.Mul(0), N, cfg, [](*cl.Event){torque.GetEvent(X),
 		torque.GetEvent(Y), torque.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y),
 		m.GetEvent(Z), B.GetEvent(X), B.GetEvent(Y), B.GetEvent(Z)})
 	torque.SetEvent(X, event)

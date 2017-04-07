@@ -28,7 +28,7 @@ var OCLKernelsList = []string{
 	"kernmulRSymm2Dz",
 	"kernmulRSymm3D",
 	"llnoprecess",
-	"lltorque",
+	"lltorque2",
 	"madd2",
 	"madd3",
 	"pointwise_div",
