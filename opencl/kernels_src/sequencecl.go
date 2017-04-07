@@ -14,7 +14,7 @@ var OCLHeadersList = []string{
 	"sum"	}
 
 var OCLKernelsList = []string{
-	"addcubicanisotropy",
+	"addcubicanisotropy2",
 	"copypadmul2",
 	"crop",
 	"adddmibulk",
@@ -46,7 +46,7 @@ var OCLKernelsList = []string{
 	"addslonczewskitorque",
 	"settemperature",
 	"settopologicalcharge",
-	"adduniaxialanisotropy",
+	"adduniaxialanisotropy2",
 	"vecnorm",
 	"zeromask",
 	"addzhanglitorque",
