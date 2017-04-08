@@ -53,5 +53,5 @@ var OCLKernelsList = []string{
 	"adduniaxialanisotropy2",
 	"vecnorm",
 	"zeromask",
-	"addzhanglitorque",
+	"addzhanglitorque2",
 	"square"	}
