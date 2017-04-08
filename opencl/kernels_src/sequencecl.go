@@ -48,7 +48,7 @@ var OCLKernelsList = []string{
 	"shifty",
 	"shiftz",
 	"addslonczewskitorque2",
-	"settemperature",
+	"settemperature2",
 	"settopologicalcharge",
 	"adduniaxialanisotropy2",
 	"vecnorm",

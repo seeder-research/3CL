@@ -25,13 +25,13 @@ func AddZhangLiTorque(torque, m *data.Slice, Msat, J, alpha, xi, pol MSlice, mes
 		N[X], N[Y], N[Z], mesh.PBC_code(), cfg, [](*cl.Event){torque.GetEvent(X),
 		torque.GetEvent(Y), torque.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z),
 		J.GetEvent(X), J.GetEvent(Y), J.GetEvent(Z)})
-        torque.SetEvent(X, event)
-        torque.SetEvent(Y, event)
-        torque.SetEvent(Z, event)
-        m.SetEvent(X, event)
-        m.SetEvent(Y, event)
-        m.SetEvent(Z, event)
-        J.SetEvent(X, event)
-        J.SetEvent(Y, event)
-        J.SetEvent(Z, event)
+    torque.SetEvent(X, event)
+    torque.SetEvent(Y, event)
+    torque.SetEvent(Z, event)
+    m.SetEvent(X, event)
+    m.SetEvent(Y, event)
+    m.SetEvent(Z, event)
+    J.SetEvent(X, event)
+    J.SetEvent(Y, event)
+    J.SetEvent(Z, event)
 }
