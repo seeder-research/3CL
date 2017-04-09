@@ -1,5 +1,4 @@
 // dst[i] = fac1 * src1[i] + fac2 * src2[i] + fac3 * src3[i]
-
 __kernel void
 madd3(__global float* __restrict__ dst,
       __global float* __restrict src1, float fac1,

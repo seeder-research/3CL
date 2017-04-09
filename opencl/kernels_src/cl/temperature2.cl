@@ -8,10 +8,9 @@ settemperature2(__global float* __restrict  B,      __global float* __restrict n
 
     int i =  ( get_group_id(1)*get_num_groups(0) + get_group_id(0) ) * get_local_size(0) + get_local_id(0);
     if (i < N) {
-		float msat = (Ms_ == NULL) ? (Ms_mul) : (Ms_mul * Ms_[i]);
-        float invMs = (msat == 0.0f) ? (0.0f) : (1.0f / msat);
-        float temp = (temp_ == NULL) ? (temp_mul) : (temp_mul * temp_[i]);
-        float alpha = (alpha_ == NULL) ? (alpha_mul) : (alpha_mul * alpha_[i]);
+        float invMs = inv_Msat(Ms_, Ms_mul, i);
+        float temp = amul(temp_, temp_mul, i);
+        float alpha = amul(alpha_, alpha_mul, i);
         B[i] = noise[i] * sqrt((kB2_VgammaDt * alpha * temp * invMs ));
     }
 }

@@ -1,7 +1,6 @@
 // 2D Z (out-of-plane only) micromagnetic kernel multiplication:
 // Mz = Kzz * Mz
-// Using the same symmetries as kernmulrsymm3d.go
-
+// Using the same symmetries as kernmulrsymm3d.cl
 __kernel void
 kernmulRSymm2Dz(__global float* __restrict  fftMz, __global float* __restrict  fftKzz, int Nx, int Ny) {
 

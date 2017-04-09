@@ -14,14 +14,10 @@ adduniaxialanisotropy2(__global float* __restrict  Bx, __global float* __restric
     int i =  ( get_group_id(1)*get_num_groups(0) + get_group_id(0) ) * get_local_size(0) + get_local_id(0);
     if (i < N) {
 
-	float ux = (ux_ == NULL) ? (ux_mul) : (ux_mul * ux_[i]);
-	float uy = (uy_ == NULL) ? (uy_mul) : (uy_mul * uy_[i]);
-	float uz = (uz_ == NULL) ? (uz_mul) : (uz_mul * uz_[i]);
-        float3 u   = normalized(make_float3(ux, uy, uz));
-        float ms = (Ms_ == NULL) ? (Ms_mul) : (Ms_mul * Ms_[i]);
-	float invMs = (ms == 0.0f) ? (ms) : (1.0f / ms);
-	float K1 = (K1_ == NULL) ? (K1_mul) : (K1_mul * K1_[i]);
-	float K2 = (K2_ == NULL) ? (K2_mul) : (K2_mul * K2_[i]);
+        float3 u   = normalized(vmul(ux_, uy_, uz_, ux_mul, uy_mul, uz_mul, i));
+		float invMs = inv_Msat(Ms_, Ms_mul, i);
+		float K1 = amul(K1_, K1_mul, i);
+		float K2 = amul(K2_, K2_mul, i);
         K1  *= invMs;
         K2  *= invMs;
         float3 m   = {mx[i], my[i], mz[i]};

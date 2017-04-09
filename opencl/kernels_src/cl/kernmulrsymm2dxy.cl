@@ -1,8 +1,7 @@
 // 2D XY (in-plane) micromagnetic kernel multiplication:
 // |Mx| = |Kxx Kxy| * |Mx|
 // |My|   |Kyx Kyy|   |My|
-// Using the same symmetries as kernmulrsymm3d.go
-
+// Using the same symmetries as kernmulrsymm3d.cl
 __kernel void
 kernmulRSymm2Dxy(__global float* __restrict  fftMx,  __global float* __restrict  fftMy,
                  __global float* __restrict  fftKxx, __global float* __restrict  fftKyy, __global float* __restrict  fftKxy,

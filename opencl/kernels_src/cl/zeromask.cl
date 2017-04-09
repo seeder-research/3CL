@@ -1,3 +1,4 @@
+// set dst to zero in cells where mask != 0
 __kernel void
 zeromask(__global float* __restrict  dst, __global float* maskLUT, __global uint8_t* regions, int N) {
 

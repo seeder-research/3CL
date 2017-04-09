@@ -12,9 +12,9 @@ copypadmul2(__global float* __restrict dst, int Dx, int Dy, int Dz,
 
     if (ix<Sx && iy<Sy && iz<Sz) {
         int sI = index(ix, iy, iz, Sx, Sy, Sz);  // source index
-	float tmpFac = (Ms_ == NULL) ? (Ms_mul) : (Ms_mul * Ms_[sI]);
+		float tmpFac = amul(Ms_, Ms_mul, sI);
         float Bsat = MU0 * tmpFac;
-        float v = (vol == NULL) ? (1.0f) : (1.0f * vol[sI]);
+        float v = amul(vol, 1.0f, sI);
         dst[index(ix, iy, iz, Dx, Dy, Dz)] = Bsat * v * src[sI];
     }
 }

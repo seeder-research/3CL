@@ -10,7 +10,7 @@ lltorque2(__global float* __restrict  tx, __global float* __restrict  ty, __glob
 
         float3 m = {mx[i], my[i], mz[i]};
         float3 H = {hx[i], hy[i], hz[i]};
-        float alpha = (alpha_ == NULL) ? (alpha_mul) : (alpha_mul * alpha_[i]);
+        float alpha = amul(alpha_, alpha_mul, i);
 
         float3 mxH = cross(m, H);
         float gilb = -1.0f / (1.0f + alpha * alpha);

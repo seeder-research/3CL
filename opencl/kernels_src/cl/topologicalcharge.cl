@@ -1,3 +1,5 @@
+// Set s to the topological charge density.
+// See topologicalcharge.go.
 __kernel void
 settopologicalcharge(__global float* __restrict s,
                      __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,

@@ -20,17 +20,14 @@ addslonczewskitorque2(__global float* __restrict tx, __global float* __restrict 
     if (i < N) {
 
         float3 m = make_float3(mx[i], my[i], mz[i]);
-        float  J = (jz_ == NULL) ? (jz_mul) : (jz_mul * jz_[i]);
-		float pxx = (px_ == NULL) ? (px_mul) : (px_mul * px_[i]);
-		float pyy = (py_ == NULL) ? (py_mul) : (py_mul * py_[i]);
-		float pzz = (pz_ == NULL) ? (pz_mul) : (pz_mul * pz_[i]);
-        float3 p = normalized(make_float3(pxx, pyy, pzz));
-        float  Ms           = (Ms_ == NULL) ? (Ms_mul) : (Ms_mul * Ms_[i]);
-        float  alpha        = (alpha_ == NULL) ? (alpha_mul) : (alpha_mul * alpha_[i]);
-        float  flt          = (flt_ == NULL) ? (flt_mul) : (flt_mul * flt_[i]);
-        float  pol          = (pol_ == NULL) ? (pol_mul) : (pol_mul * pol_[i]);
-        float  lambda       = (lambda_ == NULL) ? (lambda_mul) : (lambda_mul * lambda_[i]);
-        float  epsilonPrime = (epsPrime_ == NULL) ? (epsPrime_mul) : (epsPrime_mul * epsPrime_[i]);
+        float  J = amul(jz_, jz_mul, i);
+        float3 p = normalized(vmul(px_, py_, pz_, px_mul, py_mul, pz_mul, i));
+        float  Ms           = amul(Ms_, Ms_mul, i);
+        float  alpha        = amul(alpha_, alpha_mul, i);
+        float  flt          = amul(flt_, flt_mul, i);
+        float  pol          = amul(pol_, pol_mul, i);
+        float  lambda       = amul(lambda_, lambda_mul, i);
+        float  epsilonPrime = amul(epsPrime_, epsPrime_mul, i);
 
         if (J == 0.0f || Ms == 0.0f) {
             return;

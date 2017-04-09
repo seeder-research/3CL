@@ -23,7 +23,6 @@
 // 	-D Mx + 2A dzMy = 0
 // 	        2A dzMz = 0
 //
-
 __kernel void
 adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __global float* __restrict Hz,
            __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,

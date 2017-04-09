@@ -1,6 +1,5 @@
 // Crop stores in dst a rectangle cropped from src at given offset position.
 // dst size may be smaller than src.
-
 __kernel void
 crop(__global float* __restrict  dst, int Dx, int Dy, int Dz,
      __global float* __restrict  src, int Sx, int Sy, int Sz,

@@ -1,5 +1,4 @@
 // Landau-Lifshitz torque without precession
-
 __kernel void
 llnoprecess(__global float* __restrict  tx, __global float* __restrict  ty, __global float* __restrict  tz,
             __global float* __restrict  mx, __global float* __restrict  my, __global float* __restrict  mz,

@@ -1,3 +1,4 @@
+// decode the regions+LUT pair into an uncompressed array
 __kernel void
 regiondecode(__global float* __restrict  dst, __global float* __restrict LUT, __global uint8_t* regions, int N) {
 

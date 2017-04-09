@@ -5,7 +5,6 @@
 // H: effective field in Tesla
 // D: dmi strength / Msat, in Tesla*m
 // A: Aex/Msat
-
 __kernel void
 adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global float* __restrict Hz,
        __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,

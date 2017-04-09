@@ -1,3 +1,4 @@
+// Select and resize one layer for interactive output
 __kernel void
 resize(__global float* __restrict  dst, int Dx, int Dy, int Dz,
        __global float* __restrict  src, int Sx, int Sy, int Sz,

@@ -25,22 +25,16 @@ addcubicanisotropy2(__global float* __restrict Bx, __global float* __restrict By
     int i =  ( get_group_id(1)*get_num_groups(0) + get_group_id(0) ) * get_local_size(0) + get_local_id(0);
     if (i < N) {
 
-        float ms = (Ms_ == NULL) ? (Ms_mul) : (Ms_mul * Ms_[i]);
-        float invMs = (ms == 0.0f) ? (ms) : (1.0f / ms);
-        float  k1 = (k1_ == NULL) ? k1_mul : (k1_mul * k1_[i]);
-	k1 *= invMs;
-        float  k2 = (k2_ == NULL) ? k2_mul : (k2_mul * k2_[i]);
-	k2 *= invMs;
-        float  k3 = (k3_ == NULL) ? k3_mul : (k3_mul * k3_[i]);
-	k3 *= invMs;
-	float u1x = (c1x_ == NULL) ? c1x_mul : (c1x_mul * c1x_[i]);
-	float u1y = (c1y_ == NULL) ? c1y_mul : (c1y_mul * c1y_[i]);
-	float u1z = (c1z_ == NULL) ? c1z_mul : (c1z_mul * c1z_[i]);
-        float3 u1 = normalized(make_float3(u1x, u1y, u1z));
-	float u2x = (c2x_ == NULL) ? c2x_mul : (c2x_mul * c2x_[i]);
-	float u2y = (c2y_ == NULL) ? c2y_mul : (c2y_mul * c2y_[i]);
-	float u2z = (c2z_ == NULL) ? c2z_mul : (c2z_mul * c2z_[i]);
-        float3 u2 = normalized(make_float3(u2x, u2y, u2z));
+        float invMs = inv_Msat(Ms_, Ms_mul, i);
+        float  k1 = amul(k1_, k1_mul, i);
+		k1 *= invMs;
+        float  k2 = amul(k2_, k2_mul, i);
+		k2 *= invMs;
+        float  k3 = amul(k3_, k3_mul, i);
+		k3 *= invMs;
+		float u1x = (c1x_ == NULL) ? c1x_mul : (c1x_mul * c1x_[i]);
+        float3 u1 = normalized(vmul(c1x_, c1y_, c1z_, c1x_mul, c1y_mul, c1z_mul, i));
+        float3 u2 = normalized(vmul(c2x_, c2y_, c2z_, c2x_mul, c2y_mul, c2z_mul, i));
         float3 u3 = cross(u1, u2); // 3rd axis perpendicular to u1,u2
         float3 m  = make_float3(mx[i], my[i], mz[i]);
 

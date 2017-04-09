@@ -2,26 +2,11 @@
 #define _AMUL_H_
 
 // Returns mul * arr[i], or mul when arr == NULL;
-inline float amul(float *arr, float mul, int i) {
-    return (arr == NULL)? (mul): (mul * arr[i]);
-}
+#define amul(arr, mul, i) (arr == NULL)? (mul): (mul * arr[i])
 
 // Returns m * a[i], or m when a == NULL;
-inline float3 vmul(float *ax, float *ay, float *az,
-                              float mx, float my, float mz, int i) {
-    return make_float3(amul(ax, mx, i),
-                       amul(ay, my, i),
-                       amul(az, mz, i));
-}
+#define vmul(ax, ay, az, mx, my, mz, i) make_float3(amul(ax, mx, i), amul(ay, my, i), amul(az, mz, i))
 
 // Returns 1/Msat, or 0 when Msat == 0.
-inline float inv_Msat(float *Ms_, float Ms_mul, int i) {
-    float ms = amul(Ms_, Ms_mul, i);
-    if (ms == 0.0f) {
-        return 0.0f;
-    } else {
-        return 1.0f / ms;
-    }
-}
-
+#define inv_Msat(Ms_, Ms_mul, i) (amul(Ms_, Ms_mul, i) == 0) ? 0.0f : (1.0f / (Ms_mul * Ms_[i]))
 #endif

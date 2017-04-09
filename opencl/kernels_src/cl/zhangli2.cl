@@ -28,16 +28,13 @@ addzhanglitorque2(__global float* __restrict tx, __global float* __restrict ty, 
 
     int i = idx(ix, iy, iz);
 
-    float alpha = (alpha_ == NULL) ? (alpha_mul) : (alpha_mul * alpha_[i]);
-    float xi    = (xi_ == NULL) ? (xi_mul) : (xi_mul * xi_[i]);
-    float pol   = (pol_ == NULL) ? (pol_mul) : (pol_mul * pol_[i]);
-    float msat = (Ms_ == NULL) ? (Ms_mul) : (Ms_mul * Ms_[i]);
-	float invMs = (msat == 0.0f) ? (0.0f) : (1.0f / msat);
+    float alpha = amul(alpha_, alpha_mul, i);
+    float xi    = amul(xi_, xi_mul, i);
+    float pol   = amul(pol_, pol_mul, i);
+	float invMs = inv_Msat(Ms_, Ms_mul, i);
     float b = invMs * PREFACTOR / (1.0f + xi*xi);
-	float jxx = (jx_ == NULL) ? (jx_mul) : (jx_mul * jx_[i]);
-	float jyy = (jy_ == NULL) ? (jy_mul) : (jy_mul * jy_[i]);
-	float jzz = (jz_ == NULL) ? (jz_mul) : (jz_mul * jz_[i]);
-    float3 J = pol*make_float3(jxx, jyy, jzz);
+	float3 Jvec = vmul(jx_, jy_, jz_, jx_mul, jy_mul, jz_mul, i);
+    float3 J = pol*Jvec;
 
     float3 hspin = make_float3(0.0f, 0.0f, 0.0f); // (u·∇)m
     if (J.x != 0.0f) {

@@ -1,4 +1,4 @@
-// shift dst by shy cells (positive or negative) along Z-axis.
+// shift dst by shz cells (positive or negative) along Z-axis.
 // new edge value is clampL at left edge or clampR at right edge.
 __kernel void
 shiftz(__global float* __restrict  dst, __global float* __restrict  src,
