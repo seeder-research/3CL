@@ -3,31 +3,38 @@
 
 __kernel void
 addoommfslonczewskitorque(__global float* __restrict tx, __global float* __restrict ty, __global float* __restrict tz,
-                     __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz, __global float* __restrict jz,
-		     __global float* __restrict px, __global float* __restrict py, __global float* __restrict pz,
-                     __global float* __restrict msatLUT, __global float* __restrict alphaLUT, float flt,
-                     __global float* __restrict pfixLUT, __global float* __restrict pfreeLUT,
-                     __global float* __restrict lambdafixLUT, __global float* __restrict lambdafreeLUT,
-		     __global float* __restrict epsilonPrimeLUT,
-                     __global uint8_t* __restrict regions, int N) {
+						  __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
+						  __global float* __restrict Ms_,      		float  Ms_mul,
+						  __global float* __restrict jz_,      		float  jz_mul,
+						  __global float* __restrict px_,      		float  px_mul,
+						  __global float* __restrict py_,      		float  py_mul,
+						  __global float* __restrict pz_,      		float  pz_mul,
+						  __global float* __restrict alpha_,   		float  alpha_mul,
+						  __global float* __restrict pfix_,    		float  pfix_mul,
+						  __global float* __restrict pfree_,   		float  pfree_mul,
+						  __global float* __restrict lambdafix_,    float  lambdafix_mul,
+						  __global float* __restrict lambdafree_,   float  lambdafree_mul,
+						  __global float* __restrict epsilonPrime_, float  epsilonPrime_mul,
+						  __global float* __restrict flt_,          float  flt_mul,
+						  int N) {
 
 	int I =  ( get_group_id(1)*get_num_groups(0) + get_group_id(0) ) * get_local_size(0) + get_local_id(0);
 	if (I < N) {
 
 		float3 m = make_float3(mx[I], my[I], mz[I]);
-		float  J = jz[I];
-		float3 p = normalized(make_float3(px[I], py[I], pz[I]));
+        float  J = amul(jz_, jz_mul, I);
+        float3 p = normalized(vmul(px_, py_, pz_, px_mul, py_mul, pz_mul, I));
+        float  Ms           = amul(Ms_, Ms_mul, I);
+        float  alpha        = amul(alpha_, alpha_mul, I);
+        float  flt          = amul(flt_, flt_mul, I);
+        float  pfix         = amul(pfix_, pfix_mul, I);
+        float  pfree        = amul(pfree_, pfree_mul, I);
+        float  lambdafix    = amul(lambdafix_, lambdafix_mul, I);
+        float  lambdafree   = amul(lambdafree_, lambdafix_mul, I);
+        float  epsilonPrime = amul(epsPrime_, epsPrime_mul, I);
 
 		// read parameters
 		uint8_t region       = regions[I];
-
-		float  Ms           = msatLUT[region];
-		float  alpha        = alphaLUT[region];
-		float  pfix         = pfixLUT[region];
-		float  pfree        = pfreeLUT[region];
-		float  lambdafix    = lambdafixLUT[region];
-		float  lambdafree   = lambdafreeLUT[region];
-		float  epsilonPrime = epsilonPrimeLUT[region];
 
 		if (J == 0.0f || Ms == 0.0f) {
 			return;
