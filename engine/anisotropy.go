@@ -9,125 +9,120 @@ import (
 
 // Anisotropy variables
 var (
-	Ku1        = NewScalarParam("Ku1", "J/m3", "1st order uniaxial anisotropy constant", &ku1_red)
-	Ku2        = NewScalarParam("Ku2", "J/m3", "2nd order uniaxial anisotropy constant", &ku2_red)
-	Kc1        = NewScalarParam("Kc1", "J/m3", "1st order cubic anisotropy constant", &kc1_red)
-	Kc2        = NewScalarParam("Kc2", "J/m3", "2nd order cubic anisotropy constant", &kc2_red)
-	Kc3        = NewScalarParam("Kc3", "J/m3", "3rd order cubic anisotropy constant", &kc3_red)
+	Ku1        = NewScalarParam("Ku1", "J/m3", "1st order uniaxial anisotropy constant")
+	Ku2        = NewScalarParam("Ku2", "J/m3", "2nd order uniaxial anisotropy constant")
+	Kc1        = NewScalarParam("Kc1", "J/m3", "1st order cubic anisotropy constant")
+	Kc2        = NewScalarParam("Kc2", "J/m3", "2nd order cubic anisotropy constant")
+	Kc3        = NewScalarParam("Kc3", "J/m3", "3rd order cubic anisotropy constant")
 	AnisU      = NewVectorParam("anisU", "", "Uniaxial anisotropy direction")
 	AnisC1     = NewVectorParam("anisC1", "", "Cubic anisotropy direction #1")
 	AnisC2     = NewVectorParam("anisC2", "", "Cubic anisotorpy directon #2")
-	B_anis     = NewVectorField("B_anis", "T", "Anisotropy filed", AddAnisotropyField)
+	B_anis     = NewVectorField("B_anis", "T", "Anisotropy field", AddAnisotropyField)
 	Edens_anis = NewScalarField("Edens_anis", "J/m3", "Anisotropy energy density", AddAnisotropyEnergyDensity)
 	E_anis     = NewScalarValue("E_anis", "J", "total anisotropy energy", GetAnisotropyEnergy)
 )
 
 var (
-	ku1_red DerivedParam
-	ku2_red DerivedParam
-	kc1_red DerivedParam
-	kc2_red DerivedParam
-	kc3_red DerivedParam
+	sZero = NewScalarParam("_zero", "", "utility zero parameter")
 )
 
-var zero param // utility zero parameter
-
 func init() {
-	Ku1.addChild(&ku1_red)
 	registerEnergy(GetAnisotropyEnergy, AddAnisotropyEnergyDensity)
-	zero.init(1, "_zero", "", nil)
-
-	//ku1_red = Ku1 / Msat
-	ku1_red.init(SCALAR, []parent{Ku1, Msat}, func(p *DerivedParam) {
-		paramDiv(p.cpu_buf, Ku1.cpuLUT(), Msat.cpuLUT())
-	})
-	//ku2_red = Ku2 / Msat
-	ku2_red.init(SCALAR, []parent{Ku2, Msat}, func(p *DerivedParam) {
-		paramDiv(p.cpu_buf, Ku2.cpuLUT(), Msat.cpuLUT())
-	})
-
-	//kc1_red = Kc1 / Msat
-	kc1_red.init(SCALAR, []parent{Kc1, Msat}, func(p *DerivedParam) {
-		paramDiv(p.cpu_buf, Kc1.cpuLUT(), Msat.cpuLUT())
-	})
-	//kc2_red = Kc2 / Msat
-	kc2_red.init(SCALAR, []parent{Kc2, Msat}, func(p *DerivedParam) {
-		paramDiv(p.cpu_buf, Kc2.cpuLUT(), Msat.cpuLUT())
-	})
-	//kc3_red = Kc3 / Msat
-	kc3_red.init(SCALAR, []parent{Kc3, Msat}, func(p *DerivedParam) {
-		paramDiv(p.cpu_buf, Kc3.cpuLUT(), Msat.cpuLUT())
-	})
 }
 
-func addUniaxialAnisotropyField(dst *data.Slice) {
-	if ku1_red.nonZero() || ku2_red.nonZero() {
-		opencl.AddUniaxialAnisotropy(dst, M.Buffer(), ku1_red.gpuLUT1(), ku2_red.gpuLUT1(), AnisU.gpuLUT(), regions.Gpu())
+func addUniaxialAnisotropyFrom(dst *data.Slice, M magnetization, Msat, Ku1, Ku2 *RegionwiseScalar, AnisU *RegionwiseVector) {
+	if Ku1.nonZero() || Ku2.nonZero() {
+		ms := Msat.MSlice()
+		defer ms.Recycle()
+		ku1 := Ku1.MSlice()
+		defer ku1.Recycle()
+		ku2 := Ku2.MSlice()
+		defer ku2.Recycle()
+		u := AnisU.MSlice()
+		defer u.Recycle()
+
+		opencl.AddUniaxialAnisotropy2(dst, M.Buffer(), ms, ku1, ku2, u)
 	}
 }
 
-func addCubicAnisotropyField(dst *data.Slice) {
-	if kc1_red.nonZero() || kc2_red.nonZero() || kc3_red.nonZero() {
-		opencl.AddCubicAnisotropy(dst, M.Buffer(), kc1_red.gpuLUT1(), kc2_red.gpuLUT1(), kc3_red.gpuLUT1(), AnisC1.gpuLUT(), AnisC2.gpuLUT(), regions.Gpu())
+func addCubicAnisotropyFrom(dst *data.Slice, M magnetization, Msat, Kc1, Kc2, Kc3 *RegionwiseScalar, AnisC1, AnisC2 *RegionwiseVector) {
+	if Kc1.nonZero() || Kc2.nonZero() || Kc3.nonZero() {
+		ms := Msat.MSlice()
+		defer ms.Recycle()
+
+		kc1 := Kc1.MSlice()
+		defer kc1.Recycle()
+
+		kc2 := Kc2.MSlice()
+		defer kc2.Recycle()
+
+		kc3 := Kc3.MSlice()
+		defer kc3.Recycle()
+
+		c1 := AnisC1.MSlice()
+		defer c1.Recycle()
+
+		c2 := AnisC2.MSlice()
+		defer c2.Recycle()
+		opencl.AddCubicAnisotropy2(dst, M.Buffer(), ms, kc1, kc2, kc3, c1, c2)
 	}
 }
 
 // Add the anisotropy field to dst
 func AddAnisotropyField(dst *data.Slice) {
-	addUniaxialAnisotropyField(dst)
-	addCubicAnisotropyField(dst)
+	addUniaxialAnisotropyFrom(dst, M, Msat, Ku1, Ku2, AnisU)
+	addCubicAnisotropyFrom(dst, M, Msat, Kc1, Kc2, Kc3, AnisC1, AnisC2)
 }
 
+// Add the anisotropy energy density to dst
 func AddAnisotropyEnergyDensity(dst *data.Slice) {
-	haveUnixial := ku1_red.nonZero() || ku2_red.nonZero()
-	haveCubic := kc1_red.nonZero() || kc2_red.nonZero() || kc3_red.nonZero()
+	haveUnixial := Ku1.nonZero() || Ku2.nonZero()
+	haveCubic := Kc1.nonZero() || Kc2.nonZero() || Kc3.nonZero()
 
 	if !haveUnixial && !haveCubic {
 		return
 	}
 
-	buf := opencl.Buffer(B_anis.NComp(), B_anis.Mesh().Size())
+	buf := opencl.Buffer(B_anis.NComp(), Mesh().Size())
 	defer opencl.Recycle(buf)
 
 	// unnormalized magnetization:
-	Mf, r := M_full.Slice()
-	if r {
-		defer opencl.Recycle(Mf)
-	}
+	Mf := ValueOf(M_full)
+	defer opencl.Recycle(Mf)
 
 	if haveUnixial {
 		// 1st
 		opencl.Zero(buf)
-		opencl.AddUniaxialAnisotropy(buf, M.Buffer(), ku1_red.gpuLUT1(), zero.gpuLUT1(), AnisU.gpuLUT(), regions.Gpu())
+		addUniaxialAnisotropyFrom(buf, M, Msat, Ku1, sZero, AnisU)
 		opencl.AddDotProduct(dst, -1./2., buf, Mf)
 
 		// 2nd
 		opencl.Zero(buf)
-		opencl.AddUniaxialAnisotropy(buf, M.Buffer(), zero.gpuLUT1(), ku2_red.gpuLUT1(), AnisU.gpuLUT(), regions.Gpu())
+		addUniaxialAnisotropyFrom(buf, M, Msat, sZero, Ku2, AnisU)
 		opencl.AddDotProduct(dst, -1./4., buf, Mf)
 	}
 
 	if haveCubic {
 		// 1st
 		opencl.Zero(buf)
-		opencl.AddCubicAnisotropy(buf, M.Buffer(), kc1_red.gpuLUT1(), zero.gpuLUT1(), zero.gpuLUT1(), AnisC1.gpuLUT(), AnisC2.gpuLUT(), regions.Gpu())
+		addCubicAnisotropyFrom(buf, M, Msat, Kc1, sZero, sZero, AnisC1, AnisC2)
 		opencl.AddDotProduct(dst, -1./4., buf, Mf)
 
 		// 2nd
 		opencl.Zero(buf)
-		opencl.AddCubicAnisotropy(buf, M.Buffer(), zero.gpuLUT1(), kc2_red.gpuLUT1(), zero.gpuLUT1(), AnisC1.gpuLUT(), AnisC2.gpuLUT(), regions.Gpu())
+		addCubicAnisotropyFrom(buf, M, Msat, sZero, Kc2, sZero, AnisC1, AnisC2)
 		opencl.AddDotProduct(dst, -1./6., buf, Mf)
 
 		// 3nd
 		opencl.Zero(buf)
-		opencl.AddCubicAnisotropy(buf, M.Buffer(), zero.gpuLUT1(), zero.gpuLUT1(), kc3_red.gpuLUT1(), AnisC1.gpuLUT(), AnisC2.gpuLUT(), regions.Gpu())
+		addCubicAnisotropyFrom(buf, M, Msat, sZero, sZero, Kc3, AnisC1, AnisC2)
 		opencl.AddDotProduct(dst, -1./8., buf, Mf)
 	}
 }
 
 // Returns anisotropy energy in joules.
 func GetAnisotropyEnergy() float64 {
-	buf := opencl.Buffer(1, Edens_anis.Mesh().Size())
+	buf := opencl.Buffer(1, Mesh().Size())
 	defer opencl.Recycle(buf)
 
 	opencl.Zero(buf)

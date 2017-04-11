@@ -94,11 +94,10 @@ func LoadFile(fname string) *data.Slice {
 
 // Download a quantity to host,
 // or just return its data when already on host.
-func Download(q outputField) *data.Slice {
-	buf, recycle := q.Slice()
-	if recycle {
-		defer opencl.Recycle(buf)
-	}
+func Download(q Quantity) *data.Slice {
+	// TODO: optimize for Buffer()
+	buf := ValueOf(q)
+	defer opencl.Recycle(buf)
 	if buf.CPUAccess() {
 		return buf
 	} else {
@@ -118,8 +117,8 @@ func myFmt(msg []interface{}) []interface{} {
 			msg[i] = *e
 		}
 		// Tabledata: print average
-		if m, ok := m.(TableData); ok {
-			str := fmt.Sprint(m.average())
+		if m, ok := m.(Quantity); ok {
+			str := fmt.Sprint(AverageOf(m))
 			msg[i] = str[1 : len(str)-1] // remove [ ]
 			continue
 		}

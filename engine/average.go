@@ -8,11 +8,9 @@ import (
 )
 
 // average of quantity over universe
-func qAverageUniverse(q outputField) []float64 {
-	s, recycle := q.Slice()
-	if recycle {
-		defer opencl.Recycle(s)
-	}
+func qAverageUniverse(q Quantity) []float64 {
+	s := ValueOf(q)
+	defer opencl.Recycle(s)
 	return sAverageUniverse(s)
 }
 
