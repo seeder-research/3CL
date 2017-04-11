@@ -47,7 +47,7 @@ func init() {
 func (b *thermField) AddTo(dst *data.Slice) {
 	if !Temp.isZero() {
 		b.update()
-		cuda.Madd2(dst, dst, b.noise, 1, 1)
+		opencl.Madd2(dst, dst, b.noise, 1, 1)
 	}
 }
 
@@ -63,14 +63,14 @@ func (b *thermField) update() {
 		b.generator.SetSeed(b.seed)
 	}
 	if b.noise == nil {
-		b.noise = cuda.NewSlice(b.NComp(), b.Mesh().Size())
+		b.noise = opencl.NewSlice(b.NComp(), b.Mesh().Size())
 		// when noise was (re-)allocated it's invalid for sure.
 		B_therm.step = -1
 		B_therm.dt = -1
 	}
 
 	if Temp.isZero() {
-		cuda.Memset(b.noise, 0, 0, 0)
+		opencl.Memset(b.noise, 0, 0, 0)
 		b.step = NSteps
 		b.dt = Dt_si
 		return
@@ -87,15 +87,15 @@ func (b *thermField) update() {
 
 	N := Mesh().NCell()
 	k2mu0_VgammaDt := 2 * mag.Mu0 * mag.Kb / (GammaLL * cellVolume() * Dt_si)
-	noise := cuda.Buffer(1, Mesh().Size())
-	defer cuda.Recycle(noise)
+	noise := opencl.Buffer(1, Mesh().Size())
+	defer opencl.Recycle(noise)
 
 	const mean = 0
 	const stddev = 1
 	dst := b.noise
 	for i := 0; i < 3; i++ {
 		b.generator.GenerateNormal(uintptr(noise.DevPtr(0)), int64(N), mean, stddev)
-		cuda.SetTemperature(dst.Comp(i), noise, temp_red.gpuLUT1(), k2mu0_VgammaDt, regions.Gpu())
+		opencl.SetTemperature(dst.Comp(i), noise, temp_red.gpuLUT1(), k2mu0_VgammaDt, regions.Gpu())
 	}
 
 	b.step = NSteps

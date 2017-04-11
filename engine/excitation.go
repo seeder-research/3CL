@@ -11,11 +11,10 @@ import (
 
 // An excitation, typically field or current,
 // can be defined region-wise plus extra mask*multiplier terms.
-// TODO: unify with param.
 type Excitation struct {
 	name       string
-	perRegion  VectorParam // Region-based excitation
-	extraTerms []mulmask   // add extra mask*multiplier terms
+	perRegion  RegionwiseVector // Region-based excitation
+	extraTerms []mulmask        // add extra mask*multiplier terms
 }
 
 // space-dependent mask plus time dependent multiplier
@@ -30,6 +29,12 @@ func NewExcitation(name, unit, desc string) *Excitation {
 	e.perRegion.init(3, "_"+name+"_perRegion", unit, nil) // name starts with underscore: unexported
 	DeclLValue(name, e, cat(desc, unit))
 	return e
+}
+
+func (p *Excitation) MSlice() opencl.MSlice {
+	buf, r := p.Slice()
+	util.Assert(r == true)
+	return opencl.ToMSlice(buf)
 }
 
 func (e *Excitation) AddTo(dst *data.Slice) {
@@ -76,7 +81,7 @@ func (e *Excitation) RemoveExtraTerms() {
 func (e *Excitation) Add(mask *data.Slice, f script.ScalarFunction) {
 	var mul func() float64
 	if f != nil {
-		if Const(f) {
+		if IsConst(f) {
 			val := f.Float()
 			mul = func() float64 {
 				return val
@@ -123,6 +128,7 @@ func (e *Excitation) Comp(c int) ScalarField  { return Comp(e, c) }
 func (e *Excitation) Eval() interface{}       { return e }
 func (e *Excitation) Type() reflect.Type      { return reflect.TypeOf(new(Excitation)) }
 func (e *Excitation) InputType() reflect.Type { return script.VectorFunction_t }
+func (e *Excitation) EvalTo(dst *data.Slice)  { EvalTo(e, dst) }
 
 func checkNaN(s *data.Slice, name string) {
 	h := s.Host()
