@@ -9,6 +9,7 @@ import (
 )
 
 // multiply: dst[i] = a[i] * b[i]
+// a and b must have the same number of components
 func Mul(dst, a, b *data.Slice) {
 	N := dst.Len()
 	nComp := dst.NComp()
@@ -43,6 +44,11 @@ func Div(dst, a, b *data.Slice) {
 	}
 	err := cl.WaitForEvents(eventList)
 	if err != nil { fmt.Printf("WaitForEvents failed in div: %+v \n", err) }
+}
+
+// Add: dst = src1 + src2.
+func Add(dst, src1, src2 *data.Slice) {
+	Madd2(dst, src1, src2, 1, 1)
 }
 
 // multiply-add: dst[i] = src1[i] * factor1 + src2[i] * factor2

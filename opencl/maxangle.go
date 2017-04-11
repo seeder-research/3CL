@@ -17,8 +17,8 @@ func SetMaxAngle(dst, m *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data
 	event := k_setmaxangle_async(dst.DevPtr(0),
 		m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
 		unsafe.Pointer(Aex_red), regions.Ptr,
-		N[X], N[Y], N[Z], pbc, cfg, [](*cl.Event){dst.GetEvent(0),
-		m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z)})
+		N[X], N[Y], N[Z], pbc, cfg,
+		[](*cl.Event){dst.GetEvent(0), m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z)})
 	dst.SetEvent(0, event)
 	m.SetEvent(X, event)
 	m.SetEvent(Y, event)

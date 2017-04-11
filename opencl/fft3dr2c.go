@@ -9,13 +9,13 @@ import (
 	"github.com/mumax/3cl/util"
 )
 
-// 3D single-precission real-to-complex FFT plan.
+// 3D single-precision real-to-complex FFT plan.
 type fft3DR2CPlan struct {
 	fftplan
 	size [3]int
 }
 
-// 3D single-precission real-to-complex FFT plan.
+// 3D single-precision real-to-complex FFT plan.
 func newFFT3DR2C(Nx, Ny, Nz int) fft3DR2CPlan {
 	handle, err := cl.NewCLFFTPlan(ClCtx, cl.CLFFTDim3D, []int{Nz, Ny, Nx}) // new xyz swap
 	if err != nil {

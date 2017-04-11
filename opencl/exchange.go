@@ -12,6 +12,7 @@ import (
 // 	m: normalized magnetization
 // 	B: effective field in Tesla
 // 	Aex_red: Aex / (Msat * 1e18 m2)
+// see exchange.cl
 func AddExchange(B, m *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data.Mesh) {
 	c := mesh.CellSize()
 	wx := float32(2 * 1e-18 / (c[X] * c[X]))
@@ -45,8 +46,8 @@ func ExchangeDecode(dst *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data
 	N := mesh.Size()
 	pbc := mesh.PBC_code()
 	cfg := make3DConf(N)
-	event := k_exchangedecode_async(dst.DevPtr(0), unsafe.Pointer(Aex_red), regions.Ptr,
-					wx, wy, wz, N[X], N[Y], N[Z], pbc, cfg, [](*cl.Event){dst.GetEvent(0)})
+	event := k_exchangedecode_async(dst.DevPtr(0), unsafe.Pointer(Aex_red), regions.Ptr, wx, wy, wz, N[X], N[Y], N[Z], pbc, cfg,
+					[](*cl.Event){dst.GetEvent(0)})
 	dst.SetEvent(0, event)
         err := cl.WaitForEvents([](*cl.Event){event})
         if err != nil { fmt.Printf("WaitForEvents failed in addexchange: %+v", err) }

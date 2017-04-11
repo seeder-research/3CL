@@ -2,7 +2,6 @@ package opencl
 
 import (
 	"fmt"
-//	"unsafe"
 
 	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
@@ -18,7 +17,8 @@ func copyUnPad(dst, src *data.Slice, dstsize, srcsize [3]int) {
 	cfg := make3DConf(dstsize)
 
 	event := k_copyunpad_async(dst.DevPtr(0), dstsize[X], dstsize[Y], dstsize[Z],
-		src.DevPtr(0), srcsize[X], srcsize[Y], srcsize[Z], cfg, []*cl.Event{dst.GetEvent(0), src.GetEvent(0)})
+		src.DevPtr(0), srcsize[X], srcsize[Y], srcsize[Z], cfg,
+		[]*cl.Event{dst.GetEvent(0), src.GetEvent(0)})
 	dst.SetEvent(0, event)
 	src.SetEvent(0, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
@@ -36,11 +36,12 @@ func copyPadMul(dst, src, vol *data.Slice, dstsize, srcsize [3]int, Msat MSlice)
 
 	event := k_copypadmul2_async(dst.DevPtr(0), dstsize[X], dstsize[Y], dstsize[Z],
 		src.DevPtr(0), srcsize[X], srcsize[Y], srcsize[Z],
-		Msat.DevPtr(0), Msat.Mul(0), vol.DevPtr(0), cfg, []*cl.Event{dst.GetEvent(0), src.GetEvent(0), vol.GetEvent(0)})
+		Msat.DevPtr(0), Msat.Mul(0), vol.DevPtr(0), cfg,
+		[]*cl.Event{dst.GetEvent(0), src.GetEvent(0), Msat.GetEvent(0), vol.GetEvent(0)})
 	dst.SetEvent(0, event)
 	src.SetEvent(0, event)
-	vol.SetEvent(0, event)
 	Msat.SetEvent(0, event)
+	vol.SetEvent(0, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
 	if err != nil { fmt.Printf("WaitForEvents failed in copypadmul: %+v \n", err) }
 }

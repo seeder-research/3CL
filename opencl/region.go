@@ -47,8 +47,8 @@ func RegionSelect(dst, src *data.Slice, regions *Bytes, region byte) {
 
 	eventList := make([]*cl.Event, dst.NComp())
 	for c := 0; c < dst.NComp(); c++ {
-		eventList[c] = k_regionselect_async(dst.DevPtr(c), src.DevPtr(c), regions.Ptr, region,
-					N, cfg, [](*cl.Event){dst.GetEvent(c), src.GetEvent(c)})
+		eventList[c] = k_regionselect_async(dst.DevPtr(c), src.DevPtr(c), regions.Ptr, region, N, cfg,
+								[](*cl.Event){dst.GetEvent(c), src.GetEvent(c)})
 		dst.SetEvent(c, eventList[c])
 		src.SetEvent(c, eventList[c])
 	}

@@ -8,6 +8,7 @@ import (
 )
 
 // Add Slonczewski ST torque to torque (Tesla).
+// see slonczewski.cl
 func AddSlonczewskiTorque(torque, m *data.Slice, Msat, J, fixedP, alpha, pol, λ, ε_prime MSlice, mesh *data.Mesh) {
 	N := torque.Len()
 	cfg := make1DConf(N)
@@ -26,17 +27,19 @@ func AddSlonczewskiTorque(torque, m *data.Slice, Msat, J, fixedP, alpha, pol, λ
 		λ.DevPtr(0), λ.Mul(0),
 		ε_prime.DevPtr(0), ε_prime.Mul(0),
 		unsafe.Pointer(uintptr(0)), flt,
-		N, cfg, [](*cl.Event){torque.GetEvent(X), torque.GetEvent(Y), torque.GetEvent(Z),
-                m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z), J.GetEvent(Z),  fixedP.GetEvent(X), fixedP.GetEvent(Y),
-                fixedP.GetEvent(Z)})
-        torque.SetEvent(X, event)
-        torque.SetEvent(Y, event)
-        torque.SetEvent(Z, event)
-        m.SetEvent(X, event)
-        m.SetEvent(Y, event)
-        m.SetEvent(Z, event)
-        J.SetEvent(Z, event)
-        fixedP.SetEvent(X, event)
-        fixedP.SetEvent(Y, event)
-        fixedP.SetEvent(Z, event)
+		N, cfg,
+		[](*cl.Event){torque.GetEvent(X), torque.GetEvent(Y), torque.GetEvent(Z),
+        m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z),
+		fixedP.GetEvent(X), fixedP.GetEvent(Y), fixedP.GetEvent(Z),
+		J.GetEvent(Z)})
+    torque.SetEvent(X, event)
+    torque.SetEvent(Y, event)
+    torque.SetEvent(Z, event)
+    m.SetEvent(X, event)
+    m.SetEvent(Y, event)
+    m.SetEvent(Z, event)
+    J.SetEvent(Z, event)
+    fixedP.SetEvent(X, event)
+    fixedP.SetEvent(Y, event)
+    fixedP.SetEvent(Z, event)
 }

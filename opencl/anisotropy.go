@@ -29,7 +29,9 @@ func AddCubicAnisotropy2(Beff, m *data.Slice, Msat, k1, k2, k3, c1, c2 MSlice) {
 		c2.DevPtr(Y), c2.Mul(Y),
 		c2.DevPtr(Z), c2.Mul(Z),
 		N, cfg, [](*cl.Event){Beff.GetEvent(X),
-		Beff.GetEvent(Y), Beff.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z)})
+		Beff.GetEvent(Y), Beff.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z), Msat.GetEvent(0),
+		k1.GetEvent(0), k2.GetEvent(0), k3.GetEvent(0), c1.GetEvent(X), c1.GetEvent(Y), c1.GetEvent(Z),
+		c2.GetEvent(X), c2.GetEvent(Y), c2.GetEvent(Z)})
 
 	Beff.SetEvent(X, event)
 	Beff.SetEvent(Y, event)
@@ -37,12 +39,22 @@ func AddCubicAnisotropy2(Beff, m *data.Slice, Msat, k1, k2, k3, c1, c2 MSlice) {
 	m.SetEvent(X, event)
 	m.SetEvent(Y, event)
 	m.SetEvent(Z, event)
+	Msat.SetEvent(0, event)
+	k1.SetEvent(0, event)
+	k2.SetEvent(0, event)
+	k3.SetEvent(0, event)
+	c1.SetEvent(X, event)
+	c1.SetEvent(Y, event)
+	c1.SetEvent(Z, event)
+	c2.SetEvent(X, event)
+	c2.SetEvent(Y, event)
+	c2.SetEvent(Z, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
 	if err != nil { fmt.Printf("WaitForEvents failed in addcubicanisotropy: %+v \n", err) }
 }
 
 // Add uniaxial magnetocrystalline anisotropy field to Beff.
-// see uniaxialanisotropy.cu
+// see uniaxialanisotropy2.cl
 func AddUniaxialAnisotropy2(Beff, m *data.Slice, Msat, k1, k2, u MSlice) {
 	util.Argument(Beff.Size() == m.Size())
 
@@ -59,7 +71,8 @@ func AddUniaxialAnisotropy2(Beff, m *data.Slice, Msat, k1, k2, u MSlice) {
 		u.DevPtr(Y), u.Mul(Y),
 		u.DevPtr(Z), u.Mul(Z),
 		N, cfg, [](*cl.Event){Beff.GetEvent(X),
-		Beff.GetEvent(Y), Beff.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z)})
+		Beff.GetEvent(Y), Beff.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z), Msat.GetEvent(0),
+		k1.GetEvent(0), k2.GetEvent(0), u.GetEvent(X), u.GetEvent(Y), u.GetEvent(Z)})
 
 	Beff.SetEvent(X, event)
 	Beff.SetEvent(Y, event)
@@ -67,6 +80,12 @@ func AddUniaxialAnisotropy2(Beff, m *data.Slice, Msat, k1, k2, u MSlice) {
 	m.SetEvent(X, event)
 	m.SetEvent(Y, event)
 	m.SetEvent(Z, event)
+	Msat.SetEvent(0, event)
+	k1.SetEvent(0, event)
+	k2.SetEvent(0, event)
+	u.SetEvent(X, event)
+	u.SetEvent(Y, event)
+	u.SetEvent(Z, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
 	if err != nil { fmt.Printf("WaitForEvents failed in addcubicanisotropy: %+v \n", err) }
 }

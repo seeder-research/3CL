@@ -16,8 +16,9 @@ func Minimize(m, m0, torque *data.Slice, dt float32) {
 	event := k_minimize_async(m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
 		m0.DevPtr(X), m0.DevPtr(Y), m0.DevPtr(Z),
 		torque.DevPtr(X), torque.DevPtr(Y), torque.DevPtr(Z),
-		dt, N, cfg, [](*cl.Event){m.GetEvent(X), m.GetEvent(Y),
-		m.GetEvent(Z), m0.GetEvent(X), m0.GetEvent(Y), m0.GetEvent(Z), 
+		dt, N, cfg,
+		[](*cl.Event){m.GetEvent(X), m.GetEvent(Y),	m.GetEvent(Z),
+		m0.GetEvent(X), m0.GetEvent(Y), m0.GetEvent(Z), 
 		torque.GetEvent(X), torque.GetEvent(Y), torque.GetEvent(Z)})
 	m.SetEvent(X, event)
 	m.SetEvent(Y, event)
