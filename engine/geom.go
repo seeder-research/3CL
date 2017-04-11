@@ -27,7 +27,7 @@ type geom struct {
 func (g *geom) init() {
 	g.buffer = nil
 	g.info = info{1, "geom", ""}
-	DeclROnly("geom", &geometry, "Cell fill fraction (0..1)")
+	DeclROnly("geom", g, "Cell fill fraction (0..1)")
 }
 
 func spaceFill() float64 {
@@ -55,6 +55,10 @@ func (g *geom) Slice() (*data.Slice, bool) {
 		return s, false
 	}
 }
+
+func (q *geom) EvalTo(dst *data.Slice) { EvalTo(q, dst) }
+
+var _ Quantity = &geometry
 
 func (g *geom) average() []float64 {
 	s, r := g.Slice()

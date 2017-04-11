@@ -177,7 +177,7 @@ func (r *Regions) Gpu() *opencl.Bytes {
 	return r.gpuCache
 }
 
-var unitMap param // unit map used to output regions quantity
+var unitMap regionwise // unit map used to output regions quantity
 
 func init() {
 	unitMap.init(1, "unit", "", nil)
@@ -192,6 +192,10 @@ func (r *Regions) Slice() (*data.Slice, bool) {
 	opencl.RegionDecode(buf, unitMap.gpuLUT1(), regions.Gpu())
 	return buf, true
 }
+
+func (r *Regions) EvalTo(dst *data.Slice) { EvalTo(r, dst) }
+
+var _ Quantity = &regions
 
 // Re-interpret a contiguous array as a multi-dimensional array of given size.
 func reshapeBytes(array []byte, size [3]int) [][][]byte {

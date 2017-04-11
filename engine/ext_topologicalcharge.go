@@ -18,10 +18,8 @@ func SetTopologicalChargeDensity(dst *data.Slice) {
 }
 
 func GetTopologicalCharge() float64 {
-	s, recycle := Ext_TopologicalChargeDensity.Slice()
-	if recycle {
-		defer opencl.Recycle(s)
-	}
+	s := ValueOf(Ext_TopologicalChargeDensity)
+	defer opencl.Recycle(s)
 	c := Mesh().CellSize()
 	N := Mesh().Size()
 	return (0.25 * c[X] * c[Y] / math.Pi / float64(N[Z])) * float64(opencl.Sum(s))

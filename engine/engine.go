@@ -12,12 +12,14 @@ TODO: godoc everything
 package engine
 
 import (
+	"github.com/mumax/3cl/timer"
+	"os"
 	"runtime"
 	"sync"
 	"time"
 )
 
-const VERSION = "mumax3cl 3.9.1c"
+const VERSION = "mumax 3.10"
 
 var UNAME = VERSION + " " + runtime.GOOS + "_" + runtime.GOARCH + " " + runtime.Version() + " (" + runtime.Compiler + ")"
 
@@ -49,5 +51,11 @@ func Close() {
 	if logfile != nil {
 		logfile.Close()
 	}
-	checkNaN1(M.Comp(0).Average()) // at the end of the simulation, check for NaN so that it fails with exit status.
+	if bibfile != nil {
+		bibfile.Close()
+	}
+	if *Flag_sync {
+		timer.Print(os.Stdout)
+	}
+
 }

@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	Alpha        = NewScalarParam("alpha", "", "Landau-Lifshitz damping constant", &temp_red)
+	Alpha        = NewScalarParam("alpha", "", "Landau-Lifshitz damping constant")
 	Xi           = NewScalarParam("xi", "", "Non-adiabaticity of spin-transfer-torque")
 	Pol          = NewScalarParam("Pol", "", "Electrical current polarization")
 	Lambda       = NewScalarParam("Lambda", "", "Slonczewski Λ parameter")
@@ -28,7 +28,7 @@ var (
 
 func init() {
 	Pol.setUniform([]float64{1}) // default spin polarization
-	Lambda.Set(1)                // sensible default value (?). TODO: should not be zero
+	Lambda.Set(1)                // sensible default value (?).
 	DeclVar("GammaLL", &GammaLL, "Gyromagnetic ratio in rad/Ts")
 	DeclVar("DisableZhangLiTorque", &DisableZhangLiTorque, "Disables Zhang-Li torque (default=false)")
 	DeclVar("DisableSlonczewskiTorque", &DisableSlonczewskiTorque, "Disables Slonczewski torque (default=false)")
@@ -36,7 +36,6 @@ func init() {
 }
 
 // Sets dst to the current total torque
-// TODO: extensible
 func SetTorque(dst *data.Slice) {
 	SetLLTorque(dst)
 	AddSTTorque(dst)
@@ -46,8 +45,10 @@ func SetTorque(dst *data.Slice) {
 // Sets dst to the current Landau-Lifshitz torque
 func SetLLTorque(dst *data.Slice) {
 	SetEffectiveField(dst) // calc and store B_eff
+	alpha := Alpha.MSlice()
+	defer alpha.Recycle()
 	if Precess {
-		opencl.LLTorque(dst, M.Buffer(), dst, Alpha.gpuLUT1(), regions.Gpu()) // overwrite dst with torque
+		opencl.LLTorque(dst, M.Buffer(), dst, alpha) // overwrite dst with torque
 	} else {
 		opencl.LLNoPrecess(dst, M.Buffer(), dst)
 	}
@@ -68,12 +69,35 @@ func AddSTTorque(dst *data.Slice) {
 		defer opencl.Recycle(fl)
 	}
 	if !DisableZhangLiTorque {
-		opencl.AddZhangLiTorque(dst, M.Buffer(), jspin, Bsat.gpuLUT1(),
-			Alpha.gpuLUT1(), Xi.gpuLUT1(), Pol.gpuLUT1(), regions.Gpu(), Mesh())
+		msat := Msat.MSlice()
+		defer msat.Recycle()
+		j := J.MSlice()
+		defer j.Recycle()
+		alpha := Alpha.MSlice()
+		defer alpha.Recycle()
+		xi := Xi.MSlice()
+		defer xi.Recycle()
+		pol := Pol.MSlice()
+		defer pol.Recycle()
+		opencl.AddZhangLiTorque(dst, M.Buffer(), msat, j, alpha, xi, pol, Mesh())
 	}
 	if !DisableSlonczewskiTorque && !FixedLayer.isZero() {
-		opencl.AddSlonczewskiTorque(dst, M.Buffer(), jspin, fl, Msat.gpuLUT1(),
-			Alpha.gpuLUT1(), Pol.gpuLUT1(), Lambda.gpuLUT1(), EpsilonPrime.gpuLUT1(), regions.Gpu(), Mesh())
+		msat := Msat.MSlice()
+		defer msat.Recycle()
+		j := J.MSlice()
+		defer j.Recycle()
+		fixedP := FixedLayer.MSlice()
+		defer fixedP.Recycle()
+		alpha := Alpha.MSlice()
+		defer alpha.Recycle()
+		pol := Pol.MSlice()
+		defer pol.Recycle()
+		lambda := Lambda.MSlice()
+		defer lambda.Recycle()
+		epsPrime := EpsilonPrime.MSlice()
+		defer epsPrime.Recycle()
+		opencl.AddSlonczewskiTorque2(dst, M.Buffer(),
+			msat, j, fixedP, alpha, pol, lambda, epsPrime, Mesh())
 	}
 }
 
@@ -83,11 +107,8 @@ func FreezeSpins(dst *data.Slice) {
 	}
 }
 
-// Gets
 func GetMaxTorque() float64 {
-	torque, recycle := Torque.Slice()
-	if recycle {
-		defer opencl.Recycle(torque)
-	}
+	torque := ValueOf(Torque)
+	defer opencl.Recycle(torque)
 	return opencl.MaxVecNorm(torque)
 }

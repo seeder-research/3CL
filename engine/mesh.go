@@ -3,7 +3,6 @@ package engine
 import (
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/data"
-	"github.com/mumax/3cl/util"
 )
 
 var globalmesh_ data.Mesh // mesh for m and everything that has the same size
@@ -71,10 +70,10 @@ func SetMesh(Nx, Ny, Nz int, cellSizeX, cellSizeY, cellSizeZ float64, pbcx, pbcy
 			J.RemoveExtraTerms()
 		}
 
-//		if Mesh().Size() != prevSize {
-//			B_therm.noise.Free()
-//			B_therm.noise = nil
-//		}
+		if Mesh().Size() != prevSize {
+			B_therm.noise.Free()
+			B_therm.noise = nil
+		}
 	}
 	lazy_gridsize = []int{Nx, Ny, Nz}
 	lazy_cellsize = []float64{cellSizeX, cellSizeY, cellSizeZ}
@@ -118,6 +117,6 @@ func SetPBC(nx, ny, nz int) {
 // check if mesh is set
 func checkMesh() {
 	if globalmesh_.Size() == [3]int{0, 0, 0} {
-		util.Fatal("need to set mesh first")
+		panic("need to set mesh first")
 	}
 }

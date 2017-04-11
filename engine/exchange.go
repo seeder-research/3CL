@@ -155,7 +155,7 @@ func (p *aexchParam) update() {
 			for j := i; j < NREGION; j++ {
 				lexj := 1e18 * safediv(aex[0][j], msat[0][j])
 				I := symmidx(i, j)
-				p.lut[I] = p.scale[I]*2/(1/dexi+1/dexj) + interdmi
+				p.lut[I] = p.scale[I] * 2 / (1/lexi + 1/lexj)
 			}
 		}
 		p.gpu_ok = false
@@ -173,7 +173,7 @@ func (p *dexchParam) update() {
 				dexj := 1e9 * safediv(dex[0][j], msat[0][j])
 				I := symmidx(i, j)
 				interdmi := 1e9 * safediv(p.interdmi[I], msat[0][i])
-				p.lut[I] = p.scale[I] * 2 / (1/dexi + 1/dexj)
+				p.lut[I] = p.scale[I]*2/(1/dexi+1/dexj) + interdmi
 			}
 		}
 		p.gpu_ok = false
