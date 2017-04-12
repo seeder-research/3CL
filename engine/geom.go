@@ -40,7 +40,7 @@ func spaceFill() float64 {
 
 func (g *geom) Gpu() *data.Slice {
 	if g.buffer == nil {
-		g.buffer = data.NilSlice(1, g.Mesh().Size())
+		g.buffer = opencl.NewSlice(1, g.Mesh().Size())
 	}
 	return g.buffer
 }
