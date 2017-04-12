@@ -28,6 +28,7 @@ var (
 	initialized  = false                   // Initial state defaults to false
 	ClCUnits     int                       // Get number of compute units available
 	ClWGSize     int                       // Get maximum size of work group per compute unit
+	ClPrefWGSz	 int                       // Get preferred work group size of device
 )
 
 // Locks to an OS thread and initializes CUDA for that thread.
@@ -117,6 +118,10 @@ func Init(gpu, platformId int) {
 	reducecfg.Block[0] = ClWGSize
 	reduceintcfg.Grid[0] = ClWGSize * ClCUnits
 	reduceintcfg.Block[0] = ClWGSize
+	ClPrefWGSz, err = KernList["madd2"].PreferredWorkGroupSizeMultiple(ClDevice)
+	if err != nil {
+		fmt.Printf("PreferredWorkGroupSizeMultiple failed: %+v \n", err)
+	}
 }
 
 func ReleaseAndClean() {
