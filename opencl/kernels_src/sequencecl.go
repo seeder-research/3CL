@@ -14,12 +14,14 @@ var OCLHeadersList = []string{
 	"sum"	}
 
 var OCLKernelsList = []string{
-	"addcubicanisotropy2",
 	"copypadmul2",
+	"copyunpad",
 	"crop",
-	"adddmibulk",
-	"adddmi",
+	"addcubicanisotropy2",
+	"pointwise_div",
 	"divide",
+	"adddmi",
+	"adddmibulk",
 	"dotproduct",
 	"addexchange",
 	"exchangedecode",
@@ -31,7 +33,9 @@ var OCLKernelsList = []string{
 	"lltorque2",
 	"madd2",
 	"madd3",
-	"pointwise_div",
+	"mul",
+	"normalize2",
+	"addoommfslonczewskitorque",
 	"reducedot",
 	"reducemaxabs",
 	"reducemaxdiff",

@@ -11,7 +11,7 @@ func Normalize(vec, vol *data.Slice) {
 	util.Argument(vol == nil || vol.NComp() == 1)
 	N := vec.Len()
 	cfg := make1DConf(N)
-	event := k_normalize_async(vec.DevPtr(X), vec.DevPtr(Y), vec.DevPtr(Z), vol.DevPtr(0), N, cfg,
+	event := k_normalize2_async(vec.DevPtr(X), vec.DevPtr(Y), vec.DevPtr(Z), vol.DevPtr(0), N, cfg,
 				[](*cl.Event){vec.GetEvent(X), vec.GetEvent(Y), vec.GetEvent(Z), vol.GetEvent(X)})
 
 	vec.SetEvent(X, event)
