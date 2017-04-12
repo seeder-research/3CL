@@ -31,10 +31,7 @@ addoommfslonczewskitorque(__global float* __restrict tx, __global float* __restr
         float  pfree        = amul(pfree_, pfree_mul, I);
         float  lambdafix    = amul(lambdafix_, lambdafix_mul, I);
         float  lambdafree   = amul(lambdafree_, lambdafix_mul, I);
-        float  epsilonPrime = amul(epsPrime_, epsPrime_mul, I);
-
-		// read parameters
-		uint8_t region       = regions[I];
+        float  epsilonPrime = amul(epsilonPrime_, epsilonPrime_mul, I);
 
 		if (J == 0.0f || Ms == 0.0f) {
 			return;
