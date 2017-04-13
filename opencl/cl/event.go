@@ -101,7 +101,11 @@ func eventListPtr(el []*Event) *C.cl_event {
 	}
 	elist := make([]C.cl_event, len(el))
 	for i, e := range el {
-		elist[i] = e.clEvent
+		if e == nil {
+			elist[i] = nil
+		} else {
+			elist[i] = e.clEvent
+		}
 	}
 	return (*C.cl_event)(&elist[0])
 }
