@@ -32,6 +32,9 @@ func LaunchKernel(kernname string, gridDim, workDim []int, events []*cl.Event) *
 
 func SetKernelArgWrapper(kernname string, index int, arg interface{}) {
 //	log.Printf("Working on index %d \n", index)
+	if KernList[kernname] == nil {
+		log.Panic("Kernel "+kernname+" does not exist!")
+	}
 	switch val := arg.(type) {
 	default:
 		if err := KernList[kernname].SetArg(index, val); err != nil {
