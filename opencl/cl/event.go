@@ -86,7 +86,8 @@ func retainEvent(ev *Event) {
 // stream. This provides another method of coordinating sharing of buffers
 // and images between OpenGL and OpenCL.
 func WaitForEvents(events []*Event) error {
-	return toError(C.clWaitForEvents(C.cl_uint(len(events)), eventListPtr(events)))
+	eventWaitListPtr, WaitListLen := eventListPtr(events)
+	return toError(C.clWaitForEvents(C.cl_uint(WaitListLen), eventWaitListPtr))
 }
 
 func newEvent(clEvent C.cl_event) *Event {
@@ -95,19 +96,17 @@ func newEvent(clEvent C.cl_event) *Event {
 	return ev
 }
 
-func eventListPtr(el []*Event) *C.cl_event {
+func eventListPtr(el []*Event) (*C.cl_event, int) {
 	if el == nil {
-		return nil
+		return nil, 0
 	}
-	elist := make([]C.cl_event, len(el))
-	for i, e := range el {
-		if e == nil {
-			elist[i] = nil
-		} else {
-			elist[i] = e.clEvent
+	var elist []C.cl_event
+	for _, e := range el {
+		if e != nil {
+			elist = append(elist,e.clEvent)
 		}
 	}
-	return (*C.cl_event)(&elist[0])
+	return (*C.cl_event)(&elist[0]), len(elist)
 }
 
 //////////////// Abstract Functions ///////////////
@@ -240,14 +239,16 @@ func (ev *Event) SetEventCallback(status CommandExecStatus, user_data unsafe.Poi
 // A synchronization point that enqueues a barrier operation.
 func (q *CommandQueue) EnqueueBarrierWithWaitList(eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
-	err := toError(C.clEnqueueBarrierWithWaitList(q.clQueue, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
+	err := toError(C.clEnqueueBarrierWithWaitList(q.clQueue, C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 
 // Enqueues a marker command which waits for either a list of events to complete, or all previously enqueued commands to complete.
 func (q *CommandQueue) EnqueueMarkerWithWaitList(eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
-	err := toError(C.clEnqueueMarkerWithWaitList(q.clQueue, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
+	err := toError(C.clEnqueueMarkerWithWaitList(q.clQueue, C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 

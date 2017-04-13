@@ -8,8 +8,7 @@ import (
 // there might be better choices for recent hardware,
 // but it barely makes a difference in the end.
 const (
-	BlockSize    = 512
-	TileX, TileY = 32, 32
+	TileX, TileY = 16, 16
 	MaxGridSize  = 65535
 )
 

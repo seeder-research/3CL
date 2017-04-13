@@ -327,7 +327,8 @@ func (q *CommandQueue) EnqueueNDRangeKernel(kernel *Kernel, globalWorkOffset, gl
 		localWorkSizePtr = &localWorkSizeList[0]
 	}
 	var event C.cl_event
-	err := toError(C.clEnqueueNDRangeKernel(q.clQueue, kernel.clKernel, C.cl_uint(workDim), globalWorkOffsetPtr, globalWorkSizePtr, localWorkSizePtr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+	eventWaitListPtr, WaitListLen :=  eventListPtr(eventWaitList)
+	err := toError(C.clEnqueueNDRangeKernel(q.clQueue, kernel.clKernel, C.cl_uint(workDim), globalWorkOffsetPtr, globalWorkSizePtr, localWorkSizePtr, C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 
@@ -335,7 +336,8 @@ func (q *CommandQueue) EnqueueNDRangeKernel(kernel *Kernel, globalWorkOffset, gl
 // and globalWorkOffset = 0
 func (q *CommandQueue) EnqueueTask(kernel *Kernel, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
-	err := toError(C.clEnqueueTask(q.clQueue, kernel.clKernel, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+	eventWaitListPtr, WaitListLen :=  eventListPtr(eventWaitList)
+	err := toError(C.clEnqueueTask(q.clQueue, kernel.clKernel, C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 
@@ -346,7 +348,8 @@ func (q *CommandQueue) EnqueueNativeKernel(user_args unsafe.Pointer, num_user_ar
 	for i, mb := range memObjects {
 		UserMemObjs[i] = mb.clMem
 	}
-	err := toError(C.CLEnqueueNativeKernel(q.clQueue, user_args, C.size_t(num_user_args), C.cl_uint(len(memObjects)), &UserMemObjs[0], &ptr_memobj_in_args[0], C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+	eventWaitListPtr, WaitListLen :=  eventListPtr(eventWaitList)
+	err := toError(C.CLEnqueueNativeKernel(q.clQueue, user_args, C.size_t(num_user_args), C.cl_uint(len(memObjects)), &UserMemObjs[0], &ptr_memobj_in_args[0], C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 

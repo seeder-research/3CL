@@ -337,7 +337,8 @@ func (b *MemObject) SetMemObjectDestructorCallback(user_data unsafe.Pointer) err
 func (q *CommandQueue) EnqueueMapBuffer(buffer *MemObject, blocking bool, flags MapFlag, offset, size int, eventWaitList []*Event) (*MappedMemObject, *Event, error) {
 	var event C.cl_event
 	var err C.cl_int
-	ptr := C.clEnqueueMapBuffer(q.clQueue, buffer.clMem, clBool(blocking), flags.toCl(), C.size_t(offset), C.size_t(size), C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event, &err)
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
+	ptr := C.clEnqueueMapBuffer(q.clQueue, buffer.clMem, clBool(blocking), flags.toCl(), C.size_t(offset), C.size_t(size), C.cl_uint(WaitListLen), eventWaitListPtr, &event, &err)
 	if err != C.CL_SUCCESS {
 		return nil, nil, toError(err)
 	}
@@ -351,7 +352,8 @@ func (q *CommandQueue) EnqueueMapBuffer(buffer *MemObject, blocking bool, flags 
 // Enqueues a command to unmap a previously mapped region of a memory object.
 func (q *CommandQueue) EnqueueUnmapMemObject(buffer *MemObject, mappedObj *MappedMemObject, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
-	if err := C.clEnqueueUnmapMemObject(q.clQueue, buffer.clMem, mappedObj.ptr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event); err != C.CL_SUCCESS {
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
+	if err := C.clEnqueueUnmapMemObject(q.clQueue, buffer.clMem, mappedObj.ptr, C.cl_uint(WaitListLen), eventWaitListPtr, &event); err != C.CL_SUCCESS {
 		return nil, toError(err)
 	}
 	return newEvent(event), nil
@@ -360,7 +362,8 @@ func (q *CommandQueue) EnqueueUnmapMemObject(buffer *MemObject, mappedObj *Mappe
 // Enqueues a command to copy a buffer object to another buffer object.
 func (q *CommandQueue) EnqueueCopyBuffer(srcBuffer, dstBuffer *MemObject, srcOffset, dstOffset, byteCount int, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
-	err := toError(C.clEnqueueCopyBuffer(q.clQueue, srcBuffer.clMem, dstBuffer.clMem, C.size_t(srcOffset), C.size_t(dstOffset), C.size_t(byteCount), C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
+	err := toError(C.clEnqueueCopyBuffer(q.clQueue, srcBuffer.clMem, dstBuffer.clMem, C.size_t(srcOffset), C.size_t(dstOffset), C.size_t(byteCount), C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 
@@ -376,16 +379,18 @@ func (q *CommandQueue) EnqueueCopyBufferRect(dst, src *MemObject, dst_origin, sr
 	mem_size := make([]C.size_t, 3)
 	defer C.free(unsafe.Pointer(&mem_size))
 	mem_size[0], mem_size[1], mem_size[2] = (C.size_t)(region.X), (C.size_t)(region.Y), (C.size_t)(region.Z)
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
 	err := toError(C.clEnqueueCopyBufferRect(q.clQueue, src.clMem, dst.clMem, &src_offset[0], &dst_offset[0], &mem_size[0],
 		(C.size_t)(src_row_pitch), (C.size_t)(src_slice_pitch), (C.size_t)(dst_row_pitch), (C.size_t)(dst_slice_pitch),
-		C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+		C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 
 // Enqueue commands to write to a buffer object from host memory.
 func (q *CommandQueue) EnqueueWriteBuffer(buffer *MemObject, blocking bool, offset, dataSize int, dataPtr unsafe.Pointer, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
-	err := toError(C.clEnqueueWriteBuffer(q.clQueue, buffer.clMem, clBool(blocking), C.size_t(offset), C.size_t(dataSize), dataPtr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
+	err := toError(C.clEnqueueWriteBuffer(q.clQueue, buffer.clMem, clBool(blocking), C.size_t(offset), C.size_t(dataSize), dataPtr, C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 
@@ -413,16 +418,18 @@ func (q *CommandQueue) EnqueueWriteBufferRect(buffer *MemObject, blocking bool, 
 	mem_size := make([]C.size_t, 3)
 	defer C.free(unsafe.Pointer(&mem_size))
 	mem_size[0], mem_size[1], mem_size[2] = (C.size_t)(region.X), (C.size_t)(region.Y), (C.size_t)(region.Z)
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
 	err := toError(C.clEnqueueWriteBufferRect(q.clQueue, buffer.clMem, clBool(blocking), &buffer_offset[0], &host_offset[0], &mem_size[0],
 		(C.size_t)(buffer_row_pitch), (C.size_t)(buffer_slice_pitch), (C.size_t)(host_row_pitch), (C.size_t)(host_slice_pitch),
-		dataPtr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+		dataPtr, C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 
 // Enqueue commands to read from a buffer object to host memory.
 func (q *CommandQueue) EnqueueReadBuffer(buffer *MemObject, blocking bool, offset, dataSize int, dataPtr unsafe.Pointer, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
-	err := toError(C.clEnqueueReadBuffer(q.clQueue, buffer.clMem, clBool(blocking), C.size_t(offset), C.size_t(dataSize), dataPtr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
+	err := toError(C.clEnqueueReadBuffer(q.clQueue, buffer.clMem, clBool(blocking), C.size_t(offset), C.size_t(dataSize), dataPtr, C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 
@@ -450,9 +457,10 @@ func (q *CommandQueue) EnqueueReadBufferRect(buffer *MemObject, blocking bool, b
 	mem_size := make([]C.size_t, 3)
 	defer C.free(unsafe.Pointer(&mem_size))
 	mem_size[0], mem_size[1], mem_size[2] = (C.size_t)(region.X), (C.size_t)(region.Y), (C.size_t)(region.Z)
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
 	err := toError(C.clEnqueueReadBufferRect(q.clQueue, buffer.clMem, clBool(blocking), &buffer_offset[0], &host_offset[0], &mem_size[0],
 		(C.size_t)(buffer_row_pitch), (C.size_t)(buffer_slice_pitch), (C.size_t)(host_row_pitch), (C.size_t)(host_slice_pitch),
-		dataPtr, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+		dataPtr, C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 
@@ -499,7 +507,8 @@ func (mobj *MemObject) CreateSubBuffer(flags MemFlag, origin, bSize int) (*MemOb
 
 func (q *CommandQueue) EnqueueFillBuffer(buffer *MemObject, pattern unsafe.Pointer, patternSize, offset, size int, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
-	err := toError(C.clEnqueueFillBuffer(q.clQueue, buffer.clMem, pattern, C.size_t(patternSize), C.size_t(offset), C.size_t(size), C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event))
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
+	err := toError(C.clEnqueueFillBuffer(q.clQueue, buffer.clMem, pattern, C.size_t(patternSize), C.size_t(offset), C.size_t(size), C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
 
@@ -512,7 +521,8 @@ func (q *CommandQueue) EnqueueMigrateMemObjectsToHost(memObjs []*MemObject, even
 		mem_obj_list[idx] = obj.clMem
 	}
 	var event C.cl_event
-	err := C.clEnqueueMigrateMemObjects(q.clQueue, C.cl_uint(ObjCount), &mem_obj_list[0], C.CL_MIGRATE_MEM_OBJECT_HOST, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event)
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
+	err := C.clEnqueueMigrateMemObjects(q.clQueue, C.cl_uint(ObjCount), &mem_obj_list[0], C.CL_MIGRATE_MEM_OBJECT_HOST, C.cl_uint(WaitListLen), eventWaitListPtr, &event)
 	return newEvent(event), toError(err)
 }
 
@@ -525,7 +535,8 @@ func (q *CommandQueue) EnqueueMigrateMemObjectsIntoQueue(memObjs []*MemObject, e
                 mem_obj_list[idx] = obj.clMem
         }
         var event C.cl_event
-	err := C.clEnqueueMigrateMemObjects(q.clQueue, C.cl_uint(ObjCount), &mem_obj_list[0], C.CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED, C.cl_uint(len(eventWaitList)), eventListPtr(eventWaitList), &event)
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
+	err := C.clEnqueueMigrateMemObjects(q.clQueue, C.cl_uint(ObjCount), &mem_obj_list[0], C.CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED, C.cl_uint(WaitListLen), eventWaitListPtr, &event)
         return newEvent(event), toError(err)
 }
 
