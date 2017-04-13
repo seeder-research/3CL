@@ -20,11 +20,14 @@ type config struct {
 
 // Make a 1D kernel launch configuration suited for N threads.
 func make1DConf(N int) *config {
-	bl := make([]int, 1)
-	bl[0] = ClPrefWGSz
+	bl := make([]int, 3)
+	bl[0], bl[1], bl[2]  = ClPrefWGSz, 1, 1
 
-	gr := make([]int, 1)
-	gr[0] = N
+	n2 := divUp(N, ClPrefWGSz) // N2 blocks left
+	nx := divUp(n2, MaxGridSize)
+	ny := divUp(n2, nx)
+	gr := make([]int, 3)
+	gr[0], gr[1], gr[2] = (nx * bl[0]), (ny * bl[1]), bl[2]
 
 	return &config{gr, bl}
 }
@@ -37,7 +40,7 @@ func make3DConf(N [3]int) *config {
 	nx := divUp(N[X], TileX)
 	ny := divUp(N[Y], TileY)
         gr := make([]int, 3)
-        gr[0], gr[1], gr[2] = nx, ny, N[Z]
+        gr[0], gr[1], gr[2] = (nx * bl[0]), (ny * bl[1]), (N[Z] * bl[2])
 
 	return &config{gr, bl}
 }
