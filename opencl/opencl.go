@@ -21,6 +21,9 @@ func LaunchKernel(kernname string, gridDim, workDim []int, events []*cl.Event) *
 		log.Panic("Kernel "+kernname+" does not exist!")
 		return nil
 	}
+	log.Println("Launching kernel: ", kernname)
+	log.Println("gridDim: ", gridDim)
+	log.Println("workDim: ", workDim)
 	KernEvent, err := ClCmdQueue.EnqueueNDRangeKernel(KernList[kernname], nil, gridDim, workDim, events)
 	if err != nil {
 		log.Fatal(err)
