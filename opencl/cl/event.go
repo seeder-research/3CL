@@ -106,7 +106,11 @@ func eventListPtr(el []*Event) (*C.cl_event, int) {
 			elist = append(elist,e.clEvent)
 		}
 	}
-	return (*C.cl_event)(&elist[0]), len(elist)
+	if len(elist) == 0 {
+		return nil, 0
+	} else {
+		return (*C.cl_event)(&elist[0]), len(elist)
+	}
 }
 
 //////////////// Abstract Functions ///////////////
