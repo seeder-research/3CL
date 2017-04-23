@@ -66,7 +66,7 @@ func Recycle(s *data.Slice) {
 	for i := 0; i < s.NComp(); i++ {
 		ptr := s.DevPtr(i)
 		if _, ok := buf_check[ptr]; !ok {
-			log.Panic("recyle: was not obtained with getbuffer")
+			log.Panic("recycle: was not obtained with getbuffer")
 		}
 		pool = append(pool, ptr)
 	}

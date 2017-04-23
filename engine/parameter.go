@@ -35,7 +35,7 @@ func (p *regionwise) init(nComp int, name, unit string, children []derived) {
 
 func (p *regionwise) MSlice() opencl.MSlice {
 	if p.IsUniform() {
-		return opencl.MakeMSlice(data.NilSlice(p.NComp(), Mesh().Size()), p.getRegion(0))
+		return opencl.MakeMSlice(opencl.Buffer(p.NComp(), Mesh().Size()), p.getRegion(0))
 	} else {
 		buf, r := p.Slice()
 		util.Assert(r == true)
