@@ -65,6 +65,9 @@ func Recycle(s *data.Slice) {
 	// put each component buffer back on the stack
 	for i := 0; i < s.NComp(); i++ {
 		ptr := s.DevPtr(i)
+		if ptr == unsafe.Pointer(uintptr(0)) {
+			continue
+		}
 		if _, ok := buf_check[ptr]; !ok {
 			log.Panic("recycle: was not obtained with getbuffer")
 		}
