@@ -7,7 +7,7 @@ import (
 	"runtime"
 
 	"github.com/mumax/3cl/opencl/cl"
-	//	"github.com/mumax/3cl/util"
+	"github.com/mumax/3cl/data"
 )
 
 var (
@@ -125,6 +125,8 @@ func Init(gpu, platformId int) {
 	if err != nil {
 		fmt.Printf("PreferredWorkGroupSizeMultiple failed: %+v \n", err)
 	}
+
+	data.EnableGPU(memFree, memFree, MemCpy, MemCpyDtoH, MemCpyHtoD)
 
 	fmt.Printf("Initializing clFFT library \n")
 	if err := cl.SetupCLFFT(); err != nil {

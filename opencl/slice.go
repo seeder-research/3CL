@@ -21,7 +21,6 @@ func NewSlice(nComp int, size [3]int) *data.Slice {
 //}
 
 func newSlice(nComp int, size [3]int, memType int8) *data.Slice {
-	data.EnableGPU(memFree, memFree, MemCpy, MemCpyDtoH, MemCpyHtoD)
 	length := prod(size)
 	bytes := length * SIZEOF_FLOAT32
 	ptrs := make([]unsafe.Pointer, nComp)
