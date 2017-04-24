@@ -88,7 +88,7 @@ func main() {
 		fmt.Printf("  Vendor: %s \n", d.Vendor())
 		fmt.Printf("  Version: %s \n", d.Version())
 	}
-	program, context, queue := opencl.ClProgram, opencl.ClCtx, opencl.ClCmdQueue
+	context, queue := opencl.ClCtx, opencl.ClCmdQueue
 	kernels := opencl.KernList
 
 	/* print input array */
@@ -193,9 +193,5 @@ func main() {
 	bufX.Release()
 	bufOut.Release()
 
-	program.Release()
-
-	queue.Release()
-
-	context.Release()
+	opencl.ReleaseAndClean()
 }

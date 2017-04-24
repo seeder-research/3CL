@@ -222,8 +222,6 @@ func main() {
 	for _, krn := range kernels {
 		krn.Release()
 	}
-	opencl.ClProgram.Release()
-	queue.Release()
-	context.Release()
+	opencl.ReleaseAndClean()
 }
 

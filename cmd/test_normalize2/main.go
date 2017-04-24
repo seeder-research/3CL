@@ -93,7 +93,7 @@ func main() {
 		fmt.Printf("  Vendor: %s \n", d.Vendor())
 		fmt.Printf("  Version: %s \n", d.Version())
 	}
-	program, device, context, queue := opencl.ClProgram, opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
+	device, context, queue := opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
 	kernels := opencl.KernList
 
 	kernelObj := kernels["normalize2"]
@@ -234,8 +234,6 @@ func main() {
 		krn.Release()
 	}
 
-	program.Release()
-	queue.Release()
-	context.Release()
+	opencl.ReleaseAndClean()
 }
 

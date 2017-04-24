@@ -94,7 +94,5 @@ func PrintKernelInfo(name string) {
 	for _, krn := range opencl.KernList {
 		krn.Release()
 	}
-	opencl.ClProgram.Release()
-	opencl.ClCmdQueue.Release()
-	opencl.ClCtx.Release()
+	opencl.ReleaseAndClean()
 }
