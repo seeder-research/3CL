@@ -125,9 +125,15 @@ func Init(gpu, platformId int) {
 	if err != nil {
 		fmt.Printf("PreferredWorkGroupSizeMultiple failed: %+v \n", err)
 	}
+
+	fmt.Printf("Initializing clFFT library \n")
+	if err := cl.SetupCLFFT(); err != nil {
+		fmt.Printf("failed to initialize clFFT \n")
+	}
 }
 
 func ReleaseAndClean() {
+	cl.TeardownCLFFT()
 	ClCmdQueue.Release()
 	ClProgram.Release()
 	ClCtx.Release()

@@ -91,11 +91,6 @@ func main() {
 	program, context, queue := opencl.ClProgram, opencl.ClCtx, opencl.ClCmdQueue
 	kernels := opencl.KernList
 
-	fmt.Printf("Initializing clFFT library \n")
-	if err := cl.SetupCLFFT(); err != nil {
-		fmt.Printf("failed to initialize clFFT \n")
-	}
-
 	/* print input array */
 	fmt.Printf("\nPerforming fft on a three dimensional array of size N0 x N1 x N2 = %d x %d x %d \n", N0, N1, N2)
 	for i := 0; i < N0; i++ {
