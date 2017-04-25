@@ -15,7 +15,8 @@ adduniaxialanisotropy2(__global float* __restrict  Bx, __global float* __restric
     if (i < N) {
 
         float3 u   = normalized(vmul(ux_, uy_, uz_, ux_mul, uy_mul, uz_mul, i));
-		float invMs = inv_Msat(Ms_, Ms_mul, i);
+		float msat = amul(Ms_, Ms_mul, i);
+		float invMs = inv_val(msat);
 		float K1 = amul(K1_, K1_mul, i);
 		float K2 = amul(K2_, K2_mul, i);
         K1  *= invMs;

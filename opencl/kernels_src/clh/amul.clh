@@ -7,6 +7,6 @@
 // Returns m * a[i], or m when a == NULL;
 #define vmul(ax, ay, az, mx, my, mz, i) make_float3(amul(ax, mx, i), amul(ay, my, i), amul(az, mz, i))
 
-// Returns 1/Msat, or 0 when Msat == 0.
-#define inv_Msat(Ms_, Ms_mul, i) (amul(Ms_, Ms_mul, i) == 0) ? 0.0f : (1.0f / (Ms_mul * Ms_[i]))
+// Returns 1/val, or 0 when val == 0.
+#define inv_val(val) (val == 0.0f) ? 0.0f : (1.0f / (val))
 #endif
