@@ -45,12 +45,18 @@ func SetKernelArgWrapper(kernname string, index int, arg interface{}) {
 		}
 	case unsafe.Pointer:
 		memBufHandle, flag := arg.(unsafe.Pointer)
-		if flag {
-			if err := KernList[kernname].SetArg(index, (*cl.MemObject)(memBufHandle)); err != nil {
+		if memBufHandle == unsafe.Pointer(uintptr(0)) {
+			if err := KernList[kernname].SetArgUnsafe(index, 8, memBufHandle); err != nil {
 				log.Fatal(err)
 			}
 		} else {
-			log.Fatal("Unable to change argument type to *cl.MemObject")
+			if flag {
+				if err := KernList[kernname].SetArg(index, (*cl.MemObject)(memBufHandle)); err != nil {
+					log.Fatal(err)
+				}
+			} else {
+				log.Fatal("Unable to change argument type to *cl.MemObject")
+			}
 		}
 	case int:
                 if err := KernList[kernname].SetArg(index, (int32)(val)); err != nil {
