@@ -31,8 +31,7 @@ addzhanglitorque2(__global float* __restrict tx, __global float* __restrict ty, 
     float alpha = amul(alpha_, alpha_mul, i);
     float xi    = amul(xi_, xi_mul, i);
     float pol   = amul(pol_, pol_mul, i);
-	float msat = amul(Ms_, Ms_mul, i);
-	float invMs = inv_val(msat);
+	float invMs = inv_Msat(Ms_, Ms_mul, i);
     float b = invMs * PREFACTOR / (1.0f + xi*xi);
 	float3 Jvec = vmul(jx_, jy_, jz_, jx_mul, jy_mul, jz_mul, i);
     float3 J = pol*Jvec;

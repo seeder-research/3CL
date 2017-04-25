@@ -25,8 +25,7 @@ addcubicanisotropy2(__global float* __restrict Bx, __global float* __restrict By
     int i =  ( get_group_id(1)*get_num_groups(0) + get_group_id(0) ) * get_local_size(0) + get_local_id(0);
     if (i < N) {
 
-		float msat = amul(Ms_, Ms_mul, i);
-        float invMs = inv_val(msat);
+        float invMs = inv_Msat(Ms_, Ms_mul, i);
         float  k1 = amul(k1_, k1_mul, i);
 		k1 *= invMs;
         float  k2 = amul(k2_, k2_mul, i);
