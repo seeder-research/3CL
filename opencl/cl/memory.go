@@ -296,6 +296,25 @@ func (b *MemObject) GetFlags() (MemFlag, error) {
         return -1, toError(C.CL_INVALID_MEM_OBJECT)
 }
 
+func (b *MemObject) IsWriteable() (bool, error) {
+        if b.clMem != nil {
+		var tmp C.cl_mem_flags
+		err := C.clGetMemObjectInfo(b.clMem, C.CL_MEM_FLAGS, C.size_t(unsafe.Sizeof(tmp)), unsafe.Pointer(&tmp), nil)
+	        if toError(err) != nil {
+        	        return false, toError(err)
+	        }
+		switch {
+		case tmp == C.CL_MEM_READ_WRITE:
+			return true, nil
+	        case tmp == C.CL_MEM_WRITE_ONLY:
+        	        return true, nil
+		default:
+	        	return false, nil
+	 	}
+        }
+        return false, toError(C.CL_INVALID_MEM_OBJECT)
+}
+
 func (b *MemObject) GetOffset() (int, error) {
         if b.clMem != nil {
 		var tmp C.size_t
