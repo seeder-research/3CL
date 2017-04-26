@@ -33,6 +33,10 @@ var (
 
 // Locks to an OS thread and initializes CUDA for that thread.
 func Init(gpu, platformId int) {
+	defer func() {
+		initialized = true
+	}()
+	
 	if initialized {
 		fmt.Printf("Already initialized \n")
 		return // needed for tests
