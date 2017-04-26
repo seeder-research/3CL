@@ -22,7 +22,7 @@ func newFFT3DR2C(Nx, Ny, Nz int) fft3DR2CPlan {
 		log.Printf("Unable to create fft3dr2c plan \n")
 	}
 	arrLayout := cl.NewArrayLayout()
-	arrLayout.SetInputLayout(cl.CLFFTLayoutReal)
+	arrLayout.SetInputLayout(cl.CLFFTLayoutComplexInterleaved)
 	err = handle.SetLayouts(arrLayout)
 	if err != nil {
 		log.Printf("Unable to set buffer layouts of fft3dr2c plan \n")
