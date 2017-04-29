@@ -385,7 +385,6 @@ func (FFTplan *ClFFTPlan) GetContext() (*Context, error) {
 
 func (FFTplan *ClFFTPlan) GetPrecision() (ClFFTPrecision, error) {
 	var paramVal C.clfftPrecision
-	defer C.free(unsafe.Pointer(&paramVal))
 	if err := C.clfftGetPlanPrecision(FFTplan.clFFTHandle, &paramVal); err != C.CLFFT_SUCCESS {
 		fmt.Printf("failed to get precision of clfft plan \n")
 		return -1, toError(err)
@@ -423,7 +422,6 @@ func (FFTplan *ClFFTPlan) SetFastDoublePrecision() error {
 func (FFTplan *ClFFTPlan) GetScale(direction ClFFTDirection) (float32, error) {
 	var scaleDir C.clfftDirection
 	var outVal C.cl_float
-	defer C.free(unsafe.Pointer(&scaleDir))
 	switch direction {
 	default:
 		scaleDir = C.CLFFT_FORWARD
@@ -438,7 +436,6 @@ func (FFTplan *ClFFTPlan) GetScale(direction ClFFTDirection) (float32, error) {
 
 func (FFTplan *ClFFTPlan) SetScale(direction ClFFTDirection, scale float32) error {
 	var scaleDir C.clfftDirection
-	defer C.free(unsafe.Pointer(&scaleDir))
 	switch direction {
 	default:
 		scaleDir = C.CLFFT_FORWARD
@@ -512,7 +509,6 @@ func (FFTplan *ClFFTPlan) GetLength() ([]int, error) {
 
 func (FFTplan *ClFFTPlan) Set1DLength(inVal int) error {
 	val := C.size_t(inVal)
-	defer C.free(unsafe.Pointer(&val))
 	return toError(C.clfftSetPlanLength(FFTplan.clFFTHandle, C.CLFFT_1D, &val))
 }
 
@@ -522,7 +518,6 @@ func (FFTplan *ClFFTPlan) Set2DLength(inVal []int) error {
 	}
 	val := make([]C.size_t, 2)
 	val[0], val[1] = C.size_t(inVal[0]), C.size_t(inVal[1])
-	defer C.free(unsafe.Pointer(&val))
 	return toError(C.clfftSetPlanLength(FFTplan.clFFTHandle, C.CLFFT_2D, &val[0]))
 }
 
@@ -532,7 +527,6 @@ func (FFTplan *ClFFTPlan) Set3DLength(inVal []int) error {
 	}
 	val := make([]C.size_t, 3)
 	val[0], val[1], val[2] = C.size_t(inVal[0]), C.size_t(inVal[1]), C.size_t(inVal[2])
-	defer C.free(unsafe.Pointer(&val))
 	return toError(C.clfftSetPlanLength(FFTplan.clFFTHandle, C.CLFFT_3D, &val[0]))
 }
 
@@ -834,5 +828,13 @@ func (ArrDistance *ArrayDistances) SetInputDistance(x int) {
 
 func (ArrDistance *ArrayDistances) SetOutputDistance(x int) {
 	ArrDistance.outputs = x
+}
+
+func (ArrDistance *ArrayDistances) GetInputDistance() int {
+	return ArrDistance.inputs
+}
+
+func (ArrDistance *ArrayDistances) GetOutputDistance() int {
+	return ArrDistance.outputs
 }
 

@@ -17,28 +17,39 @@ type fft3DR2CPlan struct {
 
 // 3D single-precision real-to-complex FFT plan.
 func newFFT3DR2C(Nx, Ny, Nz int) fft3DR2CPlan {
-	handle, err := cl.NewCLFFTPlan(ClCtx, cl.CLFFTDim3D, []int{Nz, Ny, Nx}) // new xyz swap
+	handle, err := cl.NewCLFFTPlan(ClCtx, cl.CLFFTDim3D, []int{Nx, Ny, Nz})
 	if err != nil {
 		log.Printf("Unable to create fft3dr2c plan \n")
 	}
 	arrLayout := cl.NewArrayLayout()
-	arrLayout.SetInputLayout(cl.CLFFTLayoutComplexInterleaved)
+	arrLayout.SetInputLayout(cl.CLFFTLayoutReal)
+	arrLayout.SetOutputLayout(cl.CLFFTLayoutHermitianInterleaved)
 	err = handle.SetLayouts(arrLayout)
 	if err != nil {
 		log.Printf("Unable to set buffer layouts of fft3dr2c plan \n")
 	}
+
+	OutStrideArr := []int{1, Nx/2+1, Ny*(Nx/2+1)}
+	err = handle.SetOutStride(OutStrideArr)
+	if err != nil {
+		log.Printf("Unable to set output stride of fft3dr2c plan \n")
+	}
+	
 	err = handle.SetResultOutOfPlace()
 	if err != nil {
 		log.Printf("Unable to set placeness of fft3dr2c result \n")
 	}
+
 	err = handle.SetSinglePrecision()
 	if err != nil {
 		log.Printf("Unable to set precision of fft3dr2c plan \n")
 	}
+
 	err = handle.SetResultNoTranspose()
 	if err != nil {
 		log.Printf("Unable to set transpose of fft3dr2c result \n")
 	}
+
 	err = handle.BakePlanSimple([]*cl.CommandQueue{ClCmdQueue})
 	if err != nil {
 		log.Printf("Unable to bake fft3dr2c plan \n")
