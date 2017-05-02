@@ -12,6 +12,7 @@ TODO: godoc everything
 package engine
 
 import (
+	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/timer"
 	"os"
 	"runtime"
@@ -57,5 +58,5 @@ func Close() {
 	if *Flag_sync {
 		timer.Print(os.Stdout)
 	}
-
+	opencl.ReleaseAndClean()
 }

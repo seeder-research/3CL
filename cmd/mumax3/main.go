@@ -143,6 +143,7 @@ func runGoFile(fname string) {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
+		engine.Close()
 		os.Exit(1)
 	}
 }
