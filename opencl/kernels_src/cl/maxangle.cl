@@ -34,7 +34,7 @@ setmaxangle(__global float* __restrict dst,
 	m_  = ( is0(m_)? m0: m_ );                  // replace missing non-boundary neighbor
 	a__ = aLUT2d[symidx(r0, regions[i_])];
 	if (a__ != 0) {
-		angle = max(angle, acosf(dot(m_,m0)));
+		angle = max(angle, acos(dot(m_,m0)));
 	}
 
 	// right neighbor
@@ -43,7 +43,7 @@ setmaxangle(__global float* __restrict dst,
 	m_  = ( is0(m_)? m0: m_ );
 	a__ = aLUT2d[symidx(r0, regions[i_])];
 	if (a__ != 0) {
-		angle = max(angle, acosf(dot(m_,m0)));
+		angle = max(angle, acos(dot(m_,m0)));
 	}
 
 	// back neighbor
@@ -52,7 +52,7 @@ setmaxangle(__global float* __restrict dst,
 	m_  = ( is0(m_)? m0: m_ );
 	a__ = aLUT2d[symidx(r0, regions[i_])];
 	if (a__ != 0) {
-		angle = max(angle, acosf(dot(m_,m0)));
+		angle = max(angle, acos(dot(m_,m0)));
 	}
 
 	// front neighbor
@@ -61,7 +61,7 @@ setmaxangle(__global float* __restrict dst,
 	m_  = ( is0(m_)? m0: m_ );
 	a__ = aLUT2d[symidx(r0, regions[i_])];
 	if (a__ != 0) {
-		angle = max(angle, acosf(dot(m_,m0)));
+		angle = max(angle, acos(dot(m_,m0)));
 	}
 
 	// only take vertical derivative for 3D sim
@@ -72,7 +72,7 @@ setmaxangle(__global float* __restrict dst,
 		m_  = ( is0(m_)? m0: m_ );
 		a__ = aLUT2d[symidx(r0, regions[i_])];
 		if (a__ != 0) {
-			angle = max(angle, acosf(dot(m_,m0)));
+			angle = max(angle, acos(dot(m_,m0)));
 		}
 
 		// top neighbor
@@ -81,7 +81,7 @@ setmaxangle(__global float* __restrict dst,
 		m_  = ( is0(m_)? m0: m_ );
 		a__ = aLUT2d[symidx(r0, regions[i_])];
 		if (a__ != 0) {
-			angle = max(angle, acosf(dot(m_,m0)));
+			angle = max(angle, acos(dot(m_,m0)));
 		}
 	}
 

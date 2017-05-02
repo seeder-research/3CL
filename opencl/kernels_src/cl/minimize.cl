@@ -5,7 +5,7 @@ minimize(__global float* __restrict mx,  __global float* __restrict  my,  __glob
          __global float* __restrict tx,  __global float* __restrict  ty,  __global float* __restrict tz,
          float dt, int N) {
 
-	int i =  get_global_id();
+	int i =  ( get_group_id(1)*get_num_groups(0) + get_group_id(0) ) * get_local_size(0) + get_local_id(0);
 	if (i < N) {
 
 		float3 m0 = {m0x[i], m0y[i], m0z[i]};

@@ -33,6 +33,8 @@ var OCLKernelsList = []string{
 	"lltorque2",
 	"madd2",
 	"madd3",
+	"setmaxangle",
+	"minimize",
 	"mul",
 	"normalize2",
 	"addoommfslonczewskitorque",
