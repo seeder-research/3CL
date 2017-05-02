@@ -86,6 +86,7 @@ func MaxVecNorm(v *data.Slice) float64 {
         if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
                 fmt.Printf("WaitForEvents failed in maxvecnorm: %+v \n", err)
         }
+	reduceIntBuffers <- (*cl.MemObject)(intermed)
 	return math.Sqrt(float64(copyback(out)))
 }
 
@@ -104,6 +105,7 @@ func MaxVecDiff(x, y *data.Slice) float64 {
         if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
                 fmt.Printf("WaitForEvents failed in maxvecdiff: %+v \n", err)
         }
+	reduceIntBuffers <- (*cl.MemObject)(intermed)
 	return math.Sqrt(float64(copyback(out)))
 }
 
