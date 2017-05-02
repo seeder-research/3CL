@@ -163,7 +163,7 @@ func (p *Program) Retain() {
 
 func (p *Program) BuildProgram(devices []*Device, options string) error {
 	var optBuffer bytes.Buffer
-	optBuffer.WriteString("-cl-std=CL1.2 -cl-kernel-arg-info ")
+	optBuffer.WriteString("-cl-std=CL1.2 -cl-kernel-arg-info -cl-opt-disable ")
 	var cOptions *C.char
 	if options != "" {
 		optBuffer.WriteString(options)
