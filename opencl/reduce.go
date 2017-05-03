@@ -137,7 +137,7 @@ func reduceBuf(initVal float32) (unsafe.Pointer, unsafe.Pointer) {
         }
         err = cl.WaitForEvents([]*cl.Event{waitEvent})
         if err != nil {
-                fmt.Printf("Seconf WaitForEvents in reduceBuf failed: %+v \n", err)
+                fmt.Printf("Second WaitForEvents in reduceBuf failed: %+v \n", err)
                 return nil, nil
         }
 	return (unsafe.Pointer)(buf), (unsafe.Pointer)(interBuf)

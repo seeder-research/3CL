@@ -85,7 +85,8 @@ func main() {
 
 	fmt.Printf("Setting up data for testing... \n");
 
-	size := [3]int{4096, 1, 1}
+	NSize := 256*256
+	size := [3]int{NSize, 1, 1}
 	inputs := make([][]float32, 1)
 	inputs[0] = make([]float32, size[0])
 	for i := 0; i < len(inputs[0]); i++ {
@@ -102,14 +103,18 @@ func main() {
 	results := opencl.Sum(gpuBuffer)
 
 	golden := float32(0.0);
+	resAcc := float32(0.0);
 	for _, v := range inputs[0] {
-		golden += v
+		yTmp := v - resAcc
+		tTmp := golden + yTmp;
+		resAcc = (tTmp - golden) - yTmp
+		golden = tTmp
 	}
 
 	tol := float64(golden * 1e-5)
 	engine.Expect("Result", float64(results), float64(golden), tol)
 	if results == golden {
-		fmt.Printf("Results match!")
+		fmt.Println("Results match!")
 	} else {
 		fmt.Println("Results do not match! golden: ", golden, "; result: ", results)
 		}
