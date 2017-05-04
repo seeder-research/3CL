@@ -215,6 +215,10 @@ func GetElem(s *data.Slice, comp int, index int) float32 {
                 fmt.Printf("EnqueueReadBuffer failed: %+v \n", err)
         }
 	s.SetEvent(comp, event)
+	err = cl.WaitForEvents([](*cl.Event){event})
+	if err != nil {
+		fmt.Printf("WaitForEvents in GetElem failed: %+v \n", err)
+	}
 	return f
 }
 
