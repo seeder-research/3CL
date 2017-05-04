@@ -42,9 +42,11 @@ func newSlice(nComp int, size [3]int, memType int8) *data.Slice {
 
 // wrappers for data.EnableGPU arguments
 
-func memFree(ptr unsafe.Pointer) { 
-	buf := (*cl.MemObject)(ptr)
-	buf.Release()
+func memFree(ptr unsafe.Pointer) {
+	if ptr != nil {
+		buf := (*cl.MemObject)(ptr)
+		buf.Release()
+	}
 }
 
 func MemCpyDtoH(dst, src unsafe.Pointer, bytes int) []*cl.Event {
