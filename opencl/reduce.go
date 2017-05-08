@@ -10,9 +10,6 @@ import (
 	"github.com/mumax/3cl/util"
 )
 
-// Block size for reduce kernels.
-const REDUCE_BLOCKSIZE = 512
-
 // Sum of all elements.
 func Sum(in *data.Slice) float32 {
 	util.Argument(in.NComp() == 1)
@@ -165,5 +162,5 @@ func initReduceBuf() {
 // launch configuration for reduce kernels
 // 8 is typ. number of multiprocessors.
 // could be improved but takes hardly ~1% of execution time
-var reducecfg = &config{Grid: []int{REDUCE_BLOCKSIZE, 1, 1}, Block: []int{REDUCE_BLOCKSIZE, 1, 1}}
-var reduceintcfg = &config{Grid: []int{8*REDUCE_BLOCKSIZE, 1, 1}, Block: []int{REDUCE_BLOCKSIZE, 1, 1}}
+var reducecfg = &config{Grid: []int{1, 1, 1}, Block: []int{1, 1, 1}}
+var reduceintcfg = &config{Grid: []int{8, 1, 1}, Block: []int{1, 1, 1}}

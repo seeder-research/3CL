@@ -111,14 +111,10 @@ func Init(gpu, platformId int) {
 		}
 	}
 	ClCtx = context
-//	ClCtx.Retain()
 	ClCmdQueue = queue
-//	ClCmdQueue.Retain()
 	ClProgram = program
-//	ClProgram.Retain()
 	// Set basic configuration for distributing
 	// work-items across compute units
-	ClCUnits, ClWGSize = 8, REDUCE_BLOCKSIZE
 	ClCUnits = ClDevice.MaxComputeUnits()
 	ClWGSize = ClDevice.MaxWorkGroupSize()
 	reducecfg.Grid[0] = ClWGSize
