@@ -22,6 +22,10 @@ var (
 	Flag_silent      = flag.Bool("s", false, "Silent") // provided for backwards compatibility
 	Flag_sync        = flag.Bool("sync", false, "Synchronize all CUDA calls (debug)")
 	Flag_forceclean  = flag.Bool("f", false, "Force start, clean existing output directory")
+	Flag_failfast    = flag.Bool("failfast", false, "If one simulation fails, stop entire batch immediately")
+	Flag_test        = flag.Bool("test", false, "OpenCL test (internal)")
+	Flag_version     = flag.Bool("v", true, "Print version")
+	Flag_vet         = flag.Bool("vet", false, "Check input files for errors, but don't run them")
 )
 
 // Usage: in every Go input file, write:

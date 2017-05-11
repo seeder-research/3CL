@@ -220,7 +220,7 @@ Region: {{.Number "region" -1 255 -1}} </br>
 
 {{.Data.Version}} <br/>
 {{.Data.GPUInfo}} <br/>
-&copy; 2016 Xuanyao Fong, National University of Singapore.
+&copy; 2013 Arne Vansteenkiste, DyNaMat LAB, UGent. Ported to OpenCL in 2017 by Xuanyao Fong, National University of Singapore.
 
 
 </div>

@@ -15,12 +15,8 @@ import (
 	"time"
 )
 
+// flags in engine/gofiles.go
 var (
-	flag_failfast = flag.Bool("failfast", false, "If one simulation fails, stop entire batch immediately")
-	flag_test     = flag.Bool("test", false, "OpenCL test (internal)")
-	flag_version  = flag.Bool("v", true, "Print version")
-	flag_vet      = flag.Bool("vet", false, "Check input files for errors, but don't run them")
-	// more flags in engine/gofiles.go
 )
 
 func main() {
@@ -31,20 +27,20 @@ func main() {
 	opencl.Init(*engine.Flag_platform, *engine.Flag_gpu)
 
 	opencl.Synchronous = *engine.Flag_sync
-	if *flag_version {
+	if *engine.Flag_version {
 		printVersion()
 	}
 
 	// used by bootstrap launcher to test opencl
 	// successful exit means opencl was initialized fine
-	if *flag_test {
+	if *engine.Flag_test {
 		fmt.Println(opencl.GPUInfo)
 		os.Exit(0)
 	}
 
 	defer engine.Close() // flushes pending output, if any
 
-	if *flag_vet {
+	if *engine.Flag_vet {
 		vet()
 		return
 	}
@@ -164,7 +160,8 @@ func printVersion() {
 	fmt.Print("//", engine.UNAME, "\n")
 	fmt.Print("//", opencl.GPUInfo, "\n")
 //	fmt.Print("//", opencl.GPUInfo, ", using CC", opencl.UseCC, " PTX \n")
-	fmt.Print("//(c) Xuanyao Fong, National University of Singapore, Singapore", "\n")
+	fmt.Print("//(c) Arne Vansteenkiste, Dynamat LAB, Ghent University, Belgium", "\n")
+	fmt.Print("//Ported to OpenCL by Xuanyao Fong, National University of Singapore, Singapore", "\n")
 	fmt.Print("//This is free software without any warranty. See license.txt", "\n")
 	fmt.Print("//If you use mumax in any work or publication,", "\n")
 	fmt.Print("//we kindly ask you to cite the references in references.bib", "\n")

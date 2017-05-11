@@ -128,7 +128,7 @@ func run(inFile string, gpu int, webAddr string) {
 		log.Println(inFile, err)
 		exitStatus.set(1)
 		numFailed.inc()
-		if *flag_failfast {
+		if *engine.Flag_failfast {
 			os.Exit(1)
 		}
 	} else {
