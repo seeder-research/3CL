@@ -1,18 +1,27 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/binary"
+	"flag"
 	"fmt"
+	"os"
 	"math/rand"
+	"time"
+	"unsafe"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
 )
 
-func main() {
-	var data [1024]float32
-	for i := 0; i < len(data); i++ {
-		data[i] = rand.Float32()
-	}
+var d_length = flag.Int("size", 1024, "Total number of random numbers to generate")
+var r_seed = flag.Uint("seed", 0, "Seed value of RNG")
+var d_dump = flag.Bool("dump", false, "Whether to dump generated values to screen")
 
+func main() {
+
+	flag.Parse()
+	
 	opencl.Init(0, 0)
 	platforms := opencl.ClPlatforms
 	fmt.Printf("Discovered platforms: \n")
@@ -85,70 +94,28 @@ func main() {
 		fmt.Printf("  Vendor: %s \n", d.Vendor())
 		fmt.Printf("  Version: %s \n", d.Version())
 	}
-	device, context, queue := opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
-	kernels := opencl.KernList
+	context, queue, kernels := opencl.ClCtx, opencl.ClCmdQueue, opencl.KernList
+	
+	fmt.Printf("Initializing MTGP RNG and generate uniformly distributed numbers... \n");
 
-	kernelObj := kernels["square"]
-	totalArgs, err := kernelObj.NumArgs()
-	if err != nil {
-		fmt.Printf("Failed to get number of arguments of kernel: $+v \n", err)
-	} else {
-		fmt.Printf("Number of arguments in kernel : %d \n", totalArgs)
-	}
-	for i := 0; i < totalArgs; i++ {
-		name, err := kernelObj.ArgName(i)
-		if err == cl.ErrUnsupported {
-			break
-		} else if err != nil {
-			fmt.Printf("GetKernelArgInfo for name failed: %+v \n", err)
-			break
-		} else {
-			fmt.Printf("Kernel arg %d: %s \n", i, name)
-		}
-	}
+	group_num, seed := int(1), InitRNG()
+	fmt.Println("Seed: ", seed)
+	rng := opencl.NewRNGParams(group_num)
+	rng.Init(group_num, seed, nil)
 
-	fmt.Printf("Begin first run of square kernel... \n");
-
-	input, err := context.CreateEmptyBuffer(cl.MemReadOnly, 4*len(data))
-	if err != nil {
-		fmt.Printf("CreateBuffer failed for input: %+v \n", err)
-		return
+	fmt.Printf("Creating output buffer... \n");
+	d_size := int(*d_length)
+	data := make([]float32, d_size)
+	for i := 0; i < d_size; i++ {
+		data[i] = float32(53.0)
 	}
 	output, err := context.CreateEmptyBuffer(cl.MemReadWrite, 4*len(data))
 	if err != nil {
 		fmt.Printf("CreateBuffer failed for output: %+v \n", err)
 		return
 	}
-	if _, err := queue.EnqueueWriteBufferFloat32(input, true, 0, data[:], nil); err != nil {
+	if _, err := queue.EnqueueWriteBufferFloat32(output, true, 0, data, nil); err != nil {
 		fmt.Printf("EnqueueWriteBufferFloat32 failed: %+v \n", err)
-		return
-	}
-	if err := kernelObj.SetArgs(input, output, uint32(len(data))); err != nil {
-		fmt.Printf("SetKernelArgs failed: %+v \n", err)
-		return
-	}
-
-	local, err := kernelObj.WorkGroupSize(device)
-	if err != nil {
-		fmt.Printf("WorkGroupSize failed: %+v \n", err)
-		return
-	}
-	fmt.Printf("Work group size: %d \n", local)
-	size, _ := kernelObj.PreferredWorkGroupSizeMultiple(nil)
-	fmt.Printf("Preferred Work Group Size Multiple: %d \n", size)
-
-	global := len(data)
-	d := len(data) % local
-	if d != 0 {
-		global += local - d
-	}
-	if _, err := queue.EnqueueNDRangeKernel(kernelObj, nil, []int{global}, []int{local}, nil); err != nil {
-		fmt.Printf("EnqueueNDRangeKernel failed: %+v \n", err)
-		return
-	}
-
-	if err := queue.Finish(); err != nil {
-		fmt.Printf("Finish failed: %+v \n", err)
 		return
 	}
 
@@ -158,63 +125,109 @@ func main() {
 		return
 	}
 
-	correct := 0
-	for i, v := range data {
-		if results[i] == v*v {
-			correct++
-		}
+	if *d_dump {
+		fmt.Println("Results before execution: ", results)
 	}
-
-	if correct != len(data) {
-		fmt.Printf("%d/%d correct values \n", correct, len(data))
+	
+	event := rng.Uniform((unsafe.Pointer)(output), d_size, group_num, nil)
+	err = cl.WaitForEvents([]*cl.Event{event})
+	if err != nil {
+		fmt.Printf("CreateBuffer failed for output: %+v \n", err)
 		return
 	}
 
-	fmt.Printf("First run of square kernel completed...starting second run \n");
-
-	// Create second set of data to re-run kernel
-	var data1 [1024]float32
-	for i := 0; i < len(data1); i++ {
-		data1[i] = rand.Float32()
+	if _, err := queue.EnqueueReadBufferFloat32(output, true, 0, results, nil); err != nil {
+		fmt.Printf("EnqueueReadBufferFloat32 failed: %+v \n", err)
+		return
 	}
+	
+	if *d_dump {
+		fmt.Println("Results after execution: ", results)
+	}
+	
+	fOut, fErr := os.Create("uniform_bytes.bin")
+	if fErr != nil {
+		panic(fErr)
+	}
+	
+	wr := bufio.NewWriter(fOut)
+	outBytes := new(bytes.Buffer)
+	for _, v := range results {
+		vErr := binary.Write(outBytes, binary.LittleEndian, v)
+		if vErr != nil {
+			fmt.Println("binary.Write failed: ", vErr)
+		}
+	}
+	
+	nn, wrErr := wr.Write(outBytes.Bytes())
+	if wrErr != nil {
+			fmt.Println("bufio.Write failed: ", wrErr)
+	} else {
+			wr.Flush()
+			fmt.Println("Wrote ", nn, "bytes to file")
+	}
+	fOut.Close()
+	
+	fmt.Printf("Re-initializing MTGP RNG and generate normally distributed numbers... \n");
 
-	if _, err := queue.EnqueueWriteBufferFloat32(input, true, 0, data1[:], nil); err != nil {
+	rng.Init(group_num, seed, nil)
+
+	if _, err := queue.EnqueueWriteBufferFloat32(output, true, 0, data, nil); err != nil {
 		fmt.Printf("EnqueueWriteBufferFloat32 failed: %+v \n", err)
 		return
 	}
 
-	if _, err := queue.EnqueueNDRangeKernel(kernelObj, nil, []int{global}, []int{local}, nil); err != nil {
-		fmt.Printf("EnqueueNDRangeKernel failed: %+v \n", err)
-		return
-	}
-
-	if err := queue.Finish(); err != nil {
-		fmt.Printf("Finish failed: %+v \n", err)
-		return
-	}
-
-	results1 := make([]float32, len(data))
-	if _, err := queue.EnqueueReadBufferFloat32(output, true, 0, results1, nil); err != nil {
+	if _, err := queue.EnqueueReadBufferFloat32(output, true, 0, results, nil); err != nil {
 		fmt.Printf("EnqueueReadBufferFloat32 failed: %+v \n", err)
 		return
 	}
 
-	correct = 0
-	for i, v := range data1 {
-		if results1[i] == v*v {
-			correct++
-		}
+	if *d_dump {
+		fmt.Println("Results before execution: ", results)
 	}
-
-	if correct != len(data1) {
-		fmt.Printf("%d/%d correct values \n", correct, len(data1))
+	
+	event = rng.Normal((unsafe.Pointer)(output), d_size, group_num, nil)
+	err = cl.WaitForEvents([]*cl.Event{event})
+	if err != nil {
+		fmt.Printf("CreateBuffer failed for output: %+v \n", err)
 		return
 	}
 
-	fmt.Printf("Finished tests on square\n")
+	if _, err := queue.EnqueueReadBufferFloat32(output, true, 0, results, nil); err != nil {
+		fmt.Printf("EnqueueReadBufferFloat32 failed: %+v \n", err)
+		return
+	}
+	if *d_dump {
+		fmt.Println("Results after execution: ", results)
+	}
+	
+	fOut, fErr = os.Create("norm_bytes.bin")
+	if fErr != nil {
+		panic(fErr)
+	}
+	
+	wr = bufio.NewWriter(fOut)
+	outBytes = new(bytes.Buffer)
+	for _, v := range results {
+		vErr := binary.Write(outBytes, binary.LittleEndian, v)
+		if vErr != nil {
+			fmt.Println("binary.Write failed: ", vErr)
+		}
+	}
+	
+	nn, wrErr = wr.Write(outBytes.Bytes())
+	if wrErr != nil {
+			fmt.Println("bufio.Write failed: ", wrErr)
+	} else {
+			wr.Flush()
+			fmt.Println("Wrote ", nn, "bytes to file")
+	}
+
+	fOut.Close()
+	
+	fmt.Printf("Finished tests on MTGP RNG\n")
 
 	fmt.Printf("freeing resources \n")
-	input.Release()
 	output.Release()
 	for _, krn := range kernels {
 		krn.Release()
@@ -223,3 +236,10 @@ func main() {
 	opencl.ReleaseAndClean()
 }
 
+func InitRNG() uint32 {
+	if *r_seed == (uint)(0) {
+		rand.Seed(time.Now().UTC().UnixNano())
+		return rand.Uint32()
+	}
+	return (uint32)(*r_seed)
+}

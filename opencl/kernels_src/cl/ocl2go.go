@@ -122,7 +122,7 @@ func typemap(ctype string) string {
 	panic(fmt.Errorf("unsupported OpenCL type: %v", ctype))
 }
 
-var tm = map[string]string{"float*": "unsafe.Pointer", "float": "float32", "int": "int", "uint8_t*": "unsafe.Pointer", "uint8_t": "byte"}
+var tm = map[string]string{"float*": "unsafe.Pointer", "float": "float32", "int": "int", "uint8_t*": "unsafe.Pointer", "uint8_t": "byte", "uint*": "unsafe.Pointer", "uint": "uint32"}
 
 // template data
 type Kernel struct {
