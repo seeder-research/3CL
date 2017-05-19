@@ -23,4 +23,3 @@ func (p *fftplan) Free() {
 		p.handle = nil
 	}
 }
-

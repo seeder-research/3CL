@@ -114,7 +114,7 @@ func main() {
 		fmt.Printf("CreateBuffer failed for input: %+v \n", err)
 		return
 	}
-	output, err := context.CreateEmptyBuffer(cl.MemReadOnly, 4*len(data))
+	output, err := context.CreateEmptyBuffer(cl.MemReadWrite, 4*len(data))
 	if err != nil {
 		fmt.Printf("CreateBuffer failed for output: %+v \n", err)
 		return

@@ -99,4 +99,3 @@ func TestSliceHost(t *testing.T) {
 		t.Error("slice memset")
 	}
 }
-

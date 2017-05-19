@@ -6,29 +6,30 @@ import (
 	//	"log"
 	"runtime"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 )
 
 var (
-	Version      string                    // OpenCL version
-	DevName      string                    // GPU name
-	TotalMem     int64                     // total GPU memory
-	PlatformInfo string                    // Human-readable OpenCL platform description
-	GPUInfo      string                    // Human-readable GPU description
-	Synchronous  bool                      // for debug: synchronize stream0 at every kernel launch
-	ClPlatforms  []*cl.Platform            // list of platforms available
-	ClPlatform   *cl.Platform              // platform the global OpenCL context is attached to
-	ClDevices    []*cl.Device              // list of devices global OpenCL context may be associated with
-	ClDevice     *cl.Device                // device associated with global OpenCL context
-	ClCtx        *cl.Context               // global OpenCL context
-	ClCmdQueue   *cl.CommandQueue          // command queue attached to global OpenCL context
-	ClProgram    *cl.Program               // handle to program in the global OpenCL context
-	KernList     = map[string]*cl.Kernel{} // Store pointers to all compiled kernels
-	initialized  = false                   // Initial state defaults to false
-	ClCUnits     int                       // Get number of compute units available
-	ClWGSize     int                       // Get maximum size of work group per compute unit
-	ClPrefWGSz	 int                       // Get preferred work group size of device
+	Version        string                    // OpenCL version
+	DevName        string                    // GPU name
+	TotalMem       int64                     // total GPU memory
+	PlatformInfo   string                    // Human-readable OpenCL platform description
+	GPUInfo        string                    // Human-readable GPU description
+	Synchronous    bool                      // for debug: synchronize stream0 at every kernel launch
+	ClPlatforms    []*cl.Platform            // list of platforms available
+	ClPlatform     *cl.Platform              // platform the global OpenCL context is attached to
+	ClDevices      []*cl.Device              // list of devices global OpenCL context may be associated with
+	ClDevice       *cl.Device                // device associated with global OpenCL context
+	ClCtx          *cl.Context               // global OpenCL context
+	ClCmdQueue     *cl.CommandQueue          // command queue attached to global OpenCL context
+	ClProgram      *cl.Program               // handle to program in the global OpenCL context
+	KernList       = map[string]*cl.Kernel{} // Store pointers to all compiled kernels
+	initialized    = false                   // Initial state defaults to false
+	ClCUnits       int                       // Get number of compute units available
+	ClWGSize       int                       // Get maximum size of work group per compute unit
+	ClPrefWGSz     int                       // Get preferred work group size of device
+	newBufferEvent *cl.Event                 // Event for new buffers
 )
 
 // Locks to an OS thread and initializes CUDA for that thread.
@@ -36,7 +37,7 @@ func Init(gpu, platformId int) {
 	defer func() {
 		initialized = true
 	}()
-	
+
 	if initialized {
 		fmt.Printf("Already initialized \n")
 		return // needed for tests
@@ -126,6 +127,14 @@ func Init(gpu, platformId int) {
 		fmt.Printf("PreferredWorkGroupSizeMultiple failed: %+v \n", err)
 	}
 
+	newBufferEvent, err = ClCtx.CreateUserEvent()
+	if err != nil {
+		fmt.Printf("Unable to create new event for buffer: %+v \n", err)
+	}
+	err = newBufferEvent.SetUserEventStatus(cl.CommandExecStatusComplete)
+	if err != nil {
+		fmt.Printf("Unable to create new event for buffer: %+v \n", err)
+	}
 	data.EnableGPU(memFree, memFree, MemCpy, MemCpyDtoH, MemCpyHtoD)
 
 	fmt.Printf("Initializing clFFT library \n")

@@ -1,8 +1,8 @@
 package opencl
 
 import (
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/util"
 )
 
@@ -19,7 +19,7 @@ func SetTopologicalCharge(s *data.Slice, m *data.Slice, mesh *data.Mesh) {
 		m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
 		icxcy, N[X], N[Y], N[Z], mesh.PBC_code(), cfg,
 		[](*cl.Event){s.GetEvent(X),
-		m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z)})
+			m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z)})
 	s.SetEvent(X, event)
 	m.SetEvent(X, event)
 	m.SetEvent(Y, event)

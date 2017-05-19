@@ -10,8 +10,8 @@ import (
 	"log"
 	"unsafe"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 )
 
 var (
@@ -51,7 +51,11 @@ func Buffer(nComp int, size [3]int) *data.Slice {
 		buf_check[ptrs[i]] = struct{}{} // mark this pointer as mine
 	}
 
-	return data.SliceFromPtrs(size, data.GPUMemory, ptrs)
+	outBuffer := data.SliceFromPtrs(size, data.GPUMemory, ptrs)
+	for i := 0; i < nComp; i++ {
+		outBuffer.SetEvent(i, newBufferEvent)
+	}
+	return outBuffer
 }
 
 // Returns a buffer obtained from GetBuffer to the pool.

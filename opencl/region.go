@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/util"
 )
 
@@ -31,12 +31,12 @@ func RegionDecode(dst *data.Slice, lut LUTPtr, regions *Bytes) {
 	N := dst.Len()
 	cfg := make1DConf(N)
 	event := k_regiondecode_async(dst.DevPtr(0), unsafe.Pointer(lut), regions.Ptr, N, cfg,
-				      [](*cl.Event){dst.GetEvent(0)})
+		[](*cl.Event){dst.GetEvent(0)})
 	dst.SetEvent(0, event)
-        err := cl.WaitForEvents([](*cl.Event){event})
-        if err != nil {
-                fmt.Printf("WaitForEvents in regiondecode failed: %+v \n", err)
-        }
+	err := cl.WaitForEvents([](*cl.Event){event})
+	if err != nil {
+		fmt.Printf("WaitForEvents in regiondecode failed: %+v \n", err)
+	}
 }
 
 // select the part of src within the specified region, set 0's everywhere else.
@@ -48,12 +48,12 @@ func RegionSelect(dst, src *data.Slice, regions *Bytes, region byte) {
 	eventList := make([]*cl.Event, dst.NComp())
 	for c := 0; c < dst.NComp(); c++ {
 		eventList[c] = k_regionselect_async(dst.DevPtr(c), src.DevPtr(c), regions.Ptr, region, N, cfg,
-								[](*cl.Event){dst.GetEvent(c), src.GetEvent(c)})
+			[](*cl.Event){dst.GetEvent(c), src.GetEvent(c)})
 		dst.SetEvent(c, eventList[c])
 		src.SetEvent(c, eventList[c])
 	}
 	err := cl.WaitForEvents(eventList)
-        if err != nil {
-                fmt.Printf("WaitForEvents in regionselect failed: %+v \n", err)
-        }
+	if err != nil {
+		fmt.Printf("WaitForEvents in regionselect failed: %+v \n", err)
+	}
 }

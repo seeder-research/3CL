@@ -104,11 +104,11 @@ func ocl2go(fname string) {
 	var argtt, argnn []string
 	for i, a := range argn {
 		if setn[i] == "__local" {
-			setn[i] = "KernList[\""+funcname+"\"].SetArgUnsafe("+strconv.Itoa(i)+", cfg.Block[0]*cfg.Block[1]*cfg.Block[2]*SIZEOF_FLOAT32, nil)"
+			setn[i] = "KernList[\"" + funcname + "\"].SetArgUnsafe(" + strconv.Itoa(i) + ", cfg.Block[0]*cfg.Block[1]*cfg.Block[2]*SIZEOF_FLOAT32, nil)"
 		} else {
 			argnn = append(argnn, argn[i])
 			argtt = append(argtt, argt[i])
-			setn[i] = "SetKernelArgWrapper(\""+funcname+"\", "+strconv.Itoa(i)+", "+a+")"
+			setn[i] = "SetKernelArgWrapper(\"" + funcname + "\", " + strconv.Itoa(i) + ", " + a + ")"
 		}
 	}
 	wrapgen(fname, funcname, argtt, argnn, setn)
@@ -122,7 +122,7 @@ func typemap(ctype string) string {
 	panic(fmt.Errorf("unsupported OpenCL type: %v", ctype))
 }
 
-var tm = map[string]string{"float*": "unsafe.Pointer", "float": "float32", "int": "int", "uint8_t*": "unsafe.Pointer", "uint8_t": "byte"}
+var tm = map[string]string{"float*": "unsafe.Pointer", "float": "float32", "int": "int", "uint8_t*": "unsafe.Pointer", "uint8_t": "byte", "uint*": "unsafe.Pointer", "uint": "uint32"}
 
 // template data
 type Kernel struct {

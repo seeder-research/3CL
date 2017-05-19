@@ -11,7 +11,8 @@ var OCLHeadersList = []string{
 	"atomicf",
 	"reduce",
 	"amul",
-	"sum"	}
+	"mtgp32",
+	"sum"}
 
 var OCLKernelsList = []string{
 	"copypadmul2",
@@ -60,4 +61,7 @@ var OCLKernelsList = []string{
 	"vecnorm",
 	"zeromask",
 	"addzhanglitorque2",
-	"square"	}
+	"mtgp32_init_seed_kernel",
+	"mtgp32_normal",
+	"mtgp32_uniform",
+	"square"}
