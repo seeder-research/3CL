@@ -20,6 +20,16 @@ const MTGP32_TS = mtgp32RNG.MTGPDC_TS
 
 type mtgp32_params mtgp32RNG.MTGP32dc_params_array_ptr
 
+type PRNG_ interface {
+	Init(uint32, []*cl.Event)
+	Uniform(unsafe.Pointer, int, []*cl.Event) *cl.Event
+	Normal(unsafe.Pointer, int, []*cl.Event) *cl.Event
+}
+
+type Generator struct {
+	Prng	PRNG_
+}
+
 /*
     Buffer status_buffer(context,
 			 CL_MEM_READ_WRITE,
@@ -41,12 +51,23 @@ type mtgp32_params mtgp32RNG.MTGP32dc_params_array_ptr
     free_check_data(mtgp32, opt.group_num);
 */
 
-func NewRNGParams(group_num int) *mtgp32_params {
+func NewGenerator() *Generator {
+	if (ClCUnits > 0) {
+		var tmp PRNG_
+		tmp = NewRNGParams()
+		return &Generator{tmp}
+	}
+	log.Fatalln("Unable to create RNG")
+	return nil
+}
+
+func NewRNGParams() *mtgp32_params {
 	var err error
 	var events_list []*cl.Event
 	var event *cl.Event
 	tmp := mtgp32RNG.NewMTGPParams()
-	tmp.GetMTGPArrays(group_num)
+	tmp.GroupSize = ClCUnits
+	tmp.GetMTGPArrays()
 	tmp.CreateParamBuffers(ClCtx)
 	events_list, err = tmp.LoadAllParamBuffersToDevice(ClCmdQueue, nil)
 	if err != nil {
@@ -60,12 +81,24 @@ func NewRNGParams(group_num int) *mtgp32_params {
 	return (*mtgp32_params)(tmp)
 }
 
-func (p *mtgp32_params) Init(group_num int, seed uint32, events []*cl.Event) {
+func (g *Generator) Init(seed uint32, events []*cl.Event) {
+	g.Prng.Init(seed, events)
+}
+
+func (g *Generator) Uniform(data unsafe.Pointer, d_size int, events []*cl.Event) *cl.Event {
+	return g.Prng.Uniform(data, d_size, events)
+}
+
+func (g *Generator) Normal(data unsafe.Pointer, d_size int, events []*cl.Event) *cl.Event {
+	return g.Prng.Normal(data, d_size, events)
+}
+
+func (p *mtgp32_params) Init(seed uint32, events []*cl.Event) {
 
 	//	args := mtgp32_init_seed_kernel_args.argptr[:]
 	event := k_mtgp32_init_seed_kernel_async ( unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
 											unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), seed,
-											&config{[]int{group_num * MTGP32_TN}, []int{MTGP32_TN}}, events)
+											&config{[]int{ClCUnits * MTGP32_TN}, []int{MTGP32_TN}}, events)
 
 	mtgp32_uniform_args.arg_param_tbl = unsafe.Pointer(p.Rec_buf)
 	mtgp32_uniform_args.arg_temper_tbl = unsafe.Pointer(p.Temper_buf)
@@ -107,7 +140,7 @@ func (p *mtgp32_params) Init(group_num int, seed uint32, events []*cl.Event) {
 
 }
 
-func (p *mtgp32_params) Uniform(d_data unsafe.Pointer, data_size int, group_num int, events []*cl.Event) *cl.Event {
+func (p *mtgp32_params) Uniform(d_data unsafe.Pointer, data_size int, events []*cl.Event) *cl.Event {
 
 	if p.Ini == false {
 		log.Fatalln("Generator has not been initialized!")
@@ -124,8 +157,8 @@ func (p *mtgp32_params) Uniform(d_data unsafe.Pointer, data_size int, group_num 
 	mtgp32_uniform_args.arg_d_data = d_data
 	mtgp32_uniform_args.arg_size = data_size
 
-	item_num := MTGP32_TN * group_num
-	min_size := MTGP32_LS * group_num
+	item_num := MTGP32_TN * ClCUnits
+	min_size := MTGP32_LS * ClCUnits
 	if data_size%min_size != 0 {
 		data_size = (data_size/min_size + 1) * min_size
 	}
@@ -144,7 +177,7 @@ func (p *mtgp32_params) Uniform(d_data unsafe.Pointer, data_size int, group_num 
 	return event
 }
 
-func (p *mtgp32_params) Normal(d_data unsafe.Pointer, data_size int, group_num int, events []*cl.Event) *cl.Event {
+func (p *mtgp32_params) Normal(d_data unsafe.Pointer, data_size int, events []*cl.Event) *cl.Event {
 
 	if p.Ini == false {
 		log.Fatalln("Generator has not been initialized!")
@@ -161,8 +194,8 @@ func (p *mtgp32_params) Normal(d_data unsafe.Pointer, data_size int, group_num i
 	mtgp32_uniform_args.arg_d_data = d_data
 	mtgp32_uniform_args.arg_size = data_size
 
-	item_num := MTGP32_TN * group_num
-	min_size := MTGP32_LS * group_num
+	item_num := MTGP32_TN * ClCUnits
+	min_size := MTGP32_LS * ClCUnits
 	if data_size%min_size != 0 {
 		data_size = (data_size/min_size + 1) * min_size
 	}

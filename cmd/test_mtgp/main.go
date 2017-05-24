@@ -98,10 +98,10 @@ func main() {
 	
 	fmt.Printf("Initializing MTGP RNG and generate uniformly distributed numbers... \n");
 
-	group_num, seed := int(1), InitRNG()
+	seed := InitRNG()
 	fmt.Println("Seed: ", seed)
-	rng := opencl.NewRNGParams(group_num)
-	rng.Init(group_num, seed, nil)
+	rng := opencl.NewGenerator()
+	rng.Prng.Init(seed, nil)
 
 	fmt.Printf("Creating output buffer... \n");
 	d_size := int(*d_length)
@@ -129,7 +129,7 @@ func main() {
 		fmt.Println("Results before execution: ", results)
 	}
 	
-	event := rng.Uniform((unsafe.Pointer)(output), d_size, group_num, nil)
+	event := rng.Prng.Uniform((unsafe.Pointer)(output), d_size, nil)
 	err = cl.WaitForEvents([]*cl.Event{event})
 	if err != nil {
 		fmt.Printf("CreateBuffer failed for output: %+v \n", err)
@@ -170,7 +170,7 @@ func main() {
 	
 	fmt.Printf("Re-initializing MTGP RNG and generate normally distributed numbers... \n");
 
-	rng.Init(group_num, seed, nil)
+	rng.Prng.Init(seed, nil)
 
 	if _, err := queue.EnqueueWriteBufferFloat32(output, true, 0, data, nil); err != nil {
 		fmt.Printf("EnqueueWriteBufferFloat32 failed: %+v \n", err)
@@ -186,7 +186,7 @@ func main() {
 		fmt.Println("Results before execution: ", results)
 	}
 	
-	event = rng.Normal((unsafe.Pointer)(output), d_size, group_num, nil)
+	event = rng.Prng.Normal((unsafe.Pointer)(output), d_size, nil)
 	err = cl.WaitForEvents([]*cl.Event{event})
 	if err != nil {
 		fmt.Printf("CreateBuffer failed for output: %+v \n", err)

@@ -18,8 +18,8 @@ var AddThermalEnergyDensity = makeEdensAdder(&B_therm, -1)
 
 // thermField calculates and caches thermal noise.
 type thermField struct {
-	seed      int64            // seed for generator
-//	generator curand.Generator //
+	seed      uint32            // seed for generator
+	generator *opencl.Generator //
 	noise     *data.Slice      // noise buffer
 	step      int              // solver step corresponding to noise
 	dt        float64          // solver timestep corresponding to noise
@@ -46,10 +46,10 @@ func (b *thermField) update() {
 		Dt_si = FixDt
 	}
 
-//	if b.generator == 0 {
-//		b.generator = curand.CreateGenerator(curand.PSEUDO_DEFAULT)
-//		b.generator.SetSeed(b.seed)
-//	}
+	if b.generator == nil {
+		b.generator = opencl.NewGenerator()
+		b.generator.Init(b.seed, nil)
+	}
 	if b.noise == nil {
 		b.noise = opencl.NewSlice(b.NComp(), b.Mesh().Size())
 		// when noise was (re-)allocated it's invalid for sure.
@@ -73,13 +73,11 @@ func (b *thermField) update() {
 		util.Fatal("Finite temperature requires fixed time step. Set FixDt != 0.")
 	}
 
-//	N := Mesh().NCell()
+	N := Mesh().NCell()
 	k2_VgammaDt := 2 * mag.Kb / (GammaLL * cellVolume() * Dt_si)
 	noise := opencl.Buffer(1, Mesh().Size())
 	defer opencl.Recycle(noise)
 
-	const mean = 0
-	const stddev = 1
 	dst := b.noise
 	ms := Msat.MSlice()
 	defer ms.Recycle()
@@ -88,7 +86,7 @@ func (b *thermField) update() {
 	alpha := Alpha.MSlice()
 	defer alpha.Recycle()
 	for i := 0; i < 3; i++ {
-//		b.generator.GenerateNormal(uintptr(noise.DevPtr(0)), int64(N), mean, stddev)
+		noise.SetEvent(0, b.generator.Normal(noise.DevPtr(0), int(N), nil))
 		opencl.SetTemperature(dst.Comp(i), noise, k2_VgammaDt, ms, temp, alpha)
 	}
 
@@ -106,10 +104,10 @@ func GetThermalEnergy() float64 {
 
 // Seeds the thermal noise generator
 func ThermSeed(seed int) {
-	B_therm.seed = int64(seed)
-//	if B_therm.generator != 0 {
-//		B_therm.generator.SetSeed(B_therm.seed)
-//	}
+	B_therm.seed = uint32(seed)
+	if B_therm.generator != nil {
+		B_therm.generator.Init(B_therm.seed, nil)
+	}
 }
 
 func (b *thermField) Mesh() *data.Mesh       { return Mesh() }
