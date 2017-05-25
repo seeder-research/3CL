@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 )
 
 // Add exchange field to Beff.
@@ -22,11 +22,11 @@ func AddExchange(B, m *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data.M
 	pbc := mesh.PBC_code()
 	cfg := make3DConf(N)
 	event := k_addexchange_async(B.DevPtr(X), B.DevPtr(Y), B.DevPtr(Z),
-				     m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
-				     unsafe.Pointer(Aex_red), regions.Ptr,
-				     wx, wy, wz, N[X], N[Y], N[Z], pbc, cfg,
-				     [](*cl.Event){B.GetEvent(X), B.GetEvent(Y),
-				     B.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z)})
+		m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
+		unsafe.Pointer(Aex_red), regions.Ptr,
+		wx, wy, wz, N[X], N[Y], N[Z], pbc, cfg,
+		[](*cl.Event){B.GetEvent(X), B.GetEvent(Y),
+			B.GetEvent(Z), m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z)})
 	B.SetEvent(X, event)
 	B.SetEvent(Y, event)
 	B.SetEvent(Z, event)
@@ -34,7 +34,9 @@ func AddExchange(B, m *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data.M
 	m.SetEvent(Y, event)
 	m.SetEvent(Z, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
-	if err != nil { fmt.Printf("WaitForEvents failed in addexchange: %+v", err) }
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in addexchange: %+v", err)
+	}
 }
 
 // Finds the average exchange strength around each cell, for debugging.
@@ -47,8 +49,10 @@ func ExchangeDecode(dst *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data
 	pbc := mesh.PBC_code()
 	cfg := make3DConf(N)
 	event := k_exchangedecode_async(dst.DevPtr(0), unsafe.Pointer(Aex_red), regions.Ptr, wx, wy, wz, N[X], N[Y], N[Z], pbc, cfg,
-					[](*cl.Event){dst.GetEvent(0)})
+		[](*cl.Event){dst.GetEvent(0)})
 	dst.SetEvent(0, event)
-        err := cl.WaitForEvents([](*cl.Event){event})
-        if err != nil { fmt.Printf("WaitForEvents failed in addexchange: %+v", err) }
+	err := cl.WaitForEvents([](*cl.Event){event})
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in addexchange: %+v", err)
+	}
 }

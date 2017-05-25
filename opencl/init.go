@@ -6,8 +6,8 @@ import (
 	//	"log"
 	"runtime"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 )
 
 var (
@@ -28,7 +28,7 @@ var (
 	initialized  = false                   // Initial state defaults to false
 	ClCUnits     int                       // Get number of compute units available
 	ClWGSize     int                       // Get maximum size of work group per compute unit
-	ClPrefWGSz	 int                       // Get preferred work group size of device
+	ClPrefWGSz   int                       // Get preferred work group size of device
 )
 
 // Locks to an OS thread and initializes CUDA for that thread.
@@ -36,7 +36,7 @@ func Init(gpu, platformId int) {
 	defer func() {
 		initialized = true
 	}()
-	
+
 	if initialized {
 		fmt.Printf("Already initialized \n")
 		return // needed for tests

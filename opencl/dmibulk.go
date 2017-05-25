@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/util"
 )
 
@@ -30,5 +30,7 @@ func AddDMIBulk(Beff *data.Slice, m *data.Slice, Aex_red, D_red SymmLUT, regions
 	m.SetEvent(Y, event)
 	m.SetEvent(Z, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
-	if err != nil { fmt.Printf("WaitForEvents failed in adddmibulk: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in adddmibulk: %+v \n", err)
+	}
 }

@@ -1,8 +1,8 @@
 package engine
 
 import (
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/util"
 	"math"
 )
@@ -31,9 +31,9 @@ func (rk *RK45DP) Step() {
 	}
 
 	// FSAL cannot be used with finite temperature
-//	if !Temp.isZero() {
-//		torqueFn(rk.k1)
-//	}
+	//	if !Temp.isZero() {
+	//		torqueFn(rk.k1)
+	//	}
 
 	t0 := Time
 	// backup magnetization

@@ -1,8 +1,8 @@
 package engine
 
 import (
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl"
 )
 
 var globalmesh_ data.Mesh // mesh for m and everything that has the same size

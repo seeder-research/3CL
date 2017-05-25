@@ -3,8 +3,8 @@ package opencl
 import (
 	"fmt"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/util"
 )
 
@@ -18,13 +18,15 @@ func Mul(dst, a, b *data.Slice) {
 	eventList := make([]*cl.Event, nComp)
 	for c := 0; c < nComp; c++ {
 		eventList[c] = k_mul_async(dst.DevPtr(c), a.DevPtr(c), b.DevPtr(c), N, cfg,
-			    		   [](*cl.Event){dst.GetEvent(c), a.GetEvent(c), b.GetEvent(c)})
+			[](*cl.Event){dst.GetEvent(c), a.GetEvent(c), b.GetEvent(c)})
 		dst.SetEvent(c, eventList[c])
 		a.SetEvent(c, eventList[c])
 		b.SetEvent(c, eventList[c])
 	}
 	err := cl.WaitForEvents(eventList)
-	if err != nil { fmt.Printf("WaitForEvents failed in mul: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in mul: %+v \n", err)
+	}
 }
 
 // divide: dst[i] = a[i] / b[i]
@@ -37,13 +39,15 @@ func Div(dst, a, b *data.Slice) {
 	eventList := make([]*cl.Event, nComp)
 	for c := 0; c < nComp; c++ {
 		eventList[c] = k_pointwise_div_async(dst.DevPtr(c), a.DevPtr(c), b.DevPtr(c), N, cfg,
-						[](*cl.Event){dst.GetEvent(c), a.GetEvent(c), b.GetEvent(c)})
+			[](*cl.Event){dst.GetEvent(c), a.GetEvent(c), b.GetEvent(c)})
 		dst.SetEvent(c, eventList[c])
 		a.SetEvent(c, eventList[c])
 		b.SetEvent(c, eventList[c])
 	}
 	err := cl.WaitForEvents(eventList)
-	if err != nil { fmt.Printf("WaitForEvents failed in div: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in div: %+v \n", err)
+	}
 }
 
 // Add: dst = src1 + src2.
@@ -68,7 +72,9 @@ func Madd2(dst, src1, src2 *data.Slice, factor1, factor2 float32) {
 		src2.SetEvent(c, eventList[c])
 	}
 	err := cl.WaitForEvents(eventList)
-	if err != nil {	fmt.Printf("WaitForEvents failed in madd2: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in madd2: %+v \n", err)
+	}
 }
 
 // multiply-add: dst[i] = src1[i] * factor1 + src2[i] * factor2 + src3 * factor3
@@ -83,12 +89,14 @@ func Madd3(dst, src1, src2, src3 *data.Slice, factor1, factor2, factor3 float32)
 		eventList[c] = k_madd3_async(dst.DevPtr(c), src1.DevPtr(c), factor1,
 			src2.DevPtr(c), factor2, src3.DevPtr(c), factor3, N, cfg,
 			[](*cl.Event){dst.GetEvent(c), src1.GetEvent(c),
-			src2.GetEvent(c), src3.GetEvent(c)})
+				src2.GetEvent(c), src3.GetEvent(c)})
 		dst.SetEvent(c, eventList[c])
 		src1.SetEvent(c, eventList[c])
 		src2.SetEvent(c, eventList[c])
 		src3.SetEvent(c, eventList[c])
 	}
 	err := cl.WaitForEvents(eventList)
-	if err != nil { fmt.Printf("WaitForEvents failed in madd3: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in madd3: %+v \n", err)
+	}
 }

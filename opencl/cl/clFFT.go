@@ -50,7 +50,7 @@ var (
 type ErrOtherFFT int
 
 func (e ErrOtherFFT) Error() string {
-        return fmt.Sprintf("clFFT: error %d", int(e))
+	return fmt.Sprintf("clFFT: error %d", int(e))
 }
 
 var (
@@ -105,7 +105,7 @@ var (
 	ErrFFTInvalidDevicePartitionCount  = errors.New("clFFT: Invalid Device Partition Count")
 	ErrFFTInvalidGLObject              = errors.New("clFFT: Invalid GL Object")
 	ErrFFTInvalidMipLevel              = errors.New("clFFT: Invalid Mip Level")
-	ErrCLFFTInvalidPlan             = errors.New("clFFT: Invalid Plan")
+	ErrCLFFTInvalidPlan                = errors.New("clFFT: Invalid Plan")
 
 	ErrCLFFTBugCheck                = errors.New("clFFT: Bug Check")
 	ErrCLFFTNotImplemented          = errors.New("clFFT: Not Implemented")
@@ -278,6 +278,7 @@ type ArrayLayouts struct {
 
 //////////////// Supporting Types ////////////////
 type CLFFT_BakePlan_notify func(C.clfftPlanHandle, unsafe.Pointer)
+
 var bakeplan_notify map[unsafe.Pointer]CLFFT_BakePlan_notify
 
 //////////////// Basic Functions ////////////////
@@ -291,9 +292,9 @@ func init() {
 
 //export go_bakeplan_notify
 func go_bakeplan_notify(plHandle C.clfftPlanHandle, user_data unsafe.Pointer) {
-        var c_user_data []unsafe.Pointer
-        c_user_data = *(*[]unsafe.Pointer)(user_data)
-        bakeplan_notify[c_user_data[1]](plHandle, c_user_data[0])
+	var c_user_data []unsafe.Pointer
+	c_user_data = *(*[]unsafe.Pointer)(user_data)
+	bakeplan_notify[c_user_data[1]](plHandle, c_user_data[0])
 }
 
 func SetupCLFFT() error {
@@ -343,7 +344,7 @@ func NewCLFFTPlan(ctx *Context, dim ClFFTDim, dLengths []int) (*ClFFTPlan, error
 	return &ClFFTPlan{outPlanHandle}, nil
 }
 
-func NewArrayLayout() (*ArrayLayouts) {
+func NewArrayLayout() *ArrayLayouts {
 	return &ArrayLayouts{inputs: CLFFTLayoutComplexInterleaved, outputs: CLFFTLayoutComplexInterleaved}
 }
 
@@ -358,19 +359,19 @@ func (FFTplan *ClFFTPlan) CopyPlan(ctx *Context) (*ClFFTPlan, error) {
 }
 
 func (FFTplan *ClFFTPlan) BakePlanSimple(CommQueues []*CommandQueue) error {
-        QueueList := make([]C.cl_command_queue, len(CommQueues))
-        for idx, id := range CommQueues {
-                QueueList[idx] = id.clQueue
-        }
+	QueueList := make([]C.cl_command_queue, len(CommQueues))
+	for idx, id := range CommQueues {
+		QueueList[idx] = id.clQueue
+	}
 	return toError(C.clfftBakePlan(FFTplan.clFFTHandle, C.cl_uint(len(QueueList)), &QueueList[0], nil, nil))
 }
 
 func (FFTplan *ClFFTPlan) BakePlanUnsafe(CommQueues []*CommandQueue, user_data unsafe.Pointer) error {
-        QueueList := make([]C.cl_command_queue, len(CommQueues))
-        for idx, id := range CommQueues {
-                QueueList[idx] = id.clQueue
-        }
-        return toError(C.CLFFTBakePlan(FFTplan.clFFTHandle, C.cl_uint(len(QueueList)), &QueueList[0], user_data))
+	QueueList := make([]C.cl_command_queue, len(CommQueues))
+	for idx, id := range CommQueues {
+		QueueList[idx] = id.clQueue
+	}
+	return toError(C.CLFFTBakePlan(FFTplan.clFFTHandle, C.cl_uint(len(QueueList)), &QueueList[0], user_data))
 }
 
 func (FFTplan *ClFFTPlan) Destroy() error {
@@ -625,13 +626,13 @@ func (FFTplan *ClFFTPlan) SetDistances(distances *ArrayDistances) error {
 }
 
 func (FFTplan *ClFFTPlan) GetLayouts() (*ArrayLayouts, error) {
-        var inVal, outVal C.clfftLayout
-        err := toError(C.clfftGetLayout(FFTplan.clFFTHandle, &inVal, &outVal))
-        return &ArrayLayouts{inputs: ClFFTLayout(inVal), outputs: ClFFTLayout(outVal)}, err
+	var inVal, outVal C.clfftLayout
+	err := toError(C.clfftGetLayout(FFTplan.clFFTHandle, &inVal, &outVal))
+	return &ArrayLayouts{inputs: ClFFTLayout(inVal), outputs: ClFFTLayout(outVal)}, err
 }
 
 func (FFTplan *ClFFTPlan) SetLayouts(layouts *ArrayLayouts) error {
-        return toError(C.clfftSetLayout(FFTplan.clFFTHandle, layouts.inputs.toCl(), layouts.outputs.toCl()))
+	return toError(C.clfftSetLayout(FFTplan.clFFTHandle, layouts.inputs.toCl(), layouts.outputs.toCl()))
 }
 
 // GetResultPlacement returns true if the transform result is stored back into the input buffer (inplace transform)
@@ -656,32 +657,32 @@ func (FFTplan *ClFFTPlan) SetResultInplace() error {
 }
 
 func (FFTplan *ClFFTPlan) SetResultOutOfPlace() error {
-        return toError(C.clfftSetResultLocation(FFTplan.clFFTHandle, C.CLFFT_OUTOFPLACE))
+	return toError(C.clfftSetResultLocation(FFTplan.clFFTHandle, C.CLFFT_OUTOFPLACE))
 }
 
 // GetResultTranspose returns true if the final transpose in the transform is skipped
 func (FFTplan *ClFFTPlan) GetResultTranspose() (bool, error) {
-        var val C.clfftResultTransposed
-        err := toError(C.clfftGetPlanTransposeResult(FFTplan.clFFTHandle, &val))
-        if err != nil {
-                return false, err
-        }
-        switch val {
-        default:
-                return false, err
-        case C.CLFFT_TRANSPOSED:
-                return true, nil
-        case C.CLFFT_NOTRANSPOSE:
-                return false, nil
-        }
+	var val C.clfftResultTransposed
+	err := toError(C.clfftGetPlanTransposeResult(FFTplan.clFFTHandle, &val))
+	if err != nil {
+		return false, err
+	}
+	switch val {
+	default:
+		return false, err
+	case C.CLFFT_TRANSPOSED:
+		return true, nil
+	case C.CLFFT_NOTRANSPOSE:
+		return false, nil
+	}
 }
 
 func (FFTplan *ClFFTPlan) SetResultTransposed() error {
-        return toError(C.clfftSetPlanTransposeResult(FFTplan.clFFTHandle, C.CLFFT_TRANSPOSED))
+	return toError(C.clfftSetPlanTransposeResult(FFTplan.clFFTHandle, C.CLFFT_TRANSPOSED))
 }
 
 func (FFTplan *ClFFTPlan) SetResultNoTranspose() error {
-        return toError(C.clfftSetPlanTransposeResult(FFTplan.clFFTHandle, C.CLFFT_NOTRANSPOSE))
+	return toError(C.clfftSetPlanTransposeResult(FFTplan.clFFTHandle, C.CLFFT_NOTRANSPOSE))
 }
 
 func (FFTplan *ClFFTPlan) GetTemporaryBufferSize() (int, error) {
@@ -694,17 +695,17 @@ func (FFTplan *ClFFTPlan) GetTemporaryBufferSize() (int, error) {
 }
 
 func (FFTplan *ClFFTPlan) SetPlanCallback(funcName string, funcString string, localMemSize int, cb_type ClFFTCallbackType, userdata *MemObject, num_buffers int) error {
-        cFname := make([]*C.char, 1)
-        cfn := C.CString(funcName)
-        cFname[0] = cfn
-        cFstring := make([]*C.char, 1)
-        cfs := C.CString(funcString)
-        cFstring[0] = cfs
-        defer C.free(unsafe.Pointer(cfn))
-        defer C.free(unsafe.Pointer(cfs))
+	cFname := make([]*C.char, 1)
+	cfn := C.CString(funcName)
+	cFname[0] = cfn
+	cFstring := make([]*C.char, 1)
+	cfs := C.CString(funcString)
+	cFstring[0] = cfs
+	defer C.free(unsafe.Pointer(cfn))
+	defer C.free(unsafe.Pointer(cfs))
 
 	return toError(C.clfftSetPlanCallback(FFTplan.clFFTHandle, cFname[0], cFstring[0], C.int(localMemSize),
-					      C.clfftCallbackType(cb_type), &(userdata.clMem), C.int(num_buffers)))
+		C.clfftCallbackType(cb_type), &(userdata.clMem), C.int(num_buffers)))
 }
 
 func (FFTplan *ClFFTPlan) EnqueueForwardTransform(commQueues []*CommandQueue, InWaitEventsList []*Event, input_buffers_list, output_buffers_list []*MemObject, tmpBufferIn *MemObject) ([]*Event, error) {
@@ -777,8 +778,8 @@ func (FFTplan *ClFFTPlan) EnqueueTransformUnsafe(commQueues []*CommandQueue, InW
 	outEvent := make([]C.cl_event, queueLength)
 	EventsList := make([]*Event, queueLength)
 	err := toError(C.clfftEnqueueTransform(FFTplan.clFFTHandle, C.clfftDirection(TransformDirection), C.cl_uint(queueLength), &QueueList[0],
-						C.cl_uint(inWaitListLength), WaitEventsPtr, &outEvent[0],
-						input_buffers_ptr, output_buffers_ptr, tmpBufferPtr))
+		C.cl_uint(inWaitListLength), WaitEventsPtr, &outEvent[0],
+		input_buffers_ptr, output_buffers_ptr, tmpBufferPtr))
 	if err != nil {
 		return []*Event{}, err
 	}
@@ -792,34 +793,34 @@ func (ArrLayout *ArrayLayouts) SetInputLayout(layout ClFFTLayout) {
 	switch layout {
 	default:
 		ArrLayout.inputs = CLFFTLayoutComplexInterleaved
-        case CLFFTLayoutComplexInterleaved:
+	case CLFFTLayoutComplexInterleaved:
 		ArrLayout.inputs = CLFFTLayoutComplexInterleaved
-        case CLFFTLayoutComplexPlanar:
+	case CLFFTLayoutComplexPlanar:
 		ArrLayout.inputs = CLFFTLayoutComplexPlanar
-        case CLFFTLayoutHermitianInterleaved:
+	case CLFFTLayoutHermitianInterleaved:
 		ArrLayout.inputs = CLFFTLayoutHermitianInterleaved
-        case CLFFTLayoutHermitianPlanar:
+	case CLFFTLayoutHermitianPlanar:
 		ArrLayout.inputs = CLFFTLayoutHermitianPlanar
-        case CLFFTLayoutReal:
+	case CLFFTLayoutReal:
 		ArrLayout.inputs = CLFFTLayoutReal
 	}
 }
 
 func (ArrLayout *ArrayLayouts) SetOutputLayout(layout ClFFTLayout) {
-        switch layout {
-        default:
-                ArrLayout.outputs = CLFFTLayoutComplexInterleaved
-        case CLFFTLayoutComplexInterleaved:
-                ArrLayout.outputs = CLFFTLayoutComplexInterleaved
-        case CLFFTLayoutComplexPlanar:
-                ArrLayout.outputs = CLFFTLayoutComplexPlanar
-        case CLFFTLayoutHermitianInterleaved:
-                ArrLayout.outputs = CLFFTLayoutHermitianInterleaved
-        case CLFFTLayoutHermitianPlanar:
-                ArrLayout.outputs = CLFFTLayoutHermitianPlanar
-        case CLFFTLayoutReal:
-                ArrLayout.outputs = CLFFTLayoutReal
-        }
+	switch layout {
+	default:
+		ArrLayout.outputs = CLFFTLayoutComplexInterleaved
+	case CLFFTLayoutComplexInterleaved:
+		ArrLayout.outputs = CLFFTLayoutComplexInterleaved
+	case CLFFTLayoutComplexPlanar:
+		ArrLayout.outputs = CLFFTLayoutComplexPlanar
+	case CLFFTLayoutHermitianInterleaved:
+		ArrLayout.outputs = CLFFTLayoutHermitianInterleaved
+	case CLFFTLayoutHermitianPlanar:
+		ArrLayout.outputs = CLFFTLayoutHermitianPlanar
+	case CLFFTLayoutReal:
+		ArrLayout.outputs = CLFFTLayoutReal
+	}
 }
 
 func (ArrDistance *ArrayDistances) SetInputDistance(x int) {
@@ -837,4 +838,3 @@ func (ArrDistance *ArrayDistances) GetInputDistance() int {
 func (ArrDistance *ArrayDistances) GetOutputDistance() int {
 	return ArrDistance.outputs
 }
-

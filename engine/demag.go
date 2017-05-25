@@ -3,9 +3,9 @@ package engine
 // Calculation of magnetostatic field
 
 import (
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/mag"
+	"github.com/mumax/3cl/opencl"
 )
 
 // Demag variables
@@ -19,7 +19,7 @@ var (
 	EnableDemag   = true // enable/disable global demag field
 	NoDemagSpins  = NewScalarParam("NoDemagSpins", "", "Disable magnetostatic interaction per-spin (set to 1 to disable)")
 	conv_         *opencl.DemagConvolution // does the heavy lifting
-	DemagAccuracy = 6.0                  // Demag accuracy (divide cubes in at most N^3 points)
+	DemagAccuracy = 6.0                    // Demag accuracy (divide cubes in at most N^3 points)
 )
 
 var AddEdens_demag = makeEdensAdder(&B_demag, -0.5)

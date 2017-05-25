@@ -3,8 +3,8 @@ package engine
 // Minimize follows the steepest descent method as per Exl et al., JAP 115, 17D118 (2014).
 
 import (
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl"
 )
 
 var (

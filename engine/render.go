@@ -1,9 +1,9 @@
 package engine
 
 import (
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/draw"
+	"github.com/mumax/3cl/opencl"
 	"image"
 	"image/jpeg"
 	"math"

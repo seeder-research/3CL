@@ -1,11 +1,11 @@
 package opencl
 
 import (
-	"unsafe"
 	"fmt"
+	"unsafe"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/timer"
 	"github.com/mumax/3cl/util"
 )
@@ -28,12 +28,18 @@ func newSlice(nComp int, size [3]int, memType int8) *data.Slice {
 	fillWait := make([]*cl.Event, nComp)
 	for c := range ptrs {
 		tmp_buf, err := ClCtx.CreateEmptyBuffer(cl.MemReadWrite, bytes)
-		if err != nil { fmt.Printf("CreateEmptyBuffer failed: %+v \n", err) }
+		if err != nil {
+			fmt.Printf("CreateEmptyBuffer failed: %+v \n", err)
+		}
 		ptrs[c] = unsafe.Pointer(tmp_buf)
 		fillWait[c], err = ClCmdQueue.EnqueueFillBuffer(tmp_buf, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, bytes, nil)
-		if err != nil { fmt.Printf("CreateEmptyBuffer failed: %+v \n", err) }
+		if err != nil {
+			fmt.Printf("CreateEmptyBuffer failed: %+v \n", err)
+		}
 		err = cl.WaitForEvents([]*cl.Event{fillWait[c]})
-		if err != nil { fmt.Printf("Wait for EnqueueFillBuffer failed: %+v \n", err) }
+		if err != nil {
+			fmt.Printf("Wait for EnqueueFillBuffer failed: %+v \n", err)
+		}
 	}
 	returnPtr := data.SliceFromPtrs(size, memType, ptrs)
 	returnPtr.SetEvents(fillWait)
@@ -51,7 +57,7 @@ func memFree(ptr unsafe.Pointer) {
 
 func MemCpyDtoH(dst, src unsafe.Pointer, bytes int) []*cl.Event {
 	// sync previous kernels
-	eventList := make([](*cl.Event),1)
+	eventList := make([](*cl.Event), 1)
 	waitList, err := ClCmdQueue.EnqueueBarrierWithWaitList(nil)
 	if err != nil {
 		fmt.Printf("EnqueueBarrierWithWaitList failed: %+v \n", err)
@@ -85,18 +91,18 @@ func MemCpyDtoH(dst, src unsafe.Pointer, bytes int) []*cl.Event {
 
 func MemCpyHtoD(dst, src unsafe.Pointer, bytes int) []*cl.Event {
 	// sync previous kernels
-        eventList := make([](*cl.Event),1)
-        waitList, err := ClCmdQueue.EnqueueBarrierWithWaitList(nil)
-        if err != nil {
-                fmt.Printf("EnqueueBarrierWithWaitList failed: %+v \n", err)
-                return nil
-        }
-        eventList[0] = waitList
-        err = cl.WaitForEvents(eventList)
-        if err != nil {
-                fmt.Printf("First WaitForEvents in MemCpyHtoD failed: %+v \n", err)
-                return nil
-        }
+	eventList := make([](*cl.Event), 1)
+	waitList, err := ClCmdQueue.EnqueueBarrierWithWaitList(nil)
+	if err != nil {
+		fmt.Printf("EnqueueBarrierWithWaitList failed: %+v \n", err)
+		return nil
+	}
+	eventList[0] = waitList
+	err = cl.WaitForEvents(eventList)
+	if err != nil {
+		fmt.Printf("First WaitForEvents in MemCpyHtoD failed: %+v \n", err)
+		return nil
+	}
 	timer.Start("memcpyHtoD")
 
 	// execute
@@ -107,30 +113,30 @@ func MemCpyHtoD(dst, src unsafe.Pointer, bytes int) []*cl.Event {
 	}
 
 	// sync copy
-        err = cl.WaitForEvents(eventList)
+	err = cl.WaitForEvents(eventList)
 	timer.Stop("memcpyHtoD")
-        if err != nil {
-                fmt.Printf("Second WaitForEvents in MemCpyHtoD failed: %+v \n", err)
-                return nil
-        }
+	if err != nil {
+		fmt.Printf("Second WaitForEvents in MemCpyHtoD failed: %+v \n", err)
+		return nil
+	}
 
 	return eventList
 }
 
 func MemCpy(dst, src unsafe.Pointer, bytes int) []*cl.Event {
 	// sync kernels
-        eventList := make([](*cl.Event),1)
-        waitList, err := ClCmdQueue.EnqueueBarrierWithWaitList(nil)
-        if err != nil {
-                fmt.Printf("EnqueueBarrierWithWaitList failed: %+v \n", err)
-                return nil
-        }
-        eventList[0] = waitList
-        err = cl.WaitForEvents(eventList)
-        if err != nil {
-                fmt.Printf("First WaitForEvents in MemCpy failed: %+v \n", err)
-                return nil
-        }
+	eventList := make([](*cl.Event), 1)
+	waitList, err := ClCmdQueue.EnqueueBarrierWithWaitList(nil)
+	if err != nil {
+		fmt.Printf("EnqueueBarrierWithWaitList failed: %+v \n", err)
+		return nil
+	}
+	eventList[0] = waitList
+	err = cl.WaitForEvents(eventList)
+	if err != nil {
+		fmt.Printf("First WaitForEvents in MemCpy failed: %+v \n", err)
+		return nil
+	}
 	timer.Start("memcpy")
 
 	// execute
@@ -141,14 +147,14 @@ func MemCpy(dst, src unsafe.Pointer, bytes int) []*cl.Event {
 	}
 
 	// sync copy
-        err = cl.WaitForEvents(eventList)
+	err = cl.WaitForEvents(eventList)
 	timer.Stop("memcpy")
-        if err != nil {
-                fmt.Printf("First WaitForEvents in MemCpy failed: %+v \n", err)
-                return nil
-        }
+	if err != nil {
+		fmt.Printf("First WaitForEvents in MemCpy failed: %+v \n", err)
+		return nil
+	}
 
-	returnList := make([]*cl.Event,2)
+	returnList := make([]*cl.Event, 2)
 	returnList[0], returnList[1] = eventList[0], eventList[0]
 	return returnList
 }
@@ -156,22 +162,22 @@ func MemCpy(dst, src unsafe.Pointer, bytes int) []*cl.Event {
 // Memset sets the Slice's components to the specified values.
 // To be carefully used on unified slice (need sync)
 func Memset(s *data.Slice, val ...float32) {
-        eventList := make([](*cl.Event),s.NComp())
+	eventList := make([](*cl.Event), s.NComp())
 	err := cl.WaitForEvents(nil)
- 
+
 	if Synchronous { // debug
 		for c := range eventList {
 			eventList[c] = s.GetEvent(c)
 		}
 		eventBar, errBar := ClCmdQueue.EnqueueBarrierWithWaitList(eventList)
 		errBar = cl.WaitForEvents([](*cl.Event){eventBar})
-                if errBar != nil {
-                        fmt.Printf("First WaitForEvents in MemSet failed: %+v \n", err)
-                }
+		if errBar != nil {
+			fmt.Printf("First WaitForEvents in MemSet failed: %+v \n", err)
+		}
 		timer.Start("memset")
 	}
 	util.Argument(len(val) == s.NComp())
-	eventListFill := make([](*cl.Event),len(val))
+	eventListFill := make([](*cl.Event), len(val))
 	for c, v := range val {
 		eventListFill[c], err = ClCmdQueue.EnqueueFillBuffer((*cl.MemObject)(s.DevPtr(c)), unsafe.Pointer(&v), SIZEOF_FLOAT32, 0, s.Len()*SIZEOF_FLOAT32, [](*cl.Event){s.GetEvent(c)})
 		s.SetEvent(c, eventListFill[c])
@@ -182,9 +188,9 @@ func Memset(s *data.Slice, val ...float32) {
 	if Synchronous { //debug
 		eventBar, errBar := ClCmdQueue.EnqueueBarrierWithWaitList(eventListFill)
 		errBar = cl.WaitForEvents([](*cl.Event){eventBar})
-                if errBar != nil {
-                        fmt.Printf("Second WaitForEvents in MemSet failed: %+v \n", err)
-                }
+		if errBar != nil {
+			fmt.Printf("Second WaitForEvents in MemSet failed: %+v \n", err)
+		}
 		timer.Stop("memset")
 	}
 }
@@ -210,10 +216,10 @@ func SetElem(s *data.Slice, comp int, index int, value float32) {
 
 func GetElem(s *data.Slice, comp int, index int) float32 {
 	var f float32
-        event, err := ClCmdQueue.EnqueueReadBuffer((*cl.MemObject)(s.DevPtr(comp)), false, index*SIZEOF_FLOAT32, SIZEOF_FLOAT32, unsafe.Pointer(&f), [](*cl.Event){s.GetEvent(comp)})
+	event, err := ClCmdQueue.EnqueueReadBuffer((*cl.MemObject)(s.DevPtr(comp)), false, index*SIZEOF_FLOAT32, SIZEOF_FLOAT32, unsafe.Pointer(&f), [](*cl.Event){s.GetEvent(comp)})
 	if err != nil {
-                fmt.Printf("EnqueueReadBuffer failed: %+v \n", err)
-        }
+		fmt.Printf("EnqueueReadBuffer failed: %+v \n", err)
+	}
 	s.SetEvent(comp, event)
 	err = cl.WaitForEvents([](*cl.Event){event})
 	if err != nil {

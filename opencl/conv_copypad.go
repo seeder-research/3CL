@@ -3,8 +3,8 @@ package opencl
 import (
 	"fmt"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/util"
 )
 
@@ -22,7 +22,9 @@ func copyUnPad(dst, src *data.Slice, dstsize, srcsize [3]int) {
 	dst.SetEvent(0, event)
 	src.SetEvent(0, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
-	if err != nil { fmt.Printf("WaitForEvents failed in copyunpad: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in copyunpad: %+v \n", err)
+	}
 }
 
 // Copies src into dst, which is larger, and multiplies by vol*Bsat.
@@ -43,5 +45,7 @@ func copyPadMul(dst, src, vol *data.Slice, dstsize, srcsize [3]int, Msat MSlice)
 	Msat.SetEvent(0, event)
 	vol.SetEvent(0, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
-	if err != nil { fmt.Printf("WaitForEvents failed in copypadmul: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in copypadmul: %+v \n", err)
+	}
 }

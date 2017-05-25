@@ -2,8 +2,8 @@ package engine
 
 import (
 	//"fmt"
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/util"
 )
 
@@ -38,10 +38,10 @@ func (s *BackwardEuler) Step() {
 	Time = t0 + 0.5*Dt_si // 0.5 dt makes it implicit midpoint method
 
 	// with temperature, previous torque cannot be used as predictor
-//	if Temp.isZero() {
-//		opencl.Madd2(y, y0, dy1, 1, dt) // predictor euler step with previous torque
-//		M.normalize()
-//	}
+	//	if Temp.isZero() {
+	//		opencl.Madd2(y, y0, dy1, 1, dt) // predictor euler step with previous torque
+	//		M.normalize()
+	//	}
 
 	torqueFn(dy0)
 	opencl.Madd2(y, y0, dy0, 1, dt) // y = y0 + dt * dy

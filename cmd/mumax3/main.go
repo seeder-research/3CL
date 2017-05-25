@@ -4,8 +4,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/engine"
+	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/script"
 	"github.com/mumax/3cl/util"
 	"log"
@@ -16,8 +16,7 @@ import (
 )
 
 // flags in engine/gofiles.go
-var (
-)
+var ()
 
 func main() {
 	flag.Parse()
@@ -159,7 +158,7 @@ func goServeGUI() string {
 func printVersion() {
 	fmt.Print("//", engine.UNAME, "\n")
 	fmt.Print("//", opencl.GPUInfo, "\n")
-//	fmt.Print("//", opencl.GPUInfo, ", using CC", opencl.UseCC, " PTX \n")
+	//	fmt.Print("//", opencl.GPUInfo, ", using CC", opencl.UseCC, " PTX \n")
 	fmt.Print("//(c) Arne Vansteenkiste, Dynamat LAB, Ghent University, Belgium", "\n")
 	fmt.Print("//Ported to OpenCL by Xuanyao Fong, National University of Singapore, Singapore", "\n")
 	fmt.Print("//This is free software without any warranty. See license.txt", "\n")

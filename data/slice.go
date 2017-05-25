@@ -20,15 +20,15 @@ type Slice struct {
 	ptrs    []unsafe.Pointer         // points into ptr_, limited to NComp()
 	size    [3]int
 	memType int8
-	event	[MAX_COMP]*cl.Event
+	event   [MAX_COMP]*cl.Event
 }
 
 // this package must not depend on OpenCL.
 // NOTE: cpyDtoH and cpuHtoD are only needed to support 32-bit builds,
 // otherwise, it could be removed in favor of memCpy only.
 var (
-	memFree, memFreeHost		func(unsafe.Pointer)
-	memCpy, memCpyDtoH, memCpyHtoD	func(dst, src unsafe.Pointer, bytes int) []*cl.Event
+	memFree, memFreeHost           func(unsafe.Pointer)
+	memCpy, memCpyDtoH, memCpyHtoD func(dst, src unsafe.Pointer, bytes int) []*cl.Event
 )
 
 // Internal: enables slices on GPU. Called upon opencl init.

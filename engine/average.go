@@ -3,8 +3,8 @@ package engine
 // Averaging of quantities over entire universe or just magnet.
 
 import (
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl"
 )
 
 // average of quantity over universe

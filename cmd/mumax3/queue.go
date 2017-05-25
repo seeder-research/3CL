@@ -5,8 +5,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/engine"
+	"github.com/mumax/3cl/opencl"
 	"io"
 	"log"
 	"net/http"

@@ -58,7 +58,7 @@ func (dst *Bytes) Set(index int, value byte) {
 		log.Panic("Bytes.Set: index out of range:", index)
 	}
 	src := value
-	event, err := ClCmdQueue.EnqueueWriteBuffer((*cl.MemObject)(dst.Ptr), false, index, 1, unsafe.Pointer(&src), nil);
+	event, err := ClCmdQueue.EnqueueWriteBuffer((*cl.MemObject)(dst.Ptr), false, index, 1, unsafe.Pointer(&src), nil)
 	if err != nil {
 		panic(err)
 	}
@@ -75,14 +75,14 @@ func (src *Bytes) Get(index int) byte {
 		log.Panic("Bytes.Set: index out of range:", index)
 	}
 	dst := make([]byte, 1)
-	event , err := ClCmdQueue.EnqueueReadBufferByte((*cl.MemObject)(src.Ptr), false, index, dst, nil);
+	event, err := ClCmdQueue.EnqueueReadBufferByte((*cl.MemObject)(src.Ptr), false, index, dst, nil)
 	if err != nil {
 		panic(err)
 	}
-        err = cl.WaitForEvents([](*cl.Event){event})
-        if err != nil {
-                log.Panic("WaitForEvents failed in Bytes.Set():", err)
-        }
+	err = cl.WaitForEvents([](*cl.Event){event})
+	if err != nil {
+		log.Panic("WaitForEvents failed in Bytes.Set():", err)
+	}
 	return dst[0]
 }
 

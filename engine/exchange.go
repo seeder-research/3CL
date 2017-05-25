@@ -4,8 +4,8 @@ package engine
 // See also cuda/exchange.cu and cuda/dmi.cu
 
 import (
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/util"
 	"unsafe"
 )
@@ -96,7 +96,7 @@ func InterDind(region1, region2 int, value float64) {
 type exchParam struct {
 	lut            [NREGION * (NREGION + 1) / 2]float32 // 1e18 * harmonic mean of Aex/Msat in regions (i,j)
 	scale          [NREGION * (NREGION + 1) / 2]float32 // extra scale factor for lut[SymmIdx(i, j)]
-	gpu            opencl.SymmLUT                         // gpu copy of lut, lazily transferred when needed
+	gpu            opencl.SymmLUT                       // gpu copy of lut, lazily transferred when needed
 	gpu_ok, cpu_ok bool                                 // gpu cache up-to date with lut source
 }
 

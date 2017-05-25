@@ -10,8 +10,8 @@ in objects that provide:
 
 import (
 	"fmt"
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl"
 )
 
 // The Info interface defines the bare minimum methods a quantity must implement

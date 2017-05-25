@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/util"
 )
 
@@ -64,7 +64,9 @@ func (c *DemagConvolution) exec3D(outp, inp, vol *data.Slice, Msat MSlice) {
 		}
 	}
 	err := cl.WaitForEvents(fullEventList)
-	if err != nil { fmt.Printf("error waiting for forward fft to finish in exec3d:  %+v \n", err) }
+	if err != nil {
+		fmt.Printf("error waiting for forward fft to finish in exec3d:  %+v \n", err)
+	}
 	// kern mul
 	kernMulRSymm3D_async(c.fftCBuf,
 		c.kern[X][X], c.kern[Y][Y], c.kern[Z][Z],
@@ -85,7 +87,9 @@ func (c *DemagConvolution) exec2D(outp, inp, vol *data.Slice, Msat MSlice) {
 	// Z
 	event := c.fwFFT(Z, inp, vol, Msat)
 	err := cl.WaitForEvents(event)
-	if err != nil { fmt.Printf("error waiting for forward fft to end in exec2d: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("error waiting for forward fft to end in exec2d: %+v \n", err)
+	}
 	kernMulRSymm2Dz_async(c.fftCBuf[Z], c.kern[Z][Z], Nx, Ny)
 	c.bwFFT(Z, outp)
 
@@ -94,7 +98,7 @@ func (c *DemagConvolution) exec2D(outp, inp, vol *data.Slice, Msat MSlice) {
 	event0 := c.fwFFT(Y, inp, vol, Msat)
 	offset := len(event)
 	totalLen := offset + len(event0)
-	fullEventList := make([]*cl.Event,totalLen)
+	fullEventList := make([]*cl.Event, totalLen)
 	for id, eid := range event {
 		fullEventList[id] = eid
 	}
@@ -102,7 +106,9 @@ func (c *DemagConvolution) exec2D(outp, inp, vol *data.Slice, Msat MSlice) {
 		fullEventList[offset+id] = eid
 	}
 	err = cl.WaitForEvents(fullEventList)
-	if err != nil { fmt.Printf("error waiting for second and third forward fft to end in exec2d: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("error waiting for second and third forward fft to end in exec2d: %+v \n", err)
+	}
 	kernMulRSymm2Dxy_async(c.fftCBuf[X], c.fftCBuf[Y],
 		c.kern[X][X], c.kern[Y][Y], c.kern[X][Y], Nx, Ny)
 	c.bwFFT(X, outp)
@@ -129,16 +135,22 @@ func (c *DemagConvolution) fwFFT(i int, inp, vol *data.Slice, Msat MSlice) []*cl
 	in := inp.Comp(i)
 	copyPadMul(c.fftRBuf[i], in, vol, c.realKernSize, c.inputSize, Msat)
 	event, err := c.fwPlan.ExecAsync(c.fftRBuf[i], c.fftCBuf[i])
-	if err != nil { fmt.Printf("Error enqueuing forward fft: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("Error enqueuing forward fft: %+v \n", err)
+	}
 	return event
 }
 
 // backward FFT component i
 func (c *DemagConvolution) bwFFT(i int, outp *data.Slice) {
 	event, err := c.bwPlan.ExecAsync(c.fftCBuf[i], c.fftRBuf[i])
-	if err != nil { fmt.Printf("Error enqueuing backward fft: %+v", err) }
+	if err != nil {
+		fmt.Printf("Error enqueuing backward fft: %+v", err)
+	}
 	err = cl.WaitForEvents(event)
-	if err != nil { fmt.Printf("Error waiting for backward fft t end: %+v \n ", err) }
+	if err != nil {
+		fmt.Printf("Error waiting for backward fft t end: %+v \n ", err)
+	}
 	out := outp.Comp(i)
 	copyUnPad(out, c.fftRBuf[i], c.inputSize, c.realKernSize)
 }
@@ -194,9 +206,13 @@ func (c *DemagConvolution) init(realKern [3][3]*data.Slice) {
 				// FW FFT
 				data.Copy(input, realKern[i][j])
 				event, err := c.fwPlan.ExecAsync(input, output)
-				if err != nil { fmt.Printf("error enqueuing forward fft in init: %+v \n ", err) }
+				if err != nil {
+					fmt.Printf("error enqueuing forward fft in init: %+v \n ", err)
+				}
 				err = cl.WaitForEvents(event)
-				if err != nil { fmt.Printf("error waiting for forward fft to end in init: %+v \n ", err) }
+				if err != nil {
+					fmt.Printf("error waiting for forward fft to end in init: %+v \n ", err)
+				}
 				data.Copy(kfull, output)
 
 				// extract non-redundant part (Y,Z symmetry)

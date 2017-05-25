@@ -1,15 +1,15 @@
 package engine
 
 import (
-	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/util"
 	"unsafe"
 )
 
 // look-up table for region based parameters
 type lut struct {
-	gpu_buf opencl.LUTPtrs       // gpu copy of cpu buffer, only transferred when needed
+	gpu_buf opencl.LUTPtrs     // gpu copy of cpu buffer, only transferred when needed
 	gpu_ok  bool               // gpu cache up-to date with cpu source?
 	cpu_buf [][NREGION]float32 // table data on cpu
 	source  updater            // updates cpu data

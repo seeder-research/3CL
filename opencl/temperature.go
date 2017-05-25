@@ -21,7 +21,7 @@ func SetTemperature(Bth, noise *data.Slice, k2mu0_Mu0VgammaDt float64, Msat, Tem
 		Alpha.DevPtr(0), Alpha.Mul(0),
 		N, cfg,
 		[]*cl.Event{Bth.GetEvent(0), noise.GetEvent(0), Msat.GetEvent(0), Temp.GetEvent(0), Alpha.GetEvent(0)})
-	
+
 	Bth.SetEvent(0, event)
 	noise.SetEvent(0, event)
 	Msat.SetEvent(0, event)
