@@ -11,6 +11,7 @@ var OCLHeadersList = []string{
 	"atomicf",
 	"reduce",
 	"amul",
+	"mrg32k3a",
 	"sum"}
 
 var OCLKernelsList = []string{
@@ -60,4 +61,5 @@ var OCLKernelsList = []string{
 	"vecnorm",
 	"zeromask",
 	"addzhanglitorque2",
+	"mrg32k3a",
 	"square"}
