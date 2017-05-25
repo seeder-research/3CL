@@ -44,7 +44,7 @@ func newSlice(nComp int, size [3]int, memType int8) *data.Slice {
 
 	dataPtr := data.SliceFromPtrs(size, memType, ptrs)
 	dataPtr.SetEvents(fillWait)
-	return returnPtr
+	return dataPtr
 }
 
 // wrappers for data.EnableGPU arguments

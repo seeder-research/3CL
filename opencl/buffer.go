@@ -53,11 +53,11 @@ func Buffer(nComp int, size [3]int) *data.Slice {
 		ptrs[i] = unsafe.Pointer(tmpPtr)
 		fillWait[i], err = ClCmdQueue.EnqueueFillBuffer(tmpPtr, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, bytes, nil)
 		if err != nil {
-			fmt.Printf("CreateEmptyBuffer failed: %+v \n", err)
+			log.Printf("CreateEmptyBuffer failed: %+v \n", err)
 		}
 		err = cl.WaitForEvents([]*cl.Event{fillWait[i]})
 		if err != nil {
-			fmt.Printf("Wait for EnqueueFillBuffer failed: %+v \n", err)
+			log.Printf("Wait for EnqueueFillBuffer failed: %+v \n", err)
 		}
 		buf_check[ptrs[i]] = struct{}{} // mark this pointer as mine
 	}
