@@ -21,12 +21,9 @@ func LaunchKernel(kernname string, gridDim, workDim []int, events []*cl.Event) *
 		log.Panic("Kernel " + kernname + " does not exist!")
 		return nil
 	}
-	//	log.Println("Launching kernel: ", kernname)
-	//	log.Println("gridDim: ", gridDim)
-	//	log.Println("workDim: ", workDim)
 	KernEvent, err := ClCmdQueue.EnqueueNDRangeKernel(KernList[kernname], nil, gridDim, workDim, events)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 		return nil
 	} else {
 		return KernEvent
@@ -34,33 +31,32 @@ func LaunchKernel(kernname string, gridDim, workDim []int, events []*cl.Event) *
 }
 
 func SetKernelArgWrapper(kernname string, index int, arg interface{}) {
-	//	log.Printf("Working on index %d \n", index)
 	if KernList[kernname] == nil {
 		log.Panic("Kernel " + kernname + " does not exist!")
 	}
 	switch val := arg.(type) {
 	default:
 		if err := KernList[kernname].SetArg(index, val); err != nil {
-			log.Fatal(err)
+			log.Fatalln(err)
 		}
 	case unsafe.Pointer:
 		memBufHandle, flag := arg.(unsafe.Pointer)
 		if memBufHandle == unsafe.Pointer(uintptr(0)) {
 			if err := KernList[kernname].SetArgUnsafe(index, 8, memBufHandle); err != nil {
-				log.Fatal(err)
+				log.Fatalln(err)
 			}
 		} else {
 			if flag {
 				if err := KernList[kernname].SetArg(index, (*cl.MemObject)(memBufHandle)); err != nil {
-					log.Fatal(err)
+					log.Fatalln(err)
 				}
 			} else {
-				log.Fatal("Unable to change argument type to *cl.MemObject")
+				log.Fatalln("Unable to change argument type to *cl.MemObject")
 			}
 		}
 	case int:
 		if err := KernList[kernname].SetArg(index, (int32)(val)); err != nil {
-			log.Fatal(err)
+			log.Fatalln(err)
 		}
 	}
 }
