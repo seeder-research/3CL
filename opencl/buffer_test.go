@@ -34,4 +34,3 @@ func BenchmarkBuffer(b *testing.B) {
 		Recycle(a)
 	}
 }
-

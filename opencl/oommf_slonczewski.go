@@ -1,8 +1,8 @@
 package opencl
 
 import (
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 	"unsafe"
 )
 
@@ -29,11 +29,11 @@ func AddOommfSlonczewskiTorque(torque, m *data.Slice, Msat, J, fixedP, alpha, pf
 		unsafe.Pointer(uintptr(0)), flt,
 		N, cfg,
 		[](*cl.Event){torque.GetEvent(X), torque.GetEvent(Y), torque.GetEvent(Z),
-		m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z), J.GetEvent(Z),
-		fixedP.GetEvent(X), fixedP.GetEvent(Y), fixedP.GetEvent(Z),
-		alpha.GetEvent(0), ε_prime.GetEvent(0), Msat.GetEvent(0),
-		pfix.GetEvent(0), pfree.GetEvent(0),
-		λfix.GetEvent(0), λfree.GetEvent(0)})
+			m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z), J.GetEvent(Z),
+			fixedP.GetEvent(X), fixedP.GetEvent(Y), fixedP.GetEvent(Z),
+			alpha.GetEvent(0), ε_prime.GetEvent(0), Msat.GetEvent(0),
+			pfix.GetEvent(0), pfree.GetEvent(0),
+			λfix.GetEvent(0), λfree.GetEvent(0)})
 	torque.SetEvent(X, event)
 	torque.SetEvent(Y, event)
 	torque.SetEvent(Z, event)

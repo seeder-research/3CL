@@ -4,6 +4,7 @@ import (
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/mag"
 	"github.com/mumax/3cl/opencl"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/util"
 )
 
@@ -20,9 +21,9 @@ var AddThermalEnergyDensity = makeEdensAdder(&B_therm, -1)
 type thermField struct {
 	seed      uint32            // seed for generator
 	generator *opencl.Generator //
-	noise     *data.Slice      // noise buffer
-	step      int              // solver step corresponding to noise
-	dt        float64          // solver timestep corresponding to noise
+	noise     *data.Slice       // noise buffer
+	step      int               // solver step corresponding to noise
+	dt        float64           // solver timestep corresponding to noise
 }
 
 func init() {
@@ -86,7 +87,8 @@ func (b *thermField) update() {
 	alpha := Alpha.MSlice()
 	defer alpha.Recycle()
 	for i := 0; i < 3; i++ {
-		noise.SetEvent(0, b.generator.Normal(noise.DevPtr(0), int(N), nil))
+		noiseBufferEvent := b.generator.Normal(noise.DevPtr(0), int(N), []*cl.Event{noise.GetEvent(0)})
+		noise.SetEvent(0, noiseBufferEvent)
 		opencl.SetTemperature(dst.Comp(i), noise, k2_VgammaDt, ms, temp, alpha)
 	}
 

@@ -3,8 +3,8 @@ package opencl
 import (
 	"fmt"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/util"
 )
 
@@ -27,5 +27,7 @@ func Crop(dst, src *data.Slice, offX, offY, offZ int) {
 		src.SetEvent(c, eventList[c])
 	}
 	err := cl.WaitForEvents(eventList)
-	if err != nil { fmt.Printf("WaitForEvents failed in crop: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in crop: %+v \n", err)
+	}
 }

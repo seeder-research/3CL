@@ -12,7 +12,7 @@ var OCLHeadersList = []string{
 	"reduce",
 	"amul",
 	"mtgp32",
-	"sum"	}
+	"sum"}
 
 var OCLKernelsList = []string{
 	"copypadmul2",
@@ -64,4 +64,4 @@ var OCLKernelsList = []string{
 	"mtgp32_init_seed_kernel",
 	"mtgp32_normal",
 	"mtgp32_uniform",
-	"square"	}
+	"square"}

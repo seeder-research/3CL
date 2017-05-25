@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/timer"
 )
 
@@ -29,12 +29,12 @@ func newFFT3DC2R(Nx, Ny, Nz int) fft3DC2RPlan {
 		log.Printf("Unable to set buffer layouts of fft3dc2r plan \n")
 	}
 
-	InStrideArr := []int{1, Nx/2+1, Ny*(Nx/2+1)}
+	InStrideArr := []int{1, Nx/2 + 1, Ny * (Nx/2 + 1)}
 	err = handle.SetInStride(InStrideArr)
 	if err != nil {
 		log.Printf("Unable to set input stride of fft3dc2r plan \n")
 	}
-	
+
 	err = handle.SetResultOutOfPlace()
 	if err != nil {
 		log.Printf("Unable to set placeness of fft3dc2r result \n")
@@ -83,7 +83,7 @@ func (p *fft3DC2RPlan) ExecAsync(src, dst *data.Slice) ([]*cl.Event, error) {
 	tmpPtr = dst.DevPtr(0)
 	dstMemObj := *(*cl.MemObject)(tmpPtr)
 	eventsList, err := p.handle.EnqueueBackwardTransform([]*cl.CommandQueue{ClCmdQueue}, []*cl.Event{src.GetEvent(0), dst.GetEvent(0)},
-					 []*cl.MemObject{&srcMemObj}, []*cl.MemObject{&dstMemObj}, nil)
+		[]*cl.MemObject{&srcMemObj}, []*cl.MemObject{&dstMemObj}, nil)
 	if Synchronous {
 		ClCmdQueue.Finish()
 		timer.Stop("fft")

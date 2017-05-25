@@ -27,7 +27,7 @@ type PRNG_ interface {
 }
 
 type Generator struct {
-	Prng	PRNG_
+	Prng PRNG_
 }
 
 /*
@@ -52,7 +52,7 @@ type Generator struct {
 */
 
 func NewGenerator() *Generator {
-	if (ClCUnits > 0) {
+	if ClCUnits > 0 {
 		var tmp PRNG_
 		tmp = NewRNGParams()
 		return &Generator{tmp}
@@ -96,9 +96,9 @@ func (g *Generator) Normal(data unsafe.Pointer, d_size int, events []*cl.Event) 
 func (p *mtgp32_params) Init(seed uint32, events []*cl.Event) {
 
 	//	args := mtgp32_init_seed_kernel_args.argptr[:]
-	event := k_mtgp32_init_seed_kernel_async ( unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
-											unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), seed,
-											&config{[]int{ClCUnits * MTGP32_TN}, []int{MTGP32_TN}}, events)
+	event := k_mtgp32_init_seed_kernel_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
+		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), seed,
+		&config{[]int{ClCUnits * MTGP32_TN}, []int{MTGP32_TN}}, events)
 
 	mtgp32_uniform_args.arg_param_tbl = unsafe.Pointer(p.Rec_buf)
 	mtgp32_uniform_args.arg_temper_tbl = unsafe.Pointer(p.Temper_buf)

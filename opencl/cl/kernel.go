@@ -48,18 +48,19 @@ type LocalBuffer int
 
 ////////////////// Supporting Types ////////////////
 type CL_go_native_kernel func(user_data unsafe.Pointer)
+
 var go_native_kernel_func map[unsafe.Pointer]CL_go_native_kernel
 
 //////////////// Basic Functions ////////////////
 func init() {
-        go_native_kernel_func = make(map[unsafe.Pointer]CL_go_native_kernel)
+	go_native_kernel_func = make(map[unsafe.Pointer]CL_go_native_kernel)
 }
 
 //export go_native_kernel
 func go_native_kernel(user_data unsafe.Pointer) {
-        var c_user_data []unsafe.Pointer
-        c_user_data = *(*[]unsafe.Pointer)(user_data)
-        go_native_kernel_func[c_user_data[1]](c_user_data[0])
+	var c_user_data []unsafe.Pointer
+	c_user_data = *(*[]unsafe.Pointer)(user_data)
+	go_native_kernel_func[c_user_data[1]](c_user_data[0])
 }
 
 func releaseKernel(k *Kernel) {
@@ -70,9 +71,9 @@ func releaseKernel(k *Kernel) {
 }
 
 func retainKernel(k *Kernel) {
-        if k.clKernel != nil {
-                C.clRetainKernel(k.clKernel)
-        }
+	if k.clKernel != nil {
+		C.clRetainKernel(k.clKernel)
+	}
 }
 
 //////////////// Abstract Functions ////////////////
@@ -81,7 +82,7 @@ func (k *Kernel) Release() {
 }
 
 func (k *Kernel) Retain() {
-        retainKernel(k)
+	retainKernel(k)
 }
 
 func (k *Kernel) SetArgs(args ...interface{}) error {
@@ -117,33 +118,33 @@ func (k *Kernel) SetArg(index int, arg interface{}) error {
 }
 
 func (k *Kernel) ArgAddressQualifier(index int) (string, error) {
-        var val C.cl_kernel_arg_address_qualifier
-        var err C.cl_int
-        defer C.free(unsafe.Pointer(&err))
-        if err = C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_ADDRESS_QUALIFIER, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
-                return "", toError(err)
-        }
-        switch val {
-        default:
-                return "", toError(err)
-        case C.CL_KERNEL_ARG_ADDRESS_GLOBAL:
-                return "Global", nil
-        case C.CL_KERNEL_ARG_ADDRESS_LOCAL:
-                return "Local", nil
-        case C.CL_KERNEL_ARG_ADDRESS_CONSTANT:
-                return "Constant", nil
-        case C.CL_KERNEL_ARG_ADDRESS_PRIVATE:
-                return "Private", nil
-        }
+	var val C.cl_kernel_arg_address_qualifier
+	var err C.cl_int
+	defer C.free(unsafe.Pointer(&err))
+	if err = C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_ADDRESS_QUALIFIER, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
+		return "", toError(err)
+	}
+	switch val {
+	default:
+		return "", toError(err)
+	case C.CL_KERNEL_ARG_ADDRESS_GLOBAL:
+		return "Global", nil
+	case C.CL_KERNEL_ARG_ADDRESS_LOCAL:
+		return "Local", nil
+	case C.CL_KERNEL_ARG_ADDRESS_CONSTANT:
+		return "Constant", nil
+	case C.CL_KERNEL_ARG_ADDRESS_PRIVATE:
+		return "Private", nil
+	}
 }
 
 func (k *Kernel) ArgAccessQualifier(index int) (string, error) {
-        var val C.cl_kernel_arg_access_qualifier
+	var val C.cl_kernel_arg_access_qualifier
 	var err C.cl_int
 	defer C.free(unsafe.Pointer(&err))
-        if err = C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_ACCESS_QUALIFIER, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
-                return "", toError(err)
-        }
+	if err = C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_ACCESS_QUALIFIER, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil); err != C.CL_SUCCESS {
+		return "", toError(err)
+	}
 	switch val {
 	default:
 		return "", toError(err)
@@ -159,27 +160,27 @@ func (k *Kernel) ArgAccessQualifier(index int) (string, error) {
 }
 
 func (k *Kernel) ArgTypeQualifier(index int) (C.cl_kernel_arg_type_qualifier, error) {
-        var val C.cl_kernel_arg_type_qualifier
-        err := C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_TYPE_QUALIFIER, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil)
-        return val, toError(err)
+	var val C.cl_kernel_arg_type_qualifier
+	err := C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_TYPE_QUALIFIER, C.size_t(unsafe.Sizeof(val)), unsafe.Pointer(&val), nil)
+	return val, toError(err)
 }
 
 func (k *Kernel) ArgName(index int) (string, error) {
-        var strC [1024]byte
-        var strN C.size_t
-        if err := C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_NAME, 1024, unsafe.Pointer(&strC[0]), &strN); err != C.CL_SUCCESS {
-                return "", toError(err)
-        }
-        return string(strC[:strN]), nil
+	var strC [1024]byte
+	var strN C.size_t
+	if err := C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_NAME, 1024, unsafe.Pointer(&strC[0]), &strN); err != C.CL_SUCCESS {
+		return "", toError(err)
+	}
+	return string(strC[:strN]), nil
 }
 
 func (k *Kernel) ArgTypeName(index int) (string, error) {
-        var strC [1024]byte
-        var strN C.size_t
-        if err := C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_TYPE_NAME, 1024, unsafe.Pointer(&strC[0]), &strN); err != C.CL_SUCCESS {
-                return "", toError(err)
-        }
-        return string(strC[:strN]), nil
+	var strC [1024]byte
+	var strN C.size_t
+	if err := C.clGetKernelArgInfo(k.clKernel, C.cl_uint(index), C.CL_KERNEL_ARG_TYPE_NAME, 1024, unsafe.Pointer(&strC[0]), &strN); err != C.CL_SUCCESS {
+		return "", toError(err)
+	}
+	return string(strC[:strN]), nil
 }
 
 func (k *Kernel) SetArgBuffer(index int, buffer *MemObject) error {
@@ -242,28 +243,28 @@ func (k *Kernel) PreferredWorkGroupSizeMultiple(device *Device) (int, error) {
 func (k *Kernel) CompileWorkGroupSize(device *Device) ([3]int, error) {
 	var wgSize [3]C.size_t
 	defer C.free(unsafe.Pointer(&wgSize))
-        if err := C.clGetKernelWorkGroupInfo(k.clKernel, device.nullableId(), C.CL_KERNEL_COMPILE_WORK_GROUP_SIZE, C.size_t(unsafe.Sizeof(wgSize)), unsafe.Pointer(&wgSize), nil); err != C.CL_SUCCESS {
+	if err := C.clGetKernelWorkGroupInfo(k.clKernel, device.nullableId(), C.CL_KERNEL_COMPILE_WORK_GROUP_SIZE, C.size_t(unsafe.Sizeof(wgSize)), unsafe.Pointer(&wgSize), nil); err != C.CL_SUCCESS {
 		return [3]int{-1, -1, -1}, toError(err)
 	}
-        return [3]int{int(wgSize[0]), int(wgSize[1]), int(wgSize[2])}, nil
+	return [3]int{int(wgSize[0]), int(wgSize[1]), int(wgSize[2])}, nil
 }
 
 func (k *Kernel) WorkGroupLocalMemSize(device *Device) (int, error) {
-        var size C.size_t
-        err := C.clGetKernelWorkGroupInfo(k.clKernel, device.nullableId(), C.CL_KERNEL_LOCAL_MEM_SIZE, C.size_t(unsafe.Sizeof(size)), unsafe.Pointer(&size), nil)
-        return int(size), toError(err)
+	var size C.size_t
+	err := C.clGetKernelWorkGroupInfo(k.clKernel, device.nullableId(), C.CL_KERNEL_LOCAL_MEM_SIZE, C.size_t(unsafe.Sizeof(size)), unsafe.Pointer(&size), nil)
+	return int(size), toError(err)
 }
 
 func (k *Kernel) WorkGroupPrivateMemSize(device *Device) (int, error) {
-        var size C.size_t
-        err := C.clGetKernelWorkGroupInfo(k.clKernel, device.nullableId(), C.CL_KERNEL_PRIVATE_MEM_SIZE, C.size_t(unsafe.Sizeof(size)), unsafe.Pointer(&size), nil)
-        return int(size), toError(err)
+	var size C.size_t
+	err := C.clGetKernelWorkGroupInfo(k.clKernel, device.nullableId(), C.CL_KERNEL_PRIVATE_MEM_SIZE, C.size_t(unsafe.Sizeof(size)), unsafe.Pointer(&size), nil)
+	return int(size), toError(err)
 }
 
 func (k *Kernel) NumArgs() (int, error) {
-        var num C.cl_uint
+	var num C.cl_uint
 	err := C.clGetKernelInfo(k.clKernel, C.CL_KERNEL_NUM_ARGS, C.size_t(unsafe.Sizeof(num)), unsafe.Pointer(&num), nil)
-        return int(num), toError(err)
+	return int(num), toError(err)
 }
 
 func (k *Kernel) ReferenceCount() (int, error) {
@@ -273,27 +274,27 @@ func (k *Kernel) ReferenceCount() (int, error) {
 }
 
 func (k *Kernel) FunctionName() (string, error) {
-        var name C.char
+	var name C.char
 	err := C.clGetKernelInfo(k.clKernel, C.CL_KERNEL_FUNCTION_NAME, C.size_t(unsafe.Sizeof(name)), unsafe.Pointer(&name), nil)
-        return C.GoString(&name), toError(err)
+	return C.GoString(&name), toError(err)
 }
 
 func (k *Kernel) Attributes() (string, error) {
-        var name C.char
+	var name C.char
 	err := C.clGetKernelInfo(k.clKernel, C.CL_KERNEL_ATTRIBUTES, C.size_t(unsafe.Sizeof(name)), unsafe.Pointer(&name), nil)
-        return C.GoString(&name), toError(err)
+	return C.GoString(&name), toError(err)
 }
 
 func (k *Kernel) Context() (*Context, error) {
-        var context C.cl_context
+	var context C.cl_context
 	err := C.clGetKernelInfo(k.clKernel, C.CL_KERNEL_CONTEXT, C.size_t(unsafe.Sizeof(context)), unsafe.Pointer(&context), nil)
-        return &Context{clContext: context, devices: nil}, toError(err)
+	return &Context{clContext: context, devices: nil}, toError(err)
 }
 
 func (k *Kernel) Program() (*Program, error) {
-        var program C.cl_program
+	var program C.cl_program
 	err := C.clGetKernelInfo(k.clKernel, C.CL_KERNEL_PROGRAM, C.size_t(unsafe.Sizeof(program)), unsafe.Pointer(&program), nil)
-        return &Program{clProgram: program, devices: nil}, toError(err)
+	return &Program{clProgram: program, devices: nil}, toError(err)
 }
 
 // Enqueues a command to execute a kernel on a device.
@@ -327,7 +328,7 @@ func (q *CommandQueue) EnqueueNDRangeKernel(kernel *Kernel, globalWorkOffset, gl
 		localWorkSizePtr = &localWorkSizeList[0]
 	}
 	var event C.cl_event
-	eventWaitListPtr, WaitListLen :=  eventListPtr(eventWaitList)
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
 	err := toError(C.clEnqueueNDRangeKernel(q.clQueue, kernel.clKernel, C.cl_uint(workDim), globalWorkOffsetPtr, globalWorkSizePtr, localWorkSizePtr, C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
@@ -336,7 +337,7 @@ func (q *CommandQueue) EnqueueNDRangeKernel(kernel *Kernel, globalWorkOffset, gl
 // and globalWorkOffset = 0
 func (q *CommandQueue) EnqueueTask(kernel *Kernel, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
-	eventWaitListPtr, WaitListLen :=  eventListPtr(eventWaitList)
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
 	err := toError(C.clEnqueueTask(q.clQueue, kernel.clKernel, C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
@@ -348,7 +349,7 @@ func (q *CommandQueue) EnqueueNativeKernel(user_args unsafe.Pointer, num_user_ar
 	for i, mb := range memObjects {
 		UserMemObjs[i] = mb.clMem
 	}
-	eventWaitListPtr, WaitListLen :=  eventListPtr(eventWaitList)
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
 	err := toError(C.CLEnqueueNativeKernel(q.clQueue, user_args, C.size_t(num_user_args), C.cl_uint(len(memObjects)), &UserMemObjs[0], &ptr_memobj_in_args[0], C.cl_uint(WaitListLen), eventWaitListPtr, &event))
 	return newEvent(event), err
 }
@@ -380,4 +381,3 @@ func (p *Program) CreateKernelsInProgram() ([]*Kernel, error) {
 	}
 	return returnKerns, nil
 }
-

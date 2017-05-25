@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 )
 
 // SetMaxAngle sets dst to the maximum angle of each cells magnetization with all of its neighbors,
@@ -24,5 +24,7 @@ func SetMaxAngle(dst, m *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data
 	m.SetEvent(Y, event)
 	m.SetEvent(Z, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
-	if err != nil { fmt.Printf("WaitForEvents failed in setmaxangle: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in setmaxangle: %+v \n", err)
+	}
 }

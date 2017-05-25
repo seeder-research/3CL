@@ -198,49 +198,49 @@ func TestHello(t *testing.T) {
 		t.Fatalf("CreateBuffer failed for output: %+v", err)
 	}
 
-        if _, err := queue.EnqueueWriteBufferFloat32(input, true, 0, data[:], nil); err != nil {
-                t.Fatalf("EnqueueWriteBufferFloat32 failed: %+v", err)
-        }
+	if _, err := queue.EnqueueWriteBufferFloat32(input, true, 0, data[:], nil); err != nil {
+		t.Fatalf("EnqueueWriteBufferFloat32 failed: %+v", err)
+	}
 
-        if err := kernel.SetArgs(input, output, uint32(len(data))); err != nil {
-                t.Fatalf("SetKernelArgs failed: %+v", err)
-        }
+	if err := kernel.SetArgs(input, output, uint32(len(data))); err != nil {
+		t.Fatalf("SetKernelArgs failed: %+v", err)
+	}
 
-        local, err := kernel.WorkGroupSize(device)
-        if err != nil {
-                t.Fatalf("WorkGroupSize failed: %+v", err)
-        }
-        t.Logf("Work group size: %d", local)
- 
-        global := len(data)
-        d := len(data) % local
-        if d != 0 {
-                global += local - d
-        }
+	local, err := kernel.WorkGroupSize(device)
+	if err != nil {
+		t.Fatalf("WorkGroupSize failed: %+v", err)
+	}
+	t.Logf("Work group size: %d", local)
+
+	global := len(data)
+	d := len(data) % local
+	if d != 0 {
+		global += local - d
+	}
 	t.Logf("Global work group size: %d ", global)
-        if _, err := queue.EnqueueNDRangeKernel(kernel, nil, []int{global}, []int{local}, nil); err != nil {
-                t.Fatalf("EnqueueNDRangeKernel failed: %+v", err)
-        }
+	if _, err := queue.EnqueueNDRangeKernel(kernel, nil, []int{global}, []int{local}, nil); err != nil {
+		t.Fatalf("EnqueueNDRangeKernel failed: %+v", err)
+	}
 
-        if err := queue.Finish(); err != nil {
-                t.Fatalf("Finish failed: %+v", err)
-        }
+	if err := queue.Finish(); err != nil {
+		t.Fatalf("Finish failed: %+v", err)
+	}
 
-        results := make([]float32, len(data))
-        if _, err := queue.EnqueueReadBufferFloat32(output, true, 0, results, nil); err != nil {
-                t.Fatalf("EnqueueReadBufferFloat32 failed: %+v", err)
-        }
+	results := make([]float32, len(data))
+	if _, err := queue.EnqueueReadBufferFloat32(output, true, 0, results, nil); err != nil {
+		t.Fatalf("EnqueueReadBufferFloat32 failed: %+v", err)
+	}
 
-        correct := 0
-        for i, v := range data {
-                if results[i] == v*v {
-                        correct++
-                }
-        }
+	correct := 0
+	for i, v := range data {
+		if results[i] == v*v {
+			correct++
+		}
+	}
 
-        if correct != len(data) {
-                t.Error("%d/%d correct values", correct, len(results))
-        }
+	if correct != len(data) {
+		t.Error("%d/%d correct values", correct, len(results))
+	}
 
- 	t.Logf("Finished tests")
+	t.Logf("Finished tests")
 }

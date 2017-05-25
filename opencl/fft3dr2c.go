@@ -3,8 +3,8 @@ package opencl
 import (
 	"log"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/timer"
 	"github.com/mumax/3cl/util"
 )
@@ -29,12 +29,12 @@ func newFFT3DR2C(Nx, Ny, Nz int) fft3DR2CPlan {
 		log.Printf("Unable to set buffer layouts of fft3dr2c plan \n")
 	}
 
-	OutStrideArr := []int{1, Nx/2+1, Ny*(Nx/2+1)}
+	OutStrideArr := []int{1, Nx/2 + 1, Ny * (Nx/2 + 1)}
 	err = handle.SetOutStride(OutStrideArr)
 	if err != nil {
 		log.Printf("Unable to set output stride of fft3dr2c plan \n")
 	}
-	
+
 	err = handle.SetResultOutOfPlace()
 	if err != nil {
 		log.Printf("Unable to set placeness of fft3dr2c result \n")
@@ -61,7 +61,7 @@ func newFFT3DR2C(Nx, Ny, Nz int) fft3DR2CPlan {
 // src and dst are 3D arrays stored 1D arrays.
 func (p *fft3DR2CPlan) ExecAsync(src, dst *data.Slice) ([]*cl.Event, error) {
 	if Synchronous {
-                ClCmdQueue.Finish()
+		ClCmdQueue.Finish()
 		timer.Start("fft")
 	}
 	util.Argument(src.NComp() == 1 && dst.NComp() == 1)
@@ -78,9 +78,9 @@ func (p *fft3DR2CPlan) ExecAsync(src, dst *data.Slice) ([]*cl.Event, error) {
 	tmpPtr = dst.DevPtr(0)
 	dstMemObj := *(*cl.MemObject)(tmpPtr)
 	eventsList, err := p.handle.EnqueueForwardTransform([]*cl.CommandQueue{ClCmdQueue}, []*cl.Event{src.GetEvent(0), dst.GetEvent(0)},
-					 []*cl.MemObject{&srcMemObj}, []*cl.MemObject{&dstMemObj}, nil)
+		[]*cl.MemObject{&srcMemObj}, []*cl.MemObject{&dstMemObj}, nil)
 	if Synchronous {
-                ClCmdQueue.Finish()
+		ClCmdQueue.Finish()
 		timer.Stop("fft")
 	}
 	return eventsList, err
@@ -105,4 +105,3 @@ func (p *fft3DR2CPlan) InputLen() int {
 func (p *fft3DR2CPlan) OutputLen() int {
 	return prod3(p.OutputSizeFloats())
 }
-

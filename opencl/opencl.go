@@ -9,21 +9,21 @@ import (
 
 // Type size in bytes
 const (
-        SIZEOF_FLOAT32    = 4
-        SIZEOF_FLOAT64    = 8
-        SIZEOF_COMPLEX64  = 8
-        SIZEOF_COMPLEX128 = 16
+	SIZEOF_FLOAT32    = 4
+	SIZEOF_FLOAT64    = 8
+	SIZEOF_COMPLEX64  = 8
+	SIZEOF_COMPLEX128 = 16
 )
 
 // Assumes kernel arguments set prior to launch
 func LaunchKernel(kernname string, gridDim, workDim []int, events []*cl.Event) *cl.Event {
 	if KernList[kernname] == nil {
-		log.Panic("Kernel "+kernname+" does not exist!")
+		log.Panic("Kernel " + kernname + " does not exist!")
 		return nil
 	}
-//	log.Println("Launching kernel: ", kernname)
-//	log.Println("gridDim: ", gridDim)
-//	log.Println("workDim: ", workDim)
+	//	log.Println("Launching kernel: ", kernname)
+	//	log.Println("gridDim: ", gridDim)
+	//	log.Println("workDim: ", workDim)
 	KernEvent, err := ClCmdQueue.EnqueueNDRangeKernel(KernList[kernname], nil, gridDim, workDim, events)
 	if err != nil {
 		log.Fatal(err)
@@ -34,9 +34,9 @@ func LaunchKernel(kernname string, gridDim, workDim []int, events []*cl.Event) *
 }
 
 func SetKernelArgWrapper(kernname string, index int, arg interface{}) {
-//	log.Printf("Working on index %d \n", index)
+	//	log.Printf("Working on index %d \n", index)
 	if KernList[kernname] == nil {
-		log.Panic("Kernel "+kernname+" does not exist!")
+		log.Panic("Kernel " + kernname + " does not exist!")
 	}
 	switch val := arg.(type) {
 	default:
@@ -59,8 +59,8 @@ func SetKernelArgWrapper(kernname string, index int, arg interface{}) {
 			}
 		}
 	case int:
-                if err := KernList[kernname].SetArg(index, (int32)(val)); err != nil {
-                        log.Fatal(err)
-                }
-        }
+		if err := KernList[kernname].SetArg(index, (int32)(val)); err != nil {
+			log.Fatal(err)
+		}
+	}
 }

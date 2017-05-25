@@ -3,8 +3,8 @@ package opencl
 import (
 	"fmt"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 )
 
 // m = 1 / (4 + τ²(m x H)²) [{4 - τ²(m x H)²} m - 4τ(m x m x H)]
@@ -17,9 +17,9 @@ func Minimize(m, m0, torque *data.Slice, dt float32) {
 		m0.DevPtr(X), m0.DevPtr(Y), m0.DevPtr(Z),
 		torque.DevPtr(X), torque.DevPtr(Y), torque.DevPtr(Z),
 		dt, N, cfg,
-		[](*cl.Event){m.GetEvent(X), m.GetEvent(Y),	m.GetEvent(Z),
-		m0.GetEvent(X), m0.GetEvent(Y), m0.GetEvent(Z), 
-		torque.GetEvent(X), torque.GetEvent(Y), torque.GetEvent(Z)})
+		[](*cl.Event){m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z),
+			m0.GetEvent(X), m0.GetEvent(Y), m0.GetEvent(Z),
+			torque.GetEvent(X), torque.GetEvent(Y), torque.GetEvent(Z)})
 	m.SetEvent(X, event)
 	m.SetEvent(Y, event)
 	m.SetEvent(Z, event)
@@ -30,5 +30,7 @@ func Minimize(m, m0, torque *data.Slice, dt float32) {
 	torque.SetEvent(Y, event)
 	torque.SetEvent(Z, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
-	if err != nil { fmt.Printf("WaitForEvents failed in minimize: %+v \n", err) }
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in minimize: %+v \n", err)
+	}
 }

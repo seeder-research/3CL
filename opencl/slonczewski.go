@@ -3,8 +3,8 @@ package opencl
 import (
 	"unsafe"
 
-	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
 )
 
 // Add Slonczewski ST torque to torque (Tesla).
@@ -29,17 +29,17 @@ func AddSlonczewskiTorque2(torque, m *data.Slice, Msat, J, fixedP, alpha, pol, Î
 		unsafe.Pointer(uintptr(0)), flt,
 		N, cfg,
 		[](*cl.Event){torque.GetEvent(X), torque.GetEvent(Y), torque.GetEvent(Z),
-        m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z),
-		fixedP.GetEvent(X), fixedP.GetEvent(Y), fixedP.GetEvent(Z),
-		J.GetEvent(Z)})
-    torque.SetEvent(X, event)
-    torque.SetEvent(Y, event)
-    torque.SetEvent(Z, event)
-    m.SetEvent(X, event)
-    m.SetEvent(Y, event)
-    m.SetEvent(Z, event)
-    J.SetEvent(Z, event)
-    fixedP.SetEvent(X, event)
-    fixedP.SetEvent(Y, event)
-    fixedP.SetEvent(Z, event)
+			m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z),
+			fixedP.GetEvent(X), fixedP.GetEvent(Y), fixedP.GetEvent(Z),
+			J.GetEvent(Z)})
+	torque.SetEvent(X, event)
+	torque.SetEvent(Y, event)
+	torque.SetEvent(Z, event)
+	m.SetEvent(X, event)
+	m.SetEvent(Y, event)
+	m.SetEvent(Z, event)
+	J.SetEvent(Z, event)
+	fixedP.SetEvent(X, event)
+	fixedP.SetEvent(Y, event)
+	fixedP.SetEvent(Z, event)
 }
