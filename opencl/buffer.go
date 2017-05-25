@@ -31,8 +31,11 @@ func Buffer(nComp int, size [3]int) *data.Slice {
 
 	// re-use as many buffers as possible form our stack
 	N := prod(size)
+	bytes := N * SIZEOF_FLOAT32
+	initVal := float32(0.0)
 	pool := buf_pool[N]
 	nFromPool := iMin(nComp, len(pool))
+	fillWait := make([]*cl.Event, nComp)
 	for i := 0; i < nFromPool; i++ {
 		ptrs[i] = pool[len(pool)-i-1]
 	}
@@ -48,10 +51,20 @@ func Buffer(nComp int, size [3]int) *data.Slice {
 			panic(err)
 		}
 		ptrs[i] = unsafe.Pointer(tmpPtr)
+		fillWait[i], err = ClCmdQueue.EnqueueFillBuffer(tmpPtr, unsafe.Pointer(&initVal), SIZEOF_FLOAT32, 0, bytes, nil)
+		if err != nil {
+			fmt.Printf("CreateEmptyBuffer failed: %+v \n", err)
+		}
+		err = cl.WaitForEvents([]*cl.Event{fillWait[i]})
+		if err != nil {
+			fmt.Printf("Wait for EnqueueFillBuffer failed: %+v \n", err)
+		}
 		buf_check[ptrs[i]] = struct{}{} // mark this pointer as mine
 	}
 
-	return data.SliceFromPtrs(size, data.GPUMemory, ptrs)
+	outBuffer := data.SliceFromPtrs(size, data.GPUMemory, ptrs)
+	outBuffer.SetEvents(fillWait)
+	return outBuffer
 }
 
 // Returns a buffer obtained from GetBuffer to the pool.

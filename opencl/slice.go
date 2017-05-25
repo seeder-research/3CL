@@ -41,8 +41,9 @@ func newSlice(nComp int, size [3]int, memType int8) *data.Slice {
 			fmt.Printf("Wait for EnqueueFillBuffer failed: %+v \n", err)
 		}
 	}
-	returnPtr := data.SliceFromPtrs(size, memType, ptrs)
-	returnPtr.SetEvents(fillWait)
+
+	dataPtr := data.SliceFromPtrs(size, memType, ptrs)
+	dataPtr.SetEvents(fillWait)
 	return returnPtr
 }
 
