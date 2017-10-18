@@ -17,6 +17,7 @@ package cl
 //#cgo LDFLAGS:-L/usr/lib/x86_64-linux-gnu/
 //#cgo CFLAGS: -I/usr/include
 //#cgo CFLAGS: -I/usr/local/clFFT/include
+//#cgo CFLAGS: -I/apps/ubuntu_softwares/libs/clFFT/2.12.2/include
 //
 ////arch linux:
 //#cgo LDFLAGS:-L/opt/lib64 -L/opt/lib

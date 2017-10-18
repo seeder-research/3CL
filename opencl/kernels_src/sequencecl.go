@@ -66,4 +66,5 @@ var OCLKernelsList = []string{
 	"mtgp32_init_seed_kernel",
 	"mtgp32_normal",
 	"mtgp32_uniform",
+	"loop_copy",
 	"square"}
