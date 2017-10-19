@@ -13,6 +13,7 @@ var OCLHeadersList = []string{
 	"amul",
 	"RNGmrg32k3a",
 	"RNGmtgp",
+	"fft",
 	"sum"}
 
 var OCLKernelsList = []string{
@@ -66,4 +67,8 @@ var OCLKernelsList = []string{
 	"mtgp32_init_seed_kernel",
 	"mtgp32_normal",
 	"mtgp32_uniform",
+	"fft2_c2c_long_interleaved_oop",
+	"fft4_c2c_long_interleaved_oop",
+	"fft8_c2c_long_interleaved_oop",
+	"transpose",
 	"square"}
