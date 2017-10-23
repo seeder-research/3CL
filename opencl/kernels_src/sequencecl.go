@@ -70,5 +70,6 @@ var OCLKernelsList = []string{
 	"fft2_c2c_long_interleaved_oop",
 	"fft4_c2c_long_interleaved_oop",
 	"fft8_c2c_long_interleaved_oop",
+	"ct_twiddle_interleaved_oop",
 	"transpose",
 	"square"}

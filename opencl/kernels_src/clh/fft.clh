@@ -9,10 +9,10 @@
 # define M_SQRT1_2      0.70710678118654752440f
 #endif
 
-inline float2 twiddle(float k, float angle, float2 in) {
+inline float2 twiddle(int k, float angle, float2 in) {
 	float2 tw, v;
-	tw.x = native_cos(k*angle);
-	tw.y = native_sin(k*angle);
+	tw.x = native_cos((float)k*angle);
+	tw.y = native_sin((float)k*angle);
 	v.x = tw.x*in.x - tw.y*in.y;
 	v.y = tw.x*in.y + tw.y*in.x;
 	in.x = v.x;
