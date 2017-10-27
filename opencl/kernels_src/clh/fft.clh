@@ -9,14 +9,51 @@
 # define M_SQRT1_2      0.70710678118654752440f
 #endif
 
-inline float2 twiddle(int k, float angle, float2 in) {
-	float2 tw, v;
-	tw.x = native_cos((float)k*angle);
-	tw.y = native_sin((float)k*angle);
-	v.x = tw.x*in.x - tw.y*in.y;
-	v.y = tw.x*in.y + tw.y*in.x;
-	in.x = v.x;
-	in.y = v.y;
+// N = Number of complex input points
+// gId = Global ID of a work item
+// gSize = Global work size (Total number of work items)
+// Idout = Output index of each work item
+// Ns = Parameter that defines output index
+// K_W = Kernel Size
+
+//inline float2 twiddle(int k, float angle, float2 in) {
+//	float2 tw, v;
+//	tw.x = native_cos((float)k*angle);
+//	tw.y = native_sin((float)k*angle);
+//	v.x = tw.x*in.x - tw.y*in.y;
+//	v.y = tw.x*in.y + tw.y*in.x;
+//	in.x = v.x;
+//	in.y = v.y;
+//}
+
+#define FFT2(in0, in1) {\
+	float2 v0;\
+	v0 = in0;\
+	in0 = v0 + in1;\
+	in1 = v0 - in1;\
+}
+
+#define FFT4(in0, in1, in2, in3) {\
+	float2 v0, v1, v2, v3;\
+	v0 = in0 + in2;\
+	v1 = in1 + in3;\
+	v2 = in0 – in2;\
+	v3.x = in1.y – in3.y;\
+	v3.y = in3.x – in1.x;\
+	in0 = v0 + v1;\
+	in2 = v0 – v1;\
+	in1 = v2 + v3;\
+	in3 = v2 – v3;\
+}
+
+#define twidle_factor(k, angle, in) {\
+	float2 tw, v;\
+	tw.x = native_cos(k*angle);\
+	tw.y = native_sin(k*angle);\
+	v.x = tw.x*in.x – tw.y*in.y;\
+	v.y = tw.x*in.y + tw.y*in.x;\
+	in.x = v.x;\
+	in.y = v.y;\
 }
 
 #endif
