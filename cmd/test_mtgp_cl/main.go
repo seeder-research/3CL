@@ -13,15 +13,19 @@ import (
 	"time"
 )
 
-var d_length = flag.Int("size", 1024, "Total number of random numbers to generate")
-var r_seed = flag.Uint("seed", 0, "Seed value of RNG")
-var d_dump = flag.Bool("dump", false, "Whether to dump generated values to screen")
+var (
+	d_length			= flag.Int("size", 1024, "Total number of random numbers to generate")
+	r_seed				= flag.Uint("seed", 0, "Seed value of RNG")
+	d_dump				= flag.Bool("dump", false, "Whether to dump generated values to screen")
+	Flag_platform		= flag.Int("platform", 0, "Specify OpenCL platform")
+	Flag_gpu			= flag.Int("gpu", 0, "Specify GPU")
+)
 
 func main() {
 
 	flag.Parse()
 
-	opencl.Init(0, 0)
+	opencl.Init(*Flag_platform, *Flag_gpu)
 	platforms := opencl.ClPlatforms
 	fmt.Printf("Discovered platforms: \n")
 	for i, p := range platforms {
