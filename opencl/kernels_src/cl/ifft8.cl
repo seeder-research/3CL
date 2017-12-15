@@ -1,10 +1,10 @@
 // C2C length 8 FFT kernel loop
 __kernel void
-fft8_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut, int N, int Ns, int K_W) {
+ifft8_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut, int N, int Ns, int K_W) {
 	int idx = get_group_id(0)*get_local_size(0) + get_local_id(0);
 	int inc = get_global_size(0);
 	int sCount = 0;
-	float angle_ = -2.0f * M_PI / (float)(K_W);
+	float angle_ = 2.0f * M_PI / (float)(K_W);
 
 	while (sCount < Ns) {
 		while (idx < N) {
@@ -28,7 +28,17 @@ fft8_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut,
 			in6 = dataIn[Idout6];
 			in7 = dataIn[Idout7];
 
-			// Perform length-8 forward FFT calculations
+			// Scale values
+			in0 *= 0.1250000f;
+			in1 *= 0.1250000f;
+			in2 *= 0.1250000f;
+			in3 *= 0.1250000f;
+			in4 *= 0.1250000f;
+			in5 *= 0.1250000f;
+			in6 *= 0.1250000f;
+			in7 *= 0.1250000f;
+
+			// Perform length-8 inverse FFT calculations
 			if (sCount > 0) {
 				float angle = angle_ * (float)(idx);
 				twiddle_factor(1, angle, in1);
@@ -40,7 +50,7 @@ fft8_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut,
 				twiddle_factor(7, angle, in7);
 			}
 
-			FFT8(in0, in1, in2, in3, in4, in5, in6, in7);
+			IFFT8(in0, in1, in2, in3, in4, in5, in6, in7);
 
 			// Store results to memory in place
 			dataOut[Idout0] = in0;

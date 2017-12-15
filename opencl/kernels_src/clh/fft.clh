@@ -9,6 +9,54 @@
 # define M_SQRT1_2      0.70710678118654752440f
 #endif
 
+#ifndef M_SQRT3
+# define M_SQRT3		1.73205080756887729352f
+#endif
+
+#ifndef M_COS_2PI_5
+# define M_COS_2PI_5	0.309016994374947451262869f
+#endif
+
+#ifndef M_SIN_2PI_5
+# define M_SIN_2PI_5	0.951056516295153531181938f
+#endif
+
+#ifndef M_COS_4PI_5
+# define M_COS_4PI_5	-0.809016994374947451262869f
+#endif
+
+#ifndef M_SIN_4PI_5
+# define M_SIN_4PI_5	0.587785252292473248125759f
+#endif
+
+#ifndef M_COS_2PI_7
+# define M_COS_2PI_7	0.623489801858733594386308f
+#endif
+
+#ifndef M_SIN_2PI_7
+# define M_SIN_2PI_7	0.781831482468029803634124f
+#endif
+
+#ifndef M_COS_4PI_7
+# define M_COS_4PI_7	-0.222520933956314337365257f
+#endif
+
+#ifndef M_SIN_4PI_7
+# define M_SIN_4PI_7	0.974927912181823730364272f
+#endif
+
+#ifndef M_COS_6PI_7
+# define M_COS_6PI_7	-0.900968867902419034976447f
+#endif
+
+#ifndef M_SIN_6PI_7
+# define M_SIN_6PI_7	0.433883739117558231423999f
+#endif
+
+#ifndef M_1_7
+# define M_1_7			0.142857142857142849212693f
+#endif
+
 // N = Number of complex input points
 // gId = Global ID of a work item
 // gSize = Global work size (Total number of work items)
@@ -16,7 +64,7 @@
 // Ns = Parameter that defines output index
 // K_W = Kernel Size
 
-//inline float2 twiddle(int k, float angle, float2 in) {
+//inline void twiddle(int k, float angle, float2 in) {
 //	float2 tw, v;
 //	tw.x = native_cos((float)k*angle);
 //	tw.y = native_sin((float)k*angle);
@@ -26,34 +74,442 @@
 //	in.y = v.y;
 //}
 
+#define twiddle_factor(k, angle, in) {\
+	float2 tw, v;\
+	tw.x = native_cos((float)k*angle);\
+	tw.y = native_sin((float)k*angle);\
+	v.x = tw.x * in.x;\
+	v.x -= tw.y * in.y;\
+	v.y = tw.x * in.y;\
+	v.y += tw.y * in.x;\
+	in = v;\
+}
+
 #define FFT2(in0, in1) {\
 	float2 v0;\
 	v0 = in0;\
-	in0 = v0 + in1;\
-	in1 = v0 - in1;\
+	in0 = fft_sum(v0, in1);\
+	in1 = fft_diff(v0, in1);\
+}
+
+#define FFT3(in0, in1, in2) {\
+	float2 v0, v1, v2, v3;\
+	v0 = in0;\
+	v1 = fft_sum(in1, in2);\
+	in0 = fft_sum(in0, v1);\
+	v1 *= 0.5000000f;\
+	v2 = fft_diff(in2, in1);\
+	v3 = fft_diff(in1, in2);\
+	in1 = fft_diff(v0, v1);\
+	in2 = in1;\
+	v3.x = v3.y;\
+	v3.y = v2.x;\
+	v3 *= 0.5000000f;\
+	v3 *= M_SQRT3;\
+	v2 = in1;\
+	in1 = fft_sum(v2, v3);\
+	in2 = fft_diff(v2, v3);\
+}
+
+#define IFFT3(in0, in1, in2) {\
+	float2 v0, v1, v2, v3;\
+	v0 = in0;\
+	v1 = fft_sum(in1, in2);\
+	in0 = fft_sum(in0, v1);\
+	v1 *= 0.5000000f;\
+	v2 = fft_diff(in2, in1);\
+	v3 = fft_diff(in1, in2);\
+	in1 = fft_diff(v0, v1);\
+	in2 = in1;\
+	v3.x = v3.y;\
+	v3.y = v2.x;\
+	v3 *= 0.5000000f;\
+	v3 *= M_SQRT3;\
+	v2 = in1;\
+	in1 = fft_diff(v2, v3);\
+	in2 = fft_sum(v2, v3);\
 }
 
 #define FFT4(in0, in1, in2, in3) {\
 	float2 v0, v1, v2, v3;\
-	v0 = in0 + in2;\
-	v1 = in1 + in3;\
-	v2 = in0 – in2;\
-	v3.x = in1.y – in3.y;\
-	v3.y = in3.x – in1.x;\
-	in0 = v0 + v1;\
-	in2 = v0 – v1;\
-	in1 = v2 + v3;\
-	in3 = v2 – v3;\
+	v0 = fft_sum(in0, in2);\
+	v1 = fft_diff(in3, in1);\
+	v2 = fft_diff(in1, in3);\
+	v3.x = v2.y;\
+	v3.y = v1.x;\
+	v1 = fft_sum(in1, in3);\
+	v2 = fft_diff(in0, in2);\
+	in0 = fft_sum(v0, v1);\
+	in2 = fft_diff(v0, v1);\
+	in1 = fft_sum(v2, v3);\
+	in3 = fft_diff(v2, v3);\
 }
 
-#define twidle_factor(k, angle, in) {\
-	float2 tw, v;\
-	tw.x = native_cos(k*angle);\
-	tw.y = native_sin(k*angle);\
-	v.x = tw.x*in.x – tw.y*in.y;\
-	v.y = tw.x*in.y + tw.y*in.x;\
-	in.x = v.x;\
-	in.y = v.y;\
+#define IFFT4(in0, in1, in2, in3) {\
+	float2 v0, v1, v2, v3;\
+	v0 = fft_sum(in0, in2);\
+	v1 = fft_diff(in3, in1);\
+	v2 = fft_diff(in1, in3);\
+	v3.x = v1.y;\
+	v3.y = v2.x;\
+	v1 = fft_sum(in1, in3);\
+	v2 = fft_diff(in0, in2);\
+	in0 = fft_sum(v0, v1);\
+	in2 = fft_diff(v0, v1);\
+	in1 = fft_sum(v2, v3);\
+	in3 = fft_diff(v2, v3);\
+}
+
+#define FFT5(in0, in1, in2, in3, in4) {\
+	float2 v0, v1, v2, v3, v4, v5, v6;\
+	v0 = in0;\
+	v1 = fft_sum(in1, in4);\
+	v2 = fft_sum(in2, in3);\
+	v3 = fft_sum(v1, v2);\
+	in0 = fft_sum(v0, v3);\
+	v3 = fft_diff(in1, in4);\
+	v4 = fft_diff(in2, in3);\
+	in1 = M_COS_2PI_5*v1;\
+	in2 = M_COS_4PI_5*v1;\
+	in3 = M_COS_2PI_5*v2;\
+	in4 = M_COS_4PI_5*v2;\
+	v1 = fft_sum(in1, in4);\
+	v2 = fft_sum(in2, in3);\
+	in1 = M_SIN_2PI_5*v3;\
+	in2 = M_SIN_4PI_5*v3;\
+	in3 = M_SIN_2PI_5*v4;\
+	in4 = M_SIN_4PI_5*v4;\
+	v3 = fft_sum(in1, in4);\
+	v4 = fft_diff(in2, in3);\
+	v5.x = v4.y;\
+	v5.y = -1.0f * v4.x;\
+	v6.x = v3.y;\
+	v6.y = -1.0f * v3.x;\
+	in1 = fft_sum(v0, v1);\
+	in2 = fft_sum(v0, v2);\
+	v1 = in1;\
+	v2 = in2;\
+	in1 = fft_sum(v1, v6);\
+	in2 = fft_sum(v2, v5);\
+	in3 = fft_diff(v2, v5);\
+	in4 = fft_diff(v1, v6);\
+}
+
+#define IFFT5(in0, in1, in2, in3, in4) {\
+	float2 v0, v1, v2, v3, v4, v5, v6;\
+	v0 = in0;\
+	v1 = fft_sum(in1, in4);\
+	v2 = fft_sum(in2, in3);\
+	v3 = fft_sum(v1, v2);\
+	in0 = fft_sum(v0, v3);\
+	v3 = fft_diff(in1, in4);\
+	v4 = fft_diff(in2, in3);\
+	in1 = M_COS_2PI_5*v1;\
+	in2 = M_COS_4PI_5*v1;\
+	in3 = M_COS_2PI_5*v2;\
+	in4 = M_COS_4PI_5*v2;\
+	v1 = fft_sum(in1, in4);\
+	v2 = fft_sum(in2, in3);\
+	in1 = M_SIN_2PI_5*v3;\
+	in2 = M_SIN_4PI_5*v3;\
+	in3 = M_SIN_2PI_5*v4;\
+	in4 = M_SIN_4PI_5*v4;\
+	v3 = fft_sum(in1, in4);\
+	v4 = fft_diff(in2, in3);\
+	v5.x = -1.0f * v4.y;\
+	v5.y = v4.x;\
+	v6.x = -1.0f * v3.y;\
+	v6.y = v3.x;\
+	in1 = fft_sum(v0, v1);\
+	in2 = fft_sum(v0, v2);\
+	v1 = in1;\
+	v2 = in2;\
+	in1 = fft_sum(v1, v6);\
+	in2 = fft_sum(v2, v5);\
+	in3 = fft_diff(v2, v5);\
+	in4 = fft_diff(v1, v6);\
+}
+
+#define FFT7(in0, in1, in2, in3, in4, in5, in6) {\
+	float2 v0, v1, v2, v3, v4, v5, v6, v7, v8, v9;\
+	v0 = in0;\
+	v1 = fft_sum(in1, in6);\
+	v2 = fft_sum(in2, in5);\
+	v3 = fft_sum(in3, in4);\
+	v7 = M_COS_2PI_7*v1;\
+	v8 = M_COS_2PI_7*v2;\
+	v9 = M_COS_2PI_7*v3;\
+	v4 = fft_sum(v0, v1);\
+	v5 = fft_sum(v2, v3);\
+	in0 = fft_sum(v4, v5);\
+	v4 = fft_diff(in6, in1);\
+	v5 = fft_diff(in5, in2);\
+	v6 = fft_diff(in4, in3);\
+	in1 = fft_sum(v0, v7);\
+	in2 = fft_sum(v0, v9);\
+	in3 = fft_sum(v0, v8);\
+	v7 = M_COS_4PI_7*v1;\
+	v8 = M_COS_4PI_7*v2;\
+	v9 = M_COS_4PI_7*v3;\
+	in4 = fft_sum(in1, v8);\
+	in5 = fft_sum(in2, v7);\
+	in6 = fft_sum(in3, v9);\
+	v7 = M_COS_6PI_7*v1;\
+	v8 = M_COS_6PI_7*v2;\
+	v9 = M_COS_6PI_7*v3;\
+	in1 = fft_sum(in4, v9);\
+	in2 = fft_sum(in5, v8);\
+	in3 = fft_sum(in6, v7);\
+	v1.y = v4.x;\
+	v1.x = -1.0f * v4.y;\
+	v2.y = v5.x;\
+	v2.x = -1.0f * v5.y;\
+	v3.y = v6.x;\
+	v3.x = -1.0f * v6.y;\
+	v7 = M_SIN_2PI_7*v1;\
+	v8 = M_SIN_2PI_7*v2;\
+	v9 = M_SIN_2PI_7*v3;\
+	v4 = fft_sum(in1, v7);\
+	v5 = fft_diff(in2, v9);\
+	v6 = fft_diff(in3, v8);\
+	in4 = fft_sum(in3, v8);\
+	in5 = fft_sum(in2, v9);\
+	in6 = fft_diff(in1, v7);\
+	v7 = M_SIN_4PI_7*v1;\
+	v8 = M_SIN_4PI_7*v2;\
+	v9 = M_SIN_4PI_7*v3;\
+	in1 = fft_sum(v4, v8);\
+	in2 = fft_sum(v5, v7);\
+	in3 = fft_sum(v6, v9);\
+	v4 = fft_diff(in4, v9);\
+	v5 = fft_diff(in5, v7);\
+	v6 = fft_diff(in6, v8);\
+	v7 = M_SIN_6PI_7*v1;\
+	v8 = M_SIN_6PI_7*v2;\
+	v9 = M_SIN_6PI_7*v3;\
+	v1 = in1;\
+	v2 = in2;\
+	v3 = in3;\
+	in1 = fft_sum(v1, v9);\
+	in2 = fft_diff(v2, v8);\
+	in3 = fft_sum(v3, v7);\
+	in4 = fft_diff(v4, v7);\
+	in5 = fft_sum(v5, v8);\
+	in6 = fft_diff(v6, v9);\
+}
+
+#define IFFT7(in0, in1, in2, in3, in4, in5, in6) {\
+	float2 v0, v1, v2, v3, v4, v5, v6, v7, v8, v9;\
+	v0 = in0;\
+	v1 = fft_sum(in1, in6);\
+	v2 = fft_sum(in2, in5);\
+	v3 = fft_sum(in3, in4);\
+	v7 = M_COS_2PI_7*v1;\
+	v8 = M_COS_2PI_7*v2;\
+	v9 = M_COS_2PI_7*v3;\
+	v4 = fft_sum(v0, v1);\
+	v5 = fft_sum(v2, v3);\
+	in0 = fft_sum(v4, v5);\
+	v4 = fft_diff(in1, in6);\
+	v5 = fft_diff(in2, in5);\
+	v6 = fft_diff(in3, in4);\
+	in1 = fft_sum(v0, v7);\
+	in2 = fft_sum(v0, v9);\
+	in3 = fft_sum(v0, v8);\
+	v7 = M_COS_4PI_7*v1;\
+	v8 = M_COS_4PI_7*v2;\
+	v9 = M_COS_4PI_7*v3;\
+	in4 = fft_sum(in1, v8);\
+	in5 = fft_sum(in2, v7);\
+	in6 = fft_sum(in3, v9);\
+	v7 = M_COS_6PI_7*v1;\
+	v8 = M_COS_6PI_7*v2;\
+	v9 = M_COS_6PI_7*v3;\
+	in1 = fft_sum(in4, v9);\
+	in2 = fft_sum(in5, v8);\
+	in3 = fft_sum(in6, v7);\
+	v1.y = v4.x;\
+	v1.x = -1.0f * v4.y;\
+	v2.y = v5.x;\
+	v2.x = -1.0f * v5.y;\
+	v3.y = v6.x;\
+	v3.x = -1.0f * v6.y;\
+	v7 = M_SIN_2PI_7*v1;\
+	v8 = M_SIN_2PI_7*v2;\
+	v9 = M_SIN_2PI_7*v3;\
+	v4 = fft_sum(in1, v7);\
+	v5 = fft_diff(in2, v9);\
+	v6 = fft_diff(in3, v8);\
+	in4 = fft_sum(in3, v8);\
+	in5 = fft_sum(in2, v9);\
+	in6 = fft_diff(in1, v7);\
+	v7 = M_SIN_4PI_7*v1;\
+	v8 = M_SIN_4PI_7*v2;\
+	v9 = M_SIN_4PI_7*v3;\
+	in1 = fft_sum(v4, v8);\
+	in2 = fft_sum(v5, v7);\
+	in3 = fft_sum(v6, v9);\
+	v4 = fft_diff(in4, v9);\
+	v5 = fft_diff(in5, v7);\
+	v6 = fft_diff(in6, v8);\
+	v7 = M_SIN_6PI_7*v1;\
+	v8 = M_SIN_6PI_7*v2;\
+	v9 = M_SIN_6PI_7*v3;\
+	v1 = in1;\
+	v2 = in2;\
+	v3 = in3;\
+	in1 = fft_sum(v1, v9);\
+	in2 = fft_diff(v2, v8);\
+	in3 = fft_sum(v3, v7);\
+	in4 = fft_diff(v4, v7);\
+	in5 = fft_sum(v5, v8);\
+	in6 = fft_diff(v6, v9);\
+}
+
+#define FFT8(in0, in1, in2, in3, in4, in5, in6, in7) {\
+	float2 v0, v1, v2, v3, v4, v5, v6, v7;\
+	v0 = fft_sum(in0, in4);\
+	v1 = fft_diff(in6, in2);\
+	v2 = fft_diff(in2, in6);\
+	v3.x = v2.y;\
+	v3.y = v1.x;\
+	v1 = fft_sum(in2, in6);\
+	v2 = fft_diff(in0, in4);\
+	in0 = fft_sum(v0, v1);\
+	in4 = fft_diff(v0, v1);\
+	in2 = fft_sum(v2, v3);\
+	in6 = fft_diff(v2, v3);\
+	v0 = fft_sum(in1, in5);\
+	v1 = fft_diff(in7, in3);\
+	v2 = fft_diff(in3, in7);\
+	v3.x = v2.y;\
+	v3.y = v1.x;\
+	v1 = fft_sum(in3, in7);\
+	v2 = fft_diff(in1, in5);\
+	in1 = fft_sum(v0, v1);\
+	in5 = fft_diff(v0, v1);\
+	in3 = fft_sum(v2, v3);\
+	in7 = fft_diff(v2, v3);\
+	v0 = in0;\
+	v1 = in1;\
+	v2 = in2;\
+	v3.x = two_sum(in3.x, in3.y);\
+	v3.y = two_diff(in3.y, in3.x);\
+	v3.x *= M_SQRT1_2;\
+	v3.y *= M_SQRT1_2;\
+	v4 = in4;\
+	v5.x = in5.y;\
+	v5.y = -1.0f * in5.x;\
+	v6 = in6;\
+	v7.x = two_diff(in7.y, in7.x);\
+	v7.y = -1.0f * two_sum(in7.x, in7.y);\
+	v7.x *= M_SQRT1_2;\
+	v7.y *= M_SQRT1_2;\
+	in0 = fft_sum(v0, v1);\
+	in1 = fft_sum(v2, v3);\
+	in2 = fft_sum(v4, v5);\
+	in3 = fft_sum(v6, v7);\
+	in4 = fft_diff(v0, v1);\
+	in5 = fft_diff(v2, v3);\
+	in6 = fft_diff(v4, v5);\
+	in7 = fft_diff(v6, v7);\
+}
+
+#define IFFT8(in0, in1, in2, in3, in4, in5, in6, in7) {\
+	float2 v0, v1, v2, v3, v4, v5, v6, v7;\
+	v0 = fft_sum(in0, in4);\
+	v1 = fft_diff(in6, in2);\
+	v2 = fft_diff(in2, in6);\
+	v3.x = v1.y;\
+	v3.y = v2.x;\
+	v1 = fft_sum(in2, in6);\
+	v2 = fft_diff(in0, in4);\
+	in0 = fft_sum(v0, v1);\
+	in4 = fft_diff(v0, v1);\
+	in2 = fft_sum(v2, v3);\
+	in6 = fft_diff(v2, v3);\
+	v0 = fft_sum(in1, in5);\
+	v1 = fft_diff(in7, in3);\
+	v2 = fft_diff(in3, in7);\
+	v3.x = v1.y;\
+	v3.y = v2.x;\
+	v1 = fft_sum(in3, in7);\
+	v2 = fft_diff(in1, in5);\
+	in1 = fft_sum(v0, v1);\
+	in5 = fft_diff(v0, v1);\
+	in3 = fft_sum(v2, v3);\
+	in7 = fft_diff(v2, v3);\
+	v0 = in0;\
+	v1 = in1;\
+	v2 = in2;\
+	v3.x = two_diff(in3.x, in3.y);\
+	v3.y = two_sum(in3.x, in3.y);\
+	v3.x *= M_SQRT1_2;\
+	v3.y *= M_SQRT1_2;\
+	v4 = in4;\
+	v5.x = -1.0f * in5.y;\
+	v5.y = in5.x;\
+	v6 = in6;\
+	v7.x = -1.0f * two_sum(in7.x, in7.y);\
+	v7.y = two_diff(in7.x, in7.y);\
+	v7.x *= M_SQRT1_2;\
+	v7.y *= M_SQRT1_2;\
+	in0 = fft_sum(v0, v1);\
+	in1 = fft_sum(v2, v3);\
+	in2 = fft_sum(v4, v5);\
+	in3 = fft_sum(v6, v7);\
+	in4 = fft_diff(v0, v1);\
+	in5 = fft_diff(v2, v3);\
+	in6 = fft_diff(v4, v5);\
+	in7 = fft_diff(v6, v7);\
+}
+
+inline float2 fft_sum(float2 a, float2 b) {
+	float2 s = a + b;
+	float2 bv = s - a;
+	float2 av = s - bv;
+	float2 x = av - a;
+	bv = s - av;
+	float2 y = bv - b;
+	y += x;
+	s -= y;
+	return s;
+}
+
+inline float two_sum(float a, float b) {
+	float s = a + b;
+	float bv = s - a;
+	float av = s - bv;
+	float x = av - a;
+	bv = s - av;
+	float y = bv - b;
+	y += x;
+	s -= y;
+	return s;
+}
+
+inline float2 fft_diff(float2 a, float2 b) {
+	float2 s = a - b;
+	float2 bv = s - a;
+	float2 av = s - bv;
+	float2 x = av - a;
+	bv = av - s;
+	float2 y = bv - b;
+	y += x;
+	s -= y;
+	return s;
+}
+
+inline float two_diff(float a, float b) {
+	float s = a - b;
+	float bv = s - a;
+	float av = s - bv;
+	float x = av - a;
+	bv = av - s;
+	float y = bv - b;
+	y += x;
+	s -= y;
+	return s;
 }
 
 #endif

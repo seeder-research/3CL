@@ -1,10 +1,10 @@
 // C2C length 4 FFT kernel loop
 __kernel void
-fft4_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut, int N, int Ns, int K_W) {
+ifft4_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut, int N, int Ns, int K_W) {
 	int idx = get_group_id(0)*get_local_size(0) + get_local_id(0);
 	int inc = get_global_size(0);
 	int sCount = 0;
-	float angle_ = -2.0f * M_PI / (float)(K_W);
+	float angle_ = 2.0f * M_PI / (float)(K_W);
 
 	while (sCount < Ns) {
 		while (idx < N) {
@@ -20,15 +20,21 @@ fft4_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut,
 			in2 = dataIn[Idout2];
 			in3 = dataIn[Idout3];
 
-			// Perform length-4 forward FFT calculations
+			// Scale values
+			in0 *= 0.2500000f;
+			in1 *= 0.2500000f;
+			in2 *= 0.2500000f;
+			in3 *= 0.2500000f;
+
+			// Perform length-4 inverse FFT calculations
 			if (sCount > 0) {
-				float angle = angle_ * (float)(idx);
+				float angle = angle_ * (float)(idx);;
 				twiddle_factor(1, angle, in1);
 				twiddle_factor(2, angle, in2);
 				twiddle_factor(3, angle, in3);
 			}
 
-			FFT4(in0, in1, in2, in3);
+			IFFT4(in0, in1, in2, in3);
 
 			// Store results in place
 			dataOut[Idout0] = in0;
