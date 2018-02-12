@@ -36,6 +36,26 @@ func golden_fft3(dataIn []float32, N int) []float32 {
 	return out_arr
 }
 
+func golden_ifft3(dataIn []float32, N int) []float32 {
+	arr := dataIn
+	out_arr := make([]float32, 6*N)
+	for i := 0; i < N; i++ {
+		idx := 2*i
+		in0_r, in0_i := arr[idx], arr[idx+1]
+		in1_r, in1_i := arr[idx+2*N], arr[idx+1+2*N]
+		in2_r, in2_i := arr[idx+4*N], arr[idx+1+4*N]
+		cs1, sn1 := float32(math.Cos(float64(-2.0)*math.Pi/float64(3.0))),  float32(math.Sin(float64(-2.0)*math.Pi/float64(3.0)))
+
+		out_arr[idx] = (in0_r + in1_r + in2_r) / 3.0
+		out_arr[idx+1] = (in0_i + in1_i + in2_i) / 3.0
+		out_arr[idx+2*N]   = (in0_r + (cs1*in1_r + sn1*in1_i) + (cs1*in2_r - sn1*in2_i)) / 3.0
+		out_arr[idx+2*N+1] = (in0_i + (cs1*in1_i - sn1*in1_r) + (cs1*in2_i + sn1*in2_r)) / 3.0
+		out_arr[idx+4*N]   = (in0_r + (cs1*in1_r - sn1*in1_i) + (cs1*in2_r + sn1*in2_i)) / 3.0
+		out_arr[idx+4*N+1] = (in0_i + (cs1*in1_i + sn1*in1_r) + (cs1*in2_i - sn1*in2_r)) / 3.0
+	}
+	return out_arr
+}
+
 func main() {
 	flag.Parse()
 
@@ -46,6 +66,7 @@ func main() {
 		data[i] = rand.Float32()
 	}
 	gold_res := golden_fft3(data, nElem)
+	gold_ret := golden_ifft3(gold_res, nElem)
 
 	opencl.Init(*Flag_platform, *Flag_gpu)
 	platforms := opencl.ClPlatforms
@@ -309,18 +330,29 @@ func main() {
 	}
 	
 	correct := 0
+	max_relerr, max_abserr := float64(-1e-6), float64(-1e-6)
 	for i, v := range inverse_input {
-		if data[i] == v {
+		if gold_ret[i] == v {
 			correct++
 		} else {
-			if data[i] != 0 {
-				tmp := (v - data[i]) / data[i]
-				if math.Abs(float64(tmp)) < 1e-6 {
+			if gold_ret[i] != 0 {
+				tmp := (v - gold_ret[i]) / gold_ret[i]
+				tmp1 := math.Abs(float64(tmp))
+				if tmp1 < 1e-6 {
 					correct++
+				} else {
+					if tmp1 > max_relerr {
+						max_relerr = tmp1
+					}
 				}
 			} else {
-				if math.Abs(float64(v)) < 1e-6 {
+				tmp2 := math.Abs(float64(v))
+				if tmp2 < 1e-6 {
 					correct++
+				} else {
+					if tmp2 > max_abserr {
+						max_abserr = tmp2
+					}
 				}
 			}
 		}
@@ -328,6 +360,8 @@ func main() {
 
 	if correct != len(data) {
 		fmt.Printf("%d/%d correct values \n", correct, len(data))
+		fmt.Printf("Max. rel. error: %g\n", max_relerr)
+		fmt.Printf("Max. abs. error: %g\n", max_abserr)
 		return
 	}
 

@@ -30,6 +30,21 @@ func gold_fft2(datain []float32, N int) []float32 {
 	return out_arr
 }
 
+func gold_ifft2(datain []float32, N int) []float32 {
+	arr := datain
+	out_arr := make([]float32, 4*N)
+	for i := 0; i < N; i++ {
+		in0_r, in0_i := 0.5 * arr[2*i], 0.5 * arr[2*i+1]
+		in1_r, in1_i := 0.5 * arr[2*(i+N)], 0.5 * arr[2*(i+N)+1]
+
+		out_arr[2*i] = in0_r + in1_r
+		out_arr[2*i+1] = in0_i + in1_i
+		out_arr[2*(i+N)] = in0_r - in1_r
+		out_arr[2*(i+N)+1] = in0_i - in1_i
+	}
+	return out_arr
+}
+
 func main() {
 	flag.Parse()
 
@@ -40,6 +55,7 @@ func main() {
 		data[i] = rand.Float32()
 	}
 	gold_res := gold_fft2(data[:], nElem)
+	gold_ret := gold_ifft2(gold_res[:], nElem)
 
 	opencl.Init(*Flag_platform, *Flag_gpu)
 	platforms := opencl.ClPlatforms
@@ -298,18 +314,29 @@ func main() {
 	}
 	
 	correct := 0
+	max_relerr, max_abserr := float64(-1e-6), float64(-1e-6)
 	for i, v := range inverse_input {
-		if data[i] == v {
+		if gold_ret[i] == v {
 			correct++
 		} else {
-			if data[i] != 0 {
-				tmp := (v - data[i]) / data[i]
-				if math.Abs(float64(tmp)) < 1e-6 {
+			if gold_ret[i] != 0 {
+				tmp := (v - gold_ret[i]) / gold_ret[i]
+				tmp1 := math.Abs(float64(tmp))
+				if tmp1 < 1e-6 {
 					correct++
+				} else {
+					if tmp1 > max_relerr {
+						max_relerr = tmp1
+					}
 				}
 			} else {
-				if math.Abs(float64(v)) < 1e-6 {
+				tmp2 := math.Abs(float64(v))
+				if tmp2 < 1e-6 {
 					correct++
+				} else {
+					if tmp2 > max_abserr {
+						max_abserr = tmp2
+					}
 				}
 			}
 		}
@@ -317,6 +344,8 @@ func main() {
 
 	if correct != len(data) {
 		fmt.Printf("%d/%d correct values \n", correct, len(data))
+		fmt.Printf("Max. rel. error: %g\n", max_relerr)
+		fmt.Printf("Max. abs. error: %g\n", max_abserr)
 		return
 	}
 	
