@@ -29,18 +29,18 @@ ifft8_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut
 			in7 = dataIn[Idout7];
 
 			// Scale values
-			in0 *= 0.1250000f;
-			in1 *= 0.1250000f;
-			in2 *= 0.1250000f;
-			in3 *= 0.1250000f;
-			in4 *= 0.1250000f;
-			in5 *= 0.1250000f;
-			in6 *= 0.1250000f;
-			in7 *= 0.1250000f;
+			in0 = fma(0.12500f, in0, 0.0f);
+			in1 = fma(0.12500f, in1, 0.0f);
+			in2 = fma(0.12500f, in2, 0.0f);
+			in3 = fma(0.12500f, in3, 0.0f);
+			in4 = fma(0.12500f, in4, 0.0f);
+			in5 = fma(0.12500f, in5, 0.0f);
+			in6 = fma(0.12500f, in6, 0.0f);
+			in7 = fma(0.12500f, in7, 0.0f);
 
 			// Perform length-8 inverse FFT calculations
 			if (sCount > 0) {
-				float angle = angle_ * (float)(idx);
+				float angle = fma(angle_, (float)(idx), 0.0f);
 				twiddle_factor(1, angle, in1);
 				twiddle_factor(2, angle, in2);
 				twiddle_factor(3, angle, in3);
@@ -64,7 +64,7 @@ ifft8_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut
 
 			// Increment idx to go to next logical work-item
 			idx += inc;
-			angle_ *= 8.0f;
+			angle_ = fma(8.0f, angle_, 0.0f);
 		}
 		// TODO
 		// Perform in-place matric transpose (treat matrix as N x 8 matrix and transpose)

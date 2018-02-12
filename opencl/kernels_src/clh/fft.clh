@@ -462,22 +462,52 @@
 }
 
 inline float2 fft_sum(float2 a, float2 b) {
-	float2 s = fma(a, 1.0f, b);
+	float2 s;
+	if (fabs(a.x) > fabs(b.x)) {
+		s.x = fma(a.x, 1.0f, b.x);
+	} else {
+		s.x = fma(b.x, 1.0f, a.x);
+	}
+	if (fabs(a.y) > fabs(b.y)) {
+		s.y = fma(a.y, 1.0f, b.y);
+	} else {
+		s.y = fma(b.y, 1.0f, a.y);
+	}
 	return s;
 }
 
 inline float two_sum(float a, float b) {
-	float s = fma(a, 1.0f, b);
+	float s;
+	if (fabs(a) > fabs(b)) {
+		s = fma(a, 1.0f, b);
+	} else {
+		s = fma(b, 1.0f, a);
+	}
 	return s;
 }
 
 inline float2 fft_diff(float2 a, float2 b) {
-	float2 s = fma(b, -1.0f, a);
+	float2 s;
+	if (fabs(a.x) > fabs(b.x)) {
+		s.x = fma(a.x, 1.0f, -1.0f * b.x);
+	} else {
+		s.x = fma(b.x, -1.0f, a.x);
+	}
+	if (fabs(a.y) > fabs(b.y)) {
+		s.y = fma(a.y, 1.0f, -1.0f * b.y);
+	} else {
+		s.y = fma(b.y, -1.0f, a.y);
+	}
 	return s;
 }
 
 inline float two_diff(float a, float b) {
-	float s = fma(b, -1.0f, a);
+	float s;
+	if (fabs(a) > fabs(b)) {
+		s = fma(a, 1.0f, -1.0f * b);
+	} else {
+		s = fma(b, -1.0f, a);
+	}
 	return s;
 }
 

@@ -25,17 +25,17 @@ ifft7_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut
 			in4 = dataIn[Idout4];
 			in5 = dataIn[Idout5];
 			in6 = dataIn[Idout6];
-			in0 *= M_1_7;
-			in1 *= M_1_7;
-			in2 *= M_1_7;
-			in3 *= M_1_7;
-			in4 *= M_1_7;
-			in5 *= M_1_7;
-			in6 *= M_1_7;
+			in0 = fma(M_1_7, in0, 0.0f);
+			in1 = fma(M_1_7, in1, 0.0f);
+			in2 = fma(M_1_7, in2, 0.0f);
+			in3 = fma(M_1_7, in3, 0.0f);
+			in4 = fma(M_1_7, in4, 0.0f);
+			in5 = fma(M_1_7, in5, 0.0f);
+			in6 = fma(M_1_7, in6, 0.0f);
 
 			// Perform length-7 inverse FFT calculations
 			if (sCount > 0) {
-				float angle = angle_ * (float)(idx);
+				float angle = fma(angle_, (float)(idx), 0.0f);
 				twiddle_factor(1, angle, in1);
 				twiddle_factor(2, angle, in2);
 				twiddle_factor(3, angle, in3);
@@ -57,7 +57,7 @@ ifft7_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut
 
 			// Increment idx to go to next logical work item
 			idx += inc;
-			angle_ *= 7.0f;
+			angle_ = fma(7.0f, angle_, 0.0f);
 		}
 		// TODO
 		// Perform in-place matric transpose (treat matrix as N x 7 matrix and transpose)

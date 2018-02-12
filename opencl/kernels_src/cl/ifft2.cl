@@ -17,12 +17,12 @@ ifft2_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut
 			in1 = dataIn[Idout1];
 
 			// Scale values
-			in0 *= 0.5000000000f;
-			in1 *= 0.5000000000f;
+			in0 = fma(0.500f, in0, 0.0f);
+			in1 = fma(0.500f, in1, 0.0f);
 
 			// Perform length-2 inverse FFT calculations
 			if (sCount > 0) {
-				float angle = angle_ * (float)(idx);
+				float angle = fma(angle_, (float)(idx), 0.0f);
 				twiddle_factor(1, angle, in1);
 			}
 
@@ -34,7 +34,7 @@ ifft2_c2c_long_interleaved_oop(__global float2* dataIn, __global float2* dataOut
 
 			// Increment idx to go to next logical work item
 			idx += inc;
-			angle_ *= 2.0f;
+			angle_ = fma(2.0f, angle_, 0.0f);
 		}
 		// TODO
 		// Perform in-place matric transpose (treat matrix as N x 2 matrix and transpose)

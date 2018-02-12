@@ -38,6 +38,28 @@ func golden_fft4(dataIn []float32, N int) []float32 {
 	return out_arr
 }
 
+func golden_ifft4(dataIn []float32, N int) []float32 {
+	arr := dataIn
+	out_arr := make([]float32, 8*N)
+	for i := 0; i < N; i++ {
+		idx := 2*i
+		in0_r, in0_i := arr[idx], arr[idx+1]
+		in1_r, in1_i := arr[idx+2*N], arr[idx+1+2*N]
+		in2_r, in2_i := arr[idx+4*N], arr[idx+1+4*N]
+		in3_r, in3_i := arr[idx+6*N], arr[idx+1+6*N]
+
+		out_arr[idx] = (in0_r + in1_r + in2_r + in3_r) / 4.0
+		out_arr[idx+1] = (in0_i + in1_i + in2_i + in3_i) / 4.0
+		out_arr[idx+2*N]   = (in0_r - in1_i - in2_r + in3_i) / 4.0
+		out_arr[idx+2*N+1] = (in0_i + in1_r - in2_i - in3_r) / 4.0
+		out_arr[idx+4*N]   = (in0_r - in1_r + in2_r - in3_r) / 4.0
+		out_arr[idx+4*N+1] = (in0_i - in1_i + in2_i - in3_i) / 4.0
+		out_arr[idx+6*N]   = (in0_r + in1_i - in2_r - in3_i) / 4.0
+		out_arr[idx+6*N+1] = (in0_i - in1_r - in2_i + in3_r) / 4.0
+	}
+	return out_arr
+}
+
 func main() {
 	flag.Parse()
 
@@ -48,6 +70,7 @@ func main() {
 		data[i] = rand.Float32()
 	}
 	gold_res := golden_fft4(data, nElem)
+	gold_ret := golden_ifft4(gold_res, nElem)
 
 	opencl.Init(*Flag_platform, *Flag_gpu)
 	platforms := opencl.ClPlatforms
@@ -306,18 +329,37 @@ func main() {
 	}
 	
 	correct := 0
+	max_relerr, max_abserr := float64(-1e-6), float64(-1e-6)
+	rel_num, abs_num := float32(-1e-12), float32(-1e-12)
 	for i, v := range inverse_input {
-		if data[i] == v {
+		if gold_ret[i] == v {
 			correct++
 		} else {
-			if data[i] != 0 {
-				tmp := (v - data[i]) / data[i]
-				if math.Abs(float64(tmp)) < 1e-6 {
+			if gold_ret[i] != 0 {
+				tmp1 := math.Abs(float64(v - gold_ret[i]));
+				if tmp1 > max_abserr {
+					max_abserr = tmp1
+					abs_num = gold_ret[i]
+				}
+				tmp := (v - gold_ret[i]) / gold_ret[i]
+				tmp1 = math.Abs(float64(tmp))
+				if tmp1 < 1e-6 {
 					correct++
+				} else {
+					if tmp1 > max_relerr {
+						max_relerr = tmp1
+						rel_num = gold_ret[i]
+					}
 				}
 			} else {
-				if math.Abs(float64(v)) < 1e-6 {
+				tmp2 := math.Abs(float64(v))
+				if tmp2 < 1e-6 {
 					correct++
+				} else {
+					if tmp2 > max_abserr {
+						max_abserr = tmp2
+						abs_num = v
+					}
 				}
 			}
 		}
@@ -325,6 +367,8 @@ func main() {
 
 	if correct != len(data) {
 		fmt.Printf("%d/%d correct values \n", correct, len(data))
+		fmt.Printf("Max. rel. error: %g; Number: %g\n", max_relerr, rel_num)
+		fmt.Printf("Max. abs. error: %g; Number: %g\n", max_abserr, abs_num)
 		return
 	}
 	
