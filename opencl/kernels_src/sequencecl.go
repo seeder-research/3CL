@@ -80,6 +80,7 @@ var OCLKernelsList = []string{
 	"fft8_c2c_long_interleaved_oop",
 	"ifft8_c2c_long_interleaved_oop",
 	"transpose",
+	"packfromreal2complex",
 	"square"}
 
 //	"ct_twiddle_interleaved_oop",
