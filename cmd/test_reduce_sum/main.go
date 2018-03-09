@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"flag"
 	"math/rand"
 	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/opencl"
@@ -9,8 +10,15 @@ import (
 	"github.com/mumax/3cl/engine"
 )
 
+// flags in engine/gofiles.go
+var(
+	Flag_Nsize = flag.Int("count", 1, "Number of entries to sum")
+)
+
 func main() {
-	opencl.Init(0, 0)
+	flag.Parse()
+	opencl.Init(*engine.Flag_gpu, *engine.Flag_platform)
+	opencl.Synchronous = *engine.Flag_sync
 	platforms := opencl.ClPlatforms
 	fmt.Printf("Discovered platforms: \n")
 	for i, p := range platforms {
@@ -85,14 +93,14 @@ func main() {
 
 	fmt.Printf("Setting up data for testing... \n");
 
-	NSize := 256*256
+	NSize := *Flag_Nsize
 	size := [3]int{NSize, 1, 1}
 	inputs := make([][]float32, 1)
 	inputs[0] = make([]float32, size[0])
 	for i := 0; i < len(inputs[0]); i++ {
 		inputs[0][i] = rand.Float32()
 	}
-	
+
 	cpuArray := data.SliceFromArray(inputs, size)
 	gpuBuffer := opencl.Buffer(1, size)
 
@@ -102,18 +110,30 @@ func main() {
 
 	results := opencl.Sum(gpuBuffer)
 
-	golden := float32(0.0);
-	resAcc := float32(0.0);
-	for _, v := range inputs[0] {
-		yTmp := v - resAcc
-		tTmp := golden + yTmp;
-		resAcc = (tTmp - golden) - yTmp
-		golden = tTmp
+	testArr0 := make([]float64, size[0])
+	testArr1 := make([]float64, size[0])
+	for ii := 0; ii < size[0]; ii++ {
+		testArr0[ii] = float64(inputs[0][ii])
+		testArr1[ii] = float64(0.0)
 	}
+	for ii := NSize / 2; ii > 0; ii /= 2 {
+		for jj := 0; jj < ii; jj++ {
+			aVal := testArr0[jj]
+			bVal := testArr0[jj+ii]
+			tsum := aVal + bVal
+			aEr := tsum - bVal
+			bEr := tsum - aVal
+			aErr := aEr - aVal
+			bErr := bEr - bVal
+			testArr1[jj] += aErr + bErr
+			testArr0[jj] = tsum
+		}
+	}
+	golden := testArr0[0] - testArr1[0]
 
 	tol := float64(golden * 1e-5)
 	engine.Expect("Result", float64(results), float64(golden), tol)
-	if results == golden {
+	if float64(results) == golden {
 		fmt.Println("Results match!")
 	} else {
 		fmt.Println("Results do not match! golden: ", golden, "; result: ", results)
