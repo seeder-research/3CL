@@ -24,15 +24,15 @@ reducesum(__global float* __restrict src, __global float* __restrict dst, float 
 	// Loop over input elements in chunks and accumulate each chunk into local memory
 	while (global_idx < n) {
 		tmpR0 = src[global_idx]; // Load next number into local register
-		tmpR1 = currSum + tmpR0; // Temporary sum
+		tmpR1 = fma(1.0f, currSum, tmpR0); // Temporary sum
 
 		// Calculate the operands of the sum from temporary sum
-		tmpR2 = tmpR1 - tmpR0; // Recovers currSum with error
-		tmpR3 = tmpR1 - currSum; // Recovers next value with error
-		tmpR4 = tmpR2 - currSum; // Error in currSum
-		tmpR2 = tmpR3 - tmpR0; // Error in next value
+		tmpR2 = fma(-1.0f, tmpR0, tmpR1); // Recovers currSum with error
+		tmpR3 = fma(-1.0f, currSum, tmpR1); // Recovers next value with error
+		tmpR4 = fma(-1.0f, currSum, tmpR2);; // Error in currSum
+		tmpR2 = fma(-1.0f, tmpR0, tmpR3); // Error in next value
 		currSum = tmpR1; // Update sum into accumulator
-		currErr += tmpR4 + tmpR2; // Accumulate errors
+		currErr = fma(1.0f, currErr, fma(1.0f, tmpR4, tmpR2)); // Accumulate errors
 		global_idx += grp_offset;
 	}
 
@@ -46,17 +46,17 @@ reducesum(__global float* __restrict src, __global float* __restrict dst, float 
 	for (int offset = get_local_size(0) / 2; offset > 0; offset = offset / 2) {
 		if (local_idx < offset) {
 			currSum = scratch1[local_idx]; // Load accumulator
-			currErr = scratch2[local_idx] + scratch2[local_idx + offset]; // Load and accumulate error
+			currErr = fma(1.0f, scratch2[local_idx], scratch2[local_idx + offset]); // Load and accumulate error
 			tmpR0 = scratch1[local_idx + offset]; // Load next number into local register
-			tmpR1 = currSum + tmpR0; // Temporary sum
+			tmpR1 = fma(1.0f, currSum, tmpR0); // Temporary sum
 
 			// Calculate the operands of the sum from temporary sum
-			tmpR2 = tmpR1 - tmpR0; // Recovers currSum with error
-			tmpR3 = tmpR1 - currSum; // Recovers next value with error
-			tmpR4 = tmpR2 - currSum; // Error in currSum
-			tmpR2 = tmpR3 - tmpR0; // Error in next value
+			tmpR2 = fma( -1.0f, tmpR0, tmpR1); // Recovers currSum with error
+			tmpR3 = fma( -1.0f, currSum, tmpR1); // Recovers next value with error
+			tmpR4 = fma( -1.0f, currSum, tmpR2); // Error in currSum
+			tmpR2 = fma( -1.0f, tmpR0, tmpR3); // Error in next value
 			currSum = tmpR1; // Store into accumulator
-			currErr += tmpR4 + tmpR2; // Accumulate errors
+			currErr = fma(1.0f, currErr, fma(1.0f, tmpR4, tmpR2)); // Accumulate errors
 
 			// Write results back into workgroup scratch memory
 			scratch1[local_idx] = currSum;
@@ -66,8 +66,11 @@ reducesum(__global float* __restrict src, __global float* __restrict dst, float 
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 
+	// Add barrier to sync all threads
+	barrier(CLK_LOCAL_MEM_FENCE);
+
 	if (local_idx == 0) {
-		dst[grp_id] = scratch1[0] - scratch2[0];
+		dst[grp_id] = fma(-1.0f, scratch2[0], scratch1[0]);
 	}
 }
 
