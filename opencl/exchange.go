@@ -13,7 +13,7 @@ import (
 // 	B: effective field in Tesla
 // 	Aex_red: Aex / (Msat * 1e18 m2)
 // see exchange.cl
-func AddExchange(B, m *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data.Mesh) {
+func AddExchange(B, m *data.Slice, Aex_red SymmLUT, Msat MSlice, regions *Bytes, mesh *data.Mesh) {
 	c := mesh.CellSize()
 	wx := float32(2 * 1e-18 / (c[X] * c[X]))
 	wy := float32(2 * 1e-18 / (c[Y] * c[Y]))
@@ -23,6 +23,7 @@ func AddExchange(B, m *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data.M
 	cfg := make3DConf(N)
 	event := k_addexchange_async(B.DevPtr(X), B.DevPtr(Y), B.DevPtr(Z),
 		m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
+		Msat.DevPtr(0), Msat.Mul(0),
 		unsafe.Pointer(Aex_red), regions.Ptr,
 		wx, wy, wz, N[X], N[Y], N[Z], pbc, cfg,
 		[](*cl.Event){B.GetEvent(X), B.GetEvent(Y),

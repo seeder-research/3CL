@@ -17,6 +17,7 @@ var (
 
 	B_exch     = NewVectorField("B_exch", "T", "Exchange field", AddExchangeField)
 	lex2       aexchParam // inter-cell exchange in 1e18 * Aex / Msat
+	// TODO: lex2 no longer depends on Msat -> remove child dependency
 	din2       dexchParam // inter-cell interfacial DMI in 1e9 * Dex / Msat
 	dbulk2     dexchParam // inter-cell bulk DMI in 1e9 * Dex / Msat
 	E_exch     = NewScalarValue("E_exch", "J", "Total exchange energy", GetExchangeEnergy)
@@ -43,9 +44,11 @@ func init() {
 func AddExchangeField(dst *data.Slice) {
 	inter := !Dind.isZero()
 	bulk := !Dbulk.isZero()
+	ms := Msat.MSlice()
+	defer ms.Recycle()
 	switch {
 	case !inter && !bulk:
-		opencl.AddExchange(dst, M.Buffer(), lex2.Gpu(), regions.Gpu(), M.Mesh())
+		opencl.AddExchange(dst, M.Buffer(), lex2.Gpu(), ms, regions.Gpu(), M.Mesh())
 	case inter && !bulk:
 		Refer("mulkers2017")
 		opencl.AddDMI(dst, M.Buffer(), lex2.Gpu(), din2.Gpu(), regions.Gpu(), M.Mesh()) // dmi+exchange
@@ -147,13 +150,12 @@ type dexchParam struct {
 
 func (p *aexchParam) update() {
 	if !p.cpu_ok {
-		msat := Msat.cpuLUT()
 		aex := Aex.cpuLUT()
 
 		for i := 0; i < NREGION; i++ {
-			lexi := 1e18 * safediv(aex[0][i], msat[0][i])
+			lexi := 1e18 * aex[0][i]
 			for j := i; j < NREGION; j++ {
-				lexj := 1e18 * safediv(aex[0][j], msat[0][j])
+				lexj := 1e18 * aex[0][j]
 				I := symmidx(i, j)
 				p.lut[I] = p.scale[I] * 2 / (1/lexi + 1/lexj)
 			}

@@ -5,6 +5,7 @@
 __kernel void
 addexchange(__global float* __restrict Bx, __global float* __restrict By, __global float* __restrict Bz,
             __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
+            __global float* __restrict Ms_, __global float* __restrict Ms_mul,
             __global float* __restrict aLUT2d, __global uint8_t* __restrict regions,
             float wx, float wy, float wz, int Nx, int Ny, int Nz, uint8_t PBC) {
 
@@ -25,7 +26,7 @@ addexchange(__global float* __restrict Bx, __global float* __restrict By, __glob
 	}
 
 	uint8_t r0 = regions[I];
-	float3 B  = make_float3(Bx[I], By[I], Bz[I]);
+	float3 B  = make_float3(0.0, 0.0, 0.0);
 
 	int i_;    // neighbor index
 	float3 m_; // neighbor mag
@@ -76,8 +77,9 @@ addexchange(__global float* __restrict Bx, __global float* __restrict By, __glob
 		B += wz * a__ *(m_ - m0);
 	}
 
-	Bx[I] = B.x;
-	By[I] = B.y;
-	Bz[I] = B.z;
+	float invMs = inv_Msat(Ms_, Ms_mul, I);
+	Bx[I] += B.x*invMs;
+	By[I] += B.y*invMs;
+	Bz[I] += B.z*invMs;
 }
 
