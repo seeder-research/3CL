@@ -187,9 +187,9 @@ func parseIPs() []string {
 		for i, s := range split {
 			split := strings.Split(s, "-")
 			first := atobyte(split[0])
-			start[i], stop[i] = uint(first), uint(first)
+			start[i], stop[i] = first, first
 			if len(split) > 1 {
-				stop[i] = uint(atobyte(split[1]))
+				stop[i] = atobyte(split[1])
 			}
 		}
 
@@ -209,7 +209,7 @@ func parseIPs() []string {
 	return IPs
 }
 
-func atobyte(a string) byte {
+func atobyte(a string) uint {
 	i, err := strconv.Atoi(a)
 	if err != nil {
 		panic(err)
@@ -217,5 +217,5 @@ func atobyte(a string) byte {
 	if int(byte(i)) != i {
 		panic("too large")
 	}
-	return byte(i)
+	return uint(i)
 }
