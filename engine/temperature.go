@@ -5,7 +5,8 @@ import (
 	"github.com/mumax/3cl/mag"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
-	"github.com/mumax/3cl/util"
+	//"github.com/mumax/3cl/util"
+	"math"
 )
 
 var (
