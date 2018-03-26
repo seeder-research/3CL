@@ -15,11 +15,10 @@ var (
 	Dind  = NewScalarParam("Dind", "J/m2", "Interfacial Dzyaloshinskii-Moriya strength", &din2)
 	Dbulk = NewScalarParam("Dbulk", "J/m2", "Bulk Dzyaloshinskii-Moriya strength", &dbulk2)
 
-	B_exch = NewVectorField("B_exch", "T", "Exchange field", AddExchangeField)
-	lex2   aexchParam // inter-cell exchange in 1e18 * Aex
-	din2   dexchParam // inter-cell interfacial DMI in 1e9 * Dex
-	dbulk2 dexchParam // inter-cell bulk DMI in 1e9 * Dex / Msat
-	// TODO: lex2, din2, dbulk2 no longer depends on Msat -> remove child dependency
+	B_exch     = NewVectorField("B_exch", "T", "Exchange field", AddExchangeField)
+	lex2       aexchParam // inter-cell exchange in 1e18 * Aex
+	din2       dexchParam // inter-cell interfacial DMI in 1e9 * Dex
+	dbulk2     dexchParam // inter-cell bulk DMI in 1e9 * Dex
 	E_exch     = NewScalarValue("E_exch", "J", "Total exchange energy", GetExchangeEnergy)
 	Edens_exch = NewScalarField("Edens_exch", "J/m3", "Total exchange energy density", AddExchangeEnergyDensity)
 
@@ -76,7 +75,7 @@ func GetExchangeEnergy() float64 {
 }
 
 // Scales the heisenberg exchange interaction between region1 and 2.
-// Scale = 1 means the harmonic mean over the regions of Aex/Msat.
+// Scale = 1 means the harmonic mean over the regions of Aex.
 func ScaleInterExchange(region1, region2 int, scale float64) {
 	lex2.scale[symmidx(region1, region2)] = float32(scale)
 	lex2.invalidate()
@@ -97,13 +96,13 @@ func InterDind(region1, region2 int, value float64) {
 
 // stores interregion exchange stiffness
 type exchParam struct {
-	lut            [NREGION * (NREGION + 1) / 2]float32 // 1e18 * harmonic mean of Aex/Msat in regions (i,j)
+	lut            [NREGION * (NREGION + 1) / 2]float32 // 1e18 * harmonic mean of Aex in regions (i,j)
 	scale          [NREGION * (NREGION + 1) / 2]float32 // extra scale factor for lut[SymmIdx(i, j)]
 	gpu            opencl.SymmLUT                       // gpu copy of lut, lazily transferred when needed
 	gpu_ok, cpu_ok bool                                 // gpu cache up-to date with lut source
 }
 
-// to be called after Aex, Msat or scaling changed
+// to be called after Aex or scaling changed
 func (p *exchParam) invalidate() {
 	p.cpu_ok = false
 	p.gpu_ok = false
