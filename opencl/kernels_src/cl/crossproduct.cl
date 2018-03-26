@@ -8,9 +8,10 @@ crossproduct(__global float* __restrict  dstx, __global float* __restrict  dsty,
     if (i < N) {
         float3 A = {ax[i], ay[i], az[i]};
         float3 B = {bx[i], by[i], bz[i]};
-        dstx[i] = cross(A, B).x;
-        dsty[i] = cross(A, B).y;
-        dstz[i] = cross(A, B).z;
+	float3 AxB = cross(A, B);
+        dstx[i] = AxB.x;
+        dsty[i] = AxB.y;
+        dstz[i] = AxB.z;
     }
 }
 
