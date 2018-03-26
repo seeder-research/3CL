@@ -8,6 +8,7 @@
 __kernel void
 adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global float* __restrict Hz,
        __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
+       __global float* __restrict Ms_, __global float* __restrict Ms_mul,
        __global float* __restrict aLUT2d, __global float* __restrict dLUT2d, __global uint8_t* __restrict regions,
        float cx, float cy, float cz, int Nx, int Ny, int Nz, uint8_t PBC) {
 
@@ -20,7 +21,7 @@ adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global fl
 	}
 
 	int I = idx(ix, iy, iz);                      // central cell index
-	float3 h = make_float3(Hx[I], Hy[I], Hz[I]);  // add to H
+	float3 h = make_float3(0.0, 0.0, 0.0);  // add to H
 	float3 m0 = make_float3(mx[I], my[I], mz[I]); // central m
 	uint8_t r0 = regions[I];
 	int i_;                                       // neighbor index
@@ -125,9 +126,10 @@ adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global fl
 	}
 
 	// write back, result is H + Hdmi + Hex
-	Hx[I] = h.x;
-	Hy[I] = h.y;
-	Hz[I] = h.z;
+	float invMs = inv_Msat(Ms_, Ms_mul, I);
+	Hx[I] += h.x*invMs;
+	Hy[I] += h.y*invMs;
+	Hz[I] += h.z*invMs;
 }
 
 // Note on boundary conditions.
