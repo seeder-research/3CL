@@ -5,7 +5,7 @@
 __kernel void
 addexchange(__global float* __restrict Bx, __global float* __restrict By, __global float* __restrict Bz,
             __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
-            __global float* __restrict Ms_, __global float* __restrict Ms_mul,
+            __global float* __restrict Ms_, float Ms_mul,
             __global float* __restrict aLUT2d, __global uint8_t* __restrict regions,
             float wx, float wy, float wz, int Nx, int Ny, int Nz, uint8_t PBC) {
 

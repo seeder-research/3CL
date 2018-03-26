@@ -8,7 +8,7 @@
 __kernel void
 adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global float* __restrict Hz,
        __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
-       __global float* __restrict Ms_, __global float* __restrict Ms_mul,
+       __global float* __restrict Ms_, float Ms_mul,
        __global float* __restrict aLUT2d, __global float* __restrict dLUT2d, __global uint8_t* __restrict regions,
        float cx, float cy, float cz, int Nx, int Ny, int Nz, uint8_t PBC) {
 

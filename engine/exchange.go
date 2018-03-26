@@ -18,8 +18,8 @@ var (
 	B_exch = NewVectorField("B_exch", "T", "Exchange field", AddExchangeField)
 	lex2   aexchParam // inter-cell exchange in 1e18 * Aex
 	din2   dexchParam // inter-cell interfacial DMI in 1e9 * Dex
-	// TODO: lex2, din2 no longer depends on Msat -> remove child dependency
-	dbulk2     dexchParam // inter-cell bulk DMI in 1e9 * Dex / Msat
+	dbulk2 dexchParam // inter-cell bulk DMI in 1e9 * Dex / Msat
+	// TODO: lex2, din2, dbulk2 no longer depends on Msat -> remove child dependency
 	E_exch     = NewScalarValue("E_exch", "J", "Total exchange energy", GetExchangeEnergy)
 	Edens_exch = NewScalarField("Edens_exch", "J/m3", "Total exchange energy density", AddExchangeEnergyDensity)
 
@@ -54,7 +54,7 @@ func AddExchangeField(dst *data.Slice) {
 		opencl.AddDMI(dst, M.Buffer(), lex2.Gpu(), din2.Gpu(), ms, regions.Gpu(), M.Mesh()) // dmi+exchange
 	case bulk && !inter:
 		util.AssertMsg(allowUnsafe || (Msat.IsUniform() && Aex.IsUniform() && Dbulk.IsUniform()), "DMI: Msat, Aex, Dex must be uniform")
-		opencl.AddDMIBulk(dst, M.Buffer(), lex2.Gpu(), dbulk2.Gpu(), regions.Gpu(), M.Mesh()) // dmi+exchange
+		opencl.AddDMIBulk(dst, M.Buffer(), lex2.Gpu(), dbulk2.Gpu(), ms, regions.Gpu(), M.Mesh()) // dmi+exchange
 	case inter && bulk:
 		util.Fatal("Cannot have induced and interfacial DMI at the same time")
 	}
