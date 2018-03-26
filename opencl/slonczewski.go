@@ -9,10 +9,10 @@ import (
 
 // Add Slonczewski ST torque to torque (Tesla).
 // see slonczewski.cl
-func AddSlonczewskiTorque2(torque, m *data.Slice, Msat, J, fixedP, alpha, pol, λ, ε_prime MSlice, mesh *data.Mesh) {
+func AddSlonczewskiTorque2(torque, m *data.Slice, Msat, J, fixedP, alpha, pol, λ, ε_prime MSlice, flp float64, mesh *data.Mesh) {
 	N := torque.Len()
 	cfg := make1DConf(N)
-	flt := float32(mesh.WorldSize()[Z])
+	flt := float32(flp * mesh.WorldSize()[Z])
 
 	event := k_addslonczewskitorque2_async(
 		torque.DevPtr(X), torque.DevPtr(Y), torque.DevPtr(Z),
