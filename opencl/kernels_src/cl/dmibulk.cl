@@ -43,9 +43,6 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
 	float3 h = make_float3(0.0, 0.0, 0.0);  // add to H
 	float3 m0 = make_float3(mx[I], my[I], mz[I]); // central m
 	uint8_t r0 = regions[I];
-	float A = aLUT2d[symidx(r0, r0)];
-	float D = DLUT2d[symidx(r0, r0)]; 
-	float D_2A = D/(2.0f*A);   
 	int i_;                                       // neighbor index
 
 	if(is0(m0)) {
@@ -59,13 +56,17 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
 		if (ix-1 >= 0 || PBCx) {
 			m1 = make_float3(mx[i_], my[i_], mz[i_]);
 		}
+	        int r1 = is0(m1)? r0 : regions[i_];
+        	float A = aLUT2d[symidx(r0, r1)];
+	        float D = DLUT2d[symidx(r0, r1)];
+	        float D_2A = D/(2.0f*A);
 		if (is0(m1)) {                                 // neighbor missing
 			m1.x = m0.x;
 			m1.y = m0.y - (-cx * D_2A * m0.z);
 			m1.z = m0.z + (-cx * D_2A * m0.y);
 		}
 		h   += (2.0f*A/(cx*cx)) * (m1 - m0);          // exchange
-		h.y += (D/cx)*(-m1.z);                  // actually (2*D)/(2*cx) * delta m
+		h.y += (D/cx)*(-m1.z);
 		h.z -= (D/cx)*(-m1.y);
 	}
 
@@ -76,6 +77,10 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
 		if (ix+1 < Nx || PBCx) {
 			m2 = make_float3(mx[i_], my[i_], mz[i_]);
 		}
+	        int r1 = is0(m2)? r0 : regions[i_];
+        	float A = aLUT2d[symidx(r0, r1)];
+	        float D = DLUT2d[symidx(r0, r1)];
+        	float D_2A = D/(2.0f*A);
 		if (is0(m2)) {
 			m2.x = m0.x;
 			m2.y = m0.y - (+cx * D_2A * m0.z);
@@ -93,6 +98,10 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
 		if (iy-1 >= 0 || PBCy) {
 			m1 = make_float3(mx[i_], my[i_], mz[i_]);
 		}
+	        int r1 = is0(m1)? r0 : regions[i_];
+        	float A = aLUT2d[symidx(r0, r1)];
+	        float D = DLUT2d[symidx(r0, r1)];
+        	float D_2A = D/(2.0f*A);
 		if (is0(m1)) {
 			m1.x = m0.x + (-cy * D_2A * m0.z);
 			m1.y = m0.y;
@@ -109,6 +118,10 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
 		if  (iy+1 < Ny || PBCy) {
 			m2 = make_float3(mx[i_], my[i_], mz[i_]);
 		}
+	        int r1 = is0(m2)? r0 : regions[i_];
+        	float A = aLUT2d[symidx(r0, r1)];
+	        float D = DLUT2d[symidx(r0, r1)];
+        	float D_2A = D/(2.0f*A);
 		if (is0(m2)) {
 			m2.x = m0.x + (+cy * D_2A * m0.z);
 			m2.y = m0.y;
@@ -128,6 +141,10 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
 			if (iz-1 >= 0 || PBCz) {
 				m1 = make_float3(mx[i_], my[i_], mz[i_]);
 			}
+			int r1 = is0(m1)? r0 : regions[i_];
+			float A = aLUT2d[symidx(r0, r1)];
+			float D = DLUT2d[symidx(r0, r1)];
+			float D_2A = D/(2.0f*A);
 			if (is0(m1)) {
 				m1.x = m0.x - (-cz * D_2A * m0.y);
 				m1.y = m0.y + (-cz * D_2A * m0.x);
@@ -145,6 +162,10 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
 			if (iz+1 < Nz || PBCz) {
 				m2 = make_float3(mx[i_], my[i_], mz[i_]);
 			}
+			int r1 = is0(m2)? r0 : regions[i_];
+			float A = aLUT2d[symidx(r0, r1)];
+			float D = DLUT2d[symidx(r0, r1)];
+			float D_2A = D/(2.0f*A);
 			if (is0(m2)) {
 				m2.x = m0.x - (+cz * D_2A * m0.y);
 				m2.y = m0.y + (+cz * D_2A * m0.x);

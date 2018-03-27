@@ -53,9 +53,8 @@ func AddExchangeField(dst *data.Slice) {
 		Refer("mulkers2017")
 		opencl.AddDMI(dst, M.Buffer(), lex2.Gpu(), din2.Gpu(), ms, regions.Gpu(), M.Mesh()) // dmi+exchange
 	case bulk && !inter:
-		util.AssertMsg(allowUnsafe || (Msat.IsUniform() && Aex.IsUniform() && Dbulk.IsUniform()), "DMI: Msat, Aex, Dex must be uniform")
 		opencl.AddDMIBulk(dst, M.Buffer(), lex2.Gpu(), dbulk2.Gpu(), ms, regions.Gpu(), M.Mesh()) // dmi+exchange
-		// TODO: add ScaleInterDbulk and InterDbulk when inhomo Dbulk gets fixed
+		// TODO: add ScaleInterDbulk and InterDbulk
 	case inter && bulk:
 		util.Fatal("Cannot have induced and interfacial DMI at the same time")
 	}
