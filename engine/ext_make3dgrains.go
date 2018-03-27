@@ -30,7 +30,6 @@ type tesselation3d struct {
 	centers     []center3d //List of Voronoi centers
 }
 
-
 // Stores location of each Voronoi center
 type center3d struct {
 	x, y, z float64 // center position (m)
