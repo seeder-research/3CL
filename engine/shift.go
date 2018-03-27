@@ -68,11 +68,11 @@ func YShift(dy int) {
 }
 
 func shiftMagY(m *data.Slice, dy int) {
-	m2 := cuda.Buffer(1, m.Size())
-	defer cuda.Recycle(m2)
+	m2 := opencl.Buffer(1, m.Size())
+	defer opencl.Recycle(m2)
 	for c := 0; c < m.NComp(); c++ {
 		comp := m.Comp(c)
-		cuda.ShiftY(m2, comp, dy, float32(ShiftMagU[c]), float32(ShiftMagD[c]))
+		opencl.ShiftY(m2, comp, dy, float32(ShiftMagU[c]), float32(ShiftMagD[c]))
 		data.Copy(comp, m2) // str0 ?
 	}
 }

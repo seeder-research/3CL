@@ -34,6 +34,6 @@ tol := 1e-8
 
 expectv("B_custom", B_custom.Average(), vector(0, 0, 0), tol)
 
-expectv("B_custom0", B_custom.region(0).Average(), vector(0.00118888104756673, -0.00164631487528483, -0.00074591267903645), tol)
-expectv("B_custom1", B_custom.region(1).Average(), vector(-0.00118888041178385, 0.00164631512959798, 0.00074591242472330), tol)
+expectv("B_custom0", B_custom.region(0).Average(), vector(0.00118888104756673, -0.00164631487528483, -0.00074591767903645), tol)
+expectv("B_custom1", B_custom.region(1).Average(), vector(-0.00118888041178385, 0.00164631512959798, 0.00074591742472330), tol)
 expect("E_total",E_total,E_custom,1e-22) // check if custom energy added to energy

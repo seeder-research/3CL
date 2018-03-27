@@ -65,7 +65,7 @@ addoommfslonczewskitorque(__global float* __restrict tx, __global float* __restr
 		float B = beta * epsilonPrime;
 
 		float gilb     = 1.0f / (1.0f + alpha * alpha);
-		float mxpxmFac = gilb * (A - alpha * B);
+		float mxpxmFac = gilb * (A + alpha * B);
 		float pxmFac   = gilb * (B - alpha * A);
 
 		float3 pxm      = cross(p, m);

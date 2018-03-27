@@ -22,7 +22,7 @@ func main() {
 
 	flag.Parse()
 
-	opencl.Init(0, 0)
+	opencl.Init(0)
 	platforms := opencl.ClPlatforms
 	fmt.Printf("Discovered platforms: \n")
 	for i, p := range platforms {

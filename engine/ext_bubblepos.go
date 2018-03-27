@@ -20,7 +20,6 @@ func bubblePos() []float64 {
 	sign := magsign(M.GetCell(0, n[Y]/2, n[Z]/2)[Z]) //TODO make more robust with temperature?
 
 	{
-		max := float32(-1e32)
 		var magsum float32
 		var weightedsum float32
 

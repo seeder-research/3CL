@@ -3,26 +3,26 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math/rand"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
+	"math/rand"
 	"unsafe"
 )
 
-var(
-	Flag_platform		= flag.Int("platform", 0, "Specify OpenCL platform")
-	Flag_gpu			= flag.Int("gpu", 0, "Specify GPU")
+var (
+	Flag_platform = flag.Int("platform", 0, "Specify OpenCL platform")
+	Flag_gpu      = flag.Int("gpu", 0, "Specify GPU")
 )
 
 func main() {
 	flag.Parse()
-	var data,origData [128]float32
+	var data, origData [128]float32
 	for i := 0; i < len(data); i++ {
 		data[i] = rand.Float32()
 		origData[i] = data[i]
 	}
 
-	opencl.Init(*Flag_platform, *Flag_gpu)
+	opencl.Init(*Flag_gpu)
 	platforms := opencl.ClPlatforms
 	fmt.Printf("Discovered platforms: \n")
 	for i, p := range platforms {
@@ -114,7 +114,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Begin first run of buffer tests... \n");
+	fmt.Printf("Begin first run of buffer tests... \n")
 
 	input, err := context.CreateEmptyBuffer(cl.MemReadWrite, 4*len(data))
 	if err != nil {
@@ -148,26 +148,26 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Modifying single entry of data... \n");
+	fmt.Printf("Modifying single entry of data... \n")
 
-	modTarget := 69;
-	modifiedData := make([]float32, 1);
-	origData[modTarget] *= -1.0;
-	modifiedData[0] = origData[modTarget];
-	target := unsafe.Pointer(&modifiedData[0]);
-	if _, err :=queue.EnqueueFillBuffer(input, target, 4*len(modifiedData), 4*modTarget, 4*len(modifiedData), nil); err != nil {
+	modTarget := 69
+	modifiedData := make([]float32, 1)
+	origData[modTarget] *= -1.0
+	modifiedData[0] = origData[modTarget]
+	target := unsafe.Pointer(&modifiedData[0])
+	if _, err := queue.EnqueueFillBuffer(input, target, 4*len(modifiedData), 4*modTarget, 4*len(modifiedData), nil); err != nil {
 		fmt.Printf("EnqueueFillBuffer failed: %+v \n", err)
 		return
 	}
 
-	fmt.Printf("Reading after first modification \n");
+	fmt.Printf("Reading after first modification \n")
 
 	if _, err := queue.EnqueueReadBufferFloat32(input, true, 0, results, nil); err != nil {
 		fmt.Printf("EnqueueReadBufferFloat32 failed: %+v \n", err)
 		return
 	}
 
-	fmt.Printf("Comparing... \n");
+	fmt.Printf("Comparing... \n")
 
 	correct = 0
 	for i, v := range origData {
@@ -183,30 +183,30 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Modifying a range of entries of data... \n");
+	fmt.Printf("Modifying a range of entries of data... \n")
 
-	modTarget = 49;
-	modElem := 5;
-	modifiedData = make([]float32, modElem);
+	modTarget = 49
+	modElem := 5
+	modifiedData = make([]float32, modElem)
 	for i, _ := range modifiedData {
-		idx := modTarget+i;
-		origData[idx] *= -0.5;
-		modifiedData[i] = origData[idx];
+		idx := modTarget + i
+		origData[idx] *= -0.5
+		modifiedData[i] = origData[idx]
 		target = unsafe.Pointer(&modifiedData[i])
-		if _, err :=queue.EnqueueFillBuffer(input, target, 4, 4*idx, 4, nil); err != nil {
+		if _, err := queue.EnqueueFillBuffer(input, target, 4, 4*idx, 4, nil); err != nil {
 			fmt.Printf("EnqueueFillBuffer failed: %+v \n", err)
 			return
 		}
 	}
 
-	fmt.Printf("Reading after second modification \n");
+	fmt.Printf("Reading after second modification \n")
 
 	if _, err := queue.EnqueueReadBufferFloat32(input, true, 0, results, nil); err != nil {
 		fmt.Printf("EnqueueReadBufferFloat32 failed: %+v \n", err)
 		return
 	}
 
-	fmt.Printf("Comparing... \n");
+	fmt.Printf("Comparing... \n")
 
 	correct = 0
 	for i, v := range origData {
@@ -231,4 +231,3 @@ func main() {
 	}
 	opencl.ReleaseAndClean()
 }
-

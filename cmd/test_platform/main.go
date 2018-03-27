@@ -6,31 +6,32 @@ import (
 	"fmt"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
-//	"github.com/mumax/3cl/util"
+	//	"github.com/mumax/3cl/util"
 	"log"
-//	"os"
+	//	"os"
 	"runtime"
-//	"time"
+	//	"time"
 )
 
 var (
-//	flag_cachedir      = flag.String("cache", "", "Kernel cache directory")
-//	flag_cpuprof       = flag.Bool("cpuprof", false, "Record gopprof CPU profile")
-//	flag_failfast      = flag.Bool("failfast", false, "If one simulation fails, stop entire batch immediately")
-//	flag_forceclean    = flag.Bool("f", true, "Force start, clean existing output directory")
-//	flag_gpu           = flag.Int("gpu", 0, "Specify GPU")
-//	flag_platform      = flag.Int("platform", 0, "Specify OpenCL platform")
-//	flag_testkern	   = flag.Bool("kerns", false, "Test list of kernels created versus programmed list of kernels")
-//	flag_interactive   = flag.Bool("i", false, "Open interactive browser session")
-//	flag_launchtimeout = flag.Duration("launchtimeout", 0, "Launch timeout for CUDA calls")
-//	flag_memprof       = flag.Bool("memprof", false, "Recored gopprof memory profile")
-//	flag_od            = flag.String("o", "", "Override output directory")
-//	flag_port          = flag.String("http", ":35367", "Port to serve web gui")
-//	flag_selftest      = flag.Bool("paranoid", false, "Enable convolution self-test for cuFFT sanity.")
-//	flag_silent        = flag.Bool("s", false, "Silent") // provided for backwards compatibility
-//	flag_sync          = flag.Bool("sync", false, "Synchronize all CUDA calls (debug)")
-//	flag_test          = flag.Bool("test", false, "Cuda test (internal)")
-	flag_version       = flag.Bool("v", true, "Print version")
+	//	flag_cachedir      = flag.String("cache", "", "Kernel cache directory")
+	//	flag_cpuprof       = flag.Bool("cpuprof", false, "Record gopprof CPU profile")
+	//	flag_failfast      = flag.Bool("failfast", false, "If one simulation fails, stop entire batch immediately")
+	//	flag_forceclean    = flag.Bool("f", true, "Force start, clean existing output directory")
+	//	flag_gpu           = flag.Int("gpu", 0, "Specify GPU")
+	//	flag_platform      = flag.Int("platform", 0, "Specify OpenCL platform")
+	//	flag_testkern	   = flag.Bool("kerns", false, "Test list of kernels created versus programmed list of kernels")
+	//	flag_interactive   = flag.Bool("i", false, "Open interactive browser session")
+	//	flag_launchtimeout = flag.Duration("launchtimeout", 0, "Launch timeout for CUDA calls")
+	//	flag_memprof       = flag.Bool("memprof", false, "Recored gopprof memory profile")
+	//	flag_od            = flag.String("o", "", "Override output directory")
+	//	flag_port          = flag.String("http", ":35367", "Port to serve web gui")
+	//	flag_selftest      = flag.Bool("paranoid", false, "Enable convolution self-test for cuFFT sanity.")
+	//	flag_silent        = flag.Bool("s", false, "Silent") // provided for backwards compatibility
+	//	flag_sync          = flag.Bool("sync", false, "Synchronize all CUDA calls (debug)")
+	//	flag_test          = flag.Bool("test", false, "Cuda test (internal)")
+	flag_version = flag.Bool("v", true, "Print version")
+
 //	flag_vet           = flag.Bool("vet", false, "Check input files for errors, but don't run them")
 )
 
@@ -118,7 +119,7 @@ func main() {
 
 // print version to stdout
 func printVersion() {
-//	fmt.Print("//", engine.UNAME, "\n")
+	//	fmt.Print("//", engine.UNAME, "\n")
 	fmt.Print(opencl.PlatformInfo)
 	fmt.Print("//", opencl.GPUInfo)
 	fmt.Print("//(c) Arne Vansteenkiste, Dynamat LAB, Ghent University, Belgium", "\n")

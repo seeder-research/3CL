@@ -110,7 +110,7 @@ func (rk *RK23) Free() {
 	rk.k1 = nil
 }
 
-// TODO: into cuda
+// TODO: into opencl
 func madd4(dst, src1, src2, src3, src4 *data.Slice, w1, w2, w3, w4 float32) {
 	opencl.Madd3(dst, src1, src2, src3, w1, w2, w3)
 	opencl.Madd2(dst, dst, src4, 1, w4)

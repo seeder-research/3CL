@@ -5,7 +5,7 @@ import (
 	"bufio"
 	d "github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/util"
-	"github.com/mumax/3/oommf"
+	"github.com/mumax/3cl/oommf"
 	"math"
 	"os"
 )

@@ -1,9 +1,9 @@
 package engine
 
 import (
-	"github.com/mumax/3/opencl"
-	"github.com/mumax/3/data"
-	"github.com/mumax/3/util"
+	"github.com/mumax/3cl/opencl"
+	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/util"
 	"math"
 )
 
@@ -124,5 +124,5 @@ func (rk *RK56) Free() {
 
 func madd7(dst, src1, src2, src3, src4, src5, src6, src7 *data.Slice, w1, w2, w3, w4, w5, w6, w7 float32) {
 	madd6(dst, src1, src2, src3, src4, src5, src6, w1, w2, w3, w4, w5, w6)
-	cuda.Madd2(dst, dst, src7, 1, w7)
+	opencl.Madd2(dst, dst, src7, 1, w7)
 }

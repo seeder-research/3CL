@@ -241,10 +241,10 @@ func (b *Regions) shift(dx int) {
 func (b *Regions) shiftY(dy int) {
 	// TODO: return if no regions defined
 	r1 := b.Gpu()
-	r2 := cuda.NewBytes(b.Mesh().NCell()) // TODO: somehow recycle
+	r2 := opencl.NewBytes(b.Mesh().NCell()) // TODO: somehow recycle
 	defer r2.Free()
 	newreg := byte(0) // new region at edge
-	cuda.ShiftBytesY(r2, r1, b.Mesh(), dy, newreg)
+	opencl.ShiftBytesY(r2, r1, b.Mesh(), dy, newreg)
 	r1.Copy(r2)
 
 	n := Mesh().Size()

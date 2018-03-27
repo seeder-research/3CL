@@ -13,7 +13,6 @@ import (
 var (
 	// These flags are shared between cmd/mumax3 and Go input files.
 	Flag_cachedir    = flag.String("cache", "/tmp", "Kernel cache directory (empty disables caching)")
-	Flag_platform    = flag.Int("platform", 0, "Specify OpenCL platform")
 	Flag_gpu         = flag.Int("gpu", 0, "Specify GPU")
 	Flag_interactive = flag.Bool("i", false, "Open interactive browser session")
 	Flag_od          = flag.String("o", "", "Override output directory")
@@ -41,7 +40,7 @@ func InitAndClose() func() {
 
 	flag.Parse()
 
-	opencl.Init(*Flag_platform, *Flag_gpu)
+	opencl.Init(*Flag_gpu)
 	opencl.Synchronous = *Flag_sync
 
 	od := *Flag_od

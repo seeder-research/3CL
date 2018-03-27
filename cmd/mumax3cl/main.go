@@ -23,7 +23,7 @@ func main() {
 	log.SetPrefix("")
 	log.SetFlags(0)
 
-	opencl.Init(*engine.Flag_gpu, *engine.Flag_platform)
+	opencl.Init(*engine.Flag_gpu)
 
 	opencl.Synchronous = *engine.Flag_sync
 	if *engine.Flag_version {

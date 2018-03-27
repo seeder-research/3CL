@@ -1,23 +1,23 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-	"math/rand"
-	"github.com/mumax/3cl/opencl/cl"
-	"github.com/mumax/3cl/opencl"
+	"fmt"
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/engine"
+	"github.com/mumax/3cl/opencl"
+	"github.com/mumax/3cl/opencl/cl"
+	"math/rand"
 )
 
 // flags in engine/gofiles.go
-var(
+var (
 	Flag_Nsize = flag.Int("count", 1, "Number of entries to sum")
 )
 
 func main() {
 	flag.Parse()
-	opencl.Init(*engine.Flag_gpu, *engine.Flag_platform)
+	opencl.Init(*engine.Flag_gpu)
 	opencl.Synchronous = *engine.Flag_sync
 	platforms := opencl.ClPlatforms
 	fmt.Printf("Discovered platforms: \n")
@@ -91,7 +91,7 @@ func main() {
 		fmt.Printf("  Version: %s \n", d.Version())
 	}
 
-	fmt.Printf("Setting up data for testing... \n");
+	fmt.Printf("Setting up data for testing... \n")
 
 	NSize := *Flag_Nsize
 	size := [3]int{NSize, 1, 1}
@@ -106,7 +106,7 @@ func main() {
 
 	data.Copy(gpuBuffer, cpuArray)
 
-	fmt.Printf("Begin first run of sum kernel... \n");
+	fmt.Printf("Begin first run of sum kernel... \n")
 
 	results := opencl.Sum(gpuBuffer)
 
@@ -137,14 +137,13 @@ func main() {
 		fmt.Println("Results match!")
 	} else {
 		fmt.Println("Results do not match! golden: ", golden, "; result: ", results)
-		}
-	
+	}
+
 	fmt.Printf("Finished tests on sum\n")
 
 	fmt.Printf("freeing resources \n")
-//	gpuBuffer.Free()
+	//	gpuBuffer.Free()
 	opencl.Recycle(gpuBuffer)
 
 	opencl.ReleaseAndClean()
 }
-

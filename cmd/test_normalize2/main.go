@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"math"
-	"math/rand"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
+	"math"
+	"math/rand"
 )
 
 func main() {
@@ -14,14 +14,14 @@ func main() {
 		dataX[i] = rand.Float32()
 		dataY[i] = rand.Float32()
 		dataZ[i] = rand.Float32()
-		if (i%2 == 0) {
+		if i%2 == 0 {
 			mask[i] = 1.0
 		} else {
 			mask[i] = 0.0
 		}
 	}
 
-	opencl.Init(0, 0)
+	opencl.Init(0)
 	platforms := opencl.ClPlatforms
 	fmt.Printf("Discovered platforms: \n")
 	for i, p := range platforms {
@@ -115,7 +115,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Begin first run of normalize2 kernel... \n");
+	fmt.Printf("Begin first run of normalize2 kernel... \n")
 
 	inputX, err := context.CreateEmptyBuffer(cl.MemReadWrite, 4*len(dataX))
 	if err != nil {
@@ -210,9 +210,9 @@ func main() {
 		} else {
 			olen := math.Sqrt((float64)(dataX[i]*dataX[i] + dataY[i]*dataY[i] + dataZ[i]*dataZ[i]))
 			fmt.Println("Original length: ", olen, "; Want:")
-			fmt.Println("MVal: ", mask[i], ", X: ", float64(dataX[i]) / olen , ", Y: ", float64(dataY[i]) / olen, ", Z: ", float64(dataZ[i]) / olen)
+			fmt.Println("MVal: ", mask[i], ", X: ", float64(dataX[i])/olen, ", Y: ", float64(dataY[i])/olen, ", Z: ", float64(dataZ[i])/olen)
 			fmt.Println("Recovered length: ", outLength, "; Have:")
-			fmt.Println("MVal: ", mask[i], ", X: ", XVal , ", Y: ", YVal, ", Z: ", ZVal)
+			fmt.Println("MVal: ", mask[i], ", X: ", XVal, ", Y: ", YVal, ", Z: ", ZVal)
 		}
 	}
 
@@ -221,7 +221,7 @@ func main() {
 		return
 	}
 
-	fmt.Printf("First run of normalize2 kernel completed... \n");
+	fmt.Printf("First run of normalize2 kernel completed... \n")
 
 	fmt.Printf("Finished tests on normalize2\n")
 
@@ -236,4 +236,3 @@ func main() {
 
 	opencl.ReleaseAndClean()
 }
-

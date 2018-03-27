@@ -65,7 +65,7 @@ func Relax() {
 	defer stepper.Free() // purge previous rk.k1 because FSAL will be dead wrong.
 
 	maxTorque := func() float64 {
-		return cuda.MaxVecNorm(solver.k1)
+		return opencl.MaxVecNorm(solver.k1)
 	}
 	avgTorque := func() float32 {
 		return opencl.Dot(solver.k1, solver.k1)

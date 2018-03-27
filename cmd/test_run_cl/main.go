@@ -3,14 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math/rand"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
+	"math/rand"
 )
 
 var (
-	Flag_platform		= flag.Int("platform", 0, "Specify OpenCL platform")
-	Flag_gpu			= flag.Int("gpu", 0, "Specify GPU")
+	Flag_gpu = flag.Int("gpu", 0, "Specify GPU")
 )
 
 func main() {
@@ -20,7 +19,7 @@ func main() {
 		data[i] = rand.Float32()
 	}
 
-	opencl.Init(*Flag_platform, *Flag_gpu)
+	opencl.Init(*Flag_gpu)
 	platforms := opencl.ClPlatforms
 	fmt.Printf("Discovered platforms: \n")
 	for i, p := range platforms {
@@ -114,7 +113,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Begin first run of square kernel... \n");
+	fmt.Printf("Begin first run of square kernel... \n")
 
 	input, err := context.CreateEmptyBuffer(cl.MemReadOnly, 4*len(data))
 	if err != nil {
@@ -177,7 +176,7 @@ func main() {
 		return
 	}
 
-	fmt.Printf("First run of square kernel completed...starting second run \n");
+	fmt.Printf("First run of square kernel completed...starting second run \n")
 
 	// Create second set of data to re-run kernel
 	var data1 [1024]float32
@@ -229,4 +228,3 @@ func main() {
 
 	opencl.ReleaseAndClean()
 }
-

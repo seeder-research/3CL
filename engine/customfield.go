@@ -32,6 +32,12 @@ func init() {
 	DeclFunc("ConstVector", ConstVector, "Constant, uniform vector")
 	DeclFunc("Shifted", Shifted, "Shifted quantity")
 	DeclFunc("Masked", Masked, "Mask quantity with shape")
+	DeclFunc("RemoveCustomFields", RemoveCustomFields, "Removes all custom fields again")
+}
+
+//Removes all customfields
+func RemoveCustomFields() {
+        customTerms = nil
 }
 
 // AddFieldTerm adds an effective field function (returning Teslas) to B_eff.
@@ -194,11 +200,11 @@ func Cross(a, b Quantity) Quantity {
 
 func (d *crossProduct) EvalTo(dst *data.Slice) {
 	A := ValueOf(d.a)
-	defer cuda.Recycle(A)
+	defer opencl.Recycle(A)
 	B := ValueOf(d.b)
-	defer cuda.Recycle(B)
-	cuda.Zero(dst)
-	cuda.CrossProduct(dst, A, B)
+	defer opencl.Recycle(B)
+	opencl.Zero(dst)
+	opencl.CrossProduct(dst, A, B)
 }
 
 func Add(a, b Quantity) Quantity {

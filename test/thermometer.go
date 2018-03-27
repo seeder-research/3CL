@@ -17,8 +17,8 @@ Due to this difference, we need to add the following constant value to the divis
 package main
 
 import (
-	"github.com/mumax/3/cuda"
-	. "github.com/mumax/3/engine"
+	"github.com/mumax/3cl/opencl"
+	. "github.com/mumax/3cl/engine"
 )
 
 const kB = 1.38064852e-23 // Boltzmann constant
@@ -43,8 +43,8 @@ func main() {
 	`)
 
 	m := M.Buffer()
-	h := cuda.Buffer(3, m.Size())
-	mxh := cuda.Buffer(3, m.Size())
+	h := opencl.Buffer(3, m.Size())
+	mxh := opencl.Buffer(3, m.Size())
 
 	cs := Mesh().CellSize()
 	Vcell := cs[X] * cs[Y] * cs[Z]
@@ -59,9 +59,9 @@ func main() {
 		SetDemagField(h)
 		AddExchangeField(h)
 		AddAnisotropyField(h)
-		cuda.CrossProduct(mxh, m, h)
-		divisor = ((nstep-1)*divisor + float64(cuda.Dot(m, h))) / nstep
-		numerator = ((nstep-1)*numerator + float64(cuda.Dot(mxh, mxh))) / nstep
+		opencl.CrossProduct(mxh, m, h)
+		divisor = ((nstep-1)*divisor + float64(opencl.Dot(m, h))) / nstep
+		numerator = ((nstep-1)*numerator + float64(opencl.Dot(mxh, mxh))) / nstep
 	})
 
 	Run(1e-10)

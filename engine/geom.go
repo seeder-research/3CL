@@ -242,10 +242,10 @@ func (g *geom) shiftY(dy int) {
 
 	// allocated mask: shift
 	s := g.buffer
-	s2 := cuda.Buffer(1, g.Mesh().Size())
-	defer cuda.Recycle(s2)
+	s2 := opencl.Buffer(1, g.Mesh().Size())
+	defer opencl.Recycle(s2)
 	newv := float32(1) // initially fill edges with 1's
-	cuda.ShiftY(s2, s, dy, newv, newv)
+	opencl.ShiftY(s2, s, dy, newv, newv)
 	data.Copy(s, s2)
 
 	n := Mesh().Size()
@@ -256,7 +256,7 @@ func (g *geom) shiftY(dy int) {
 			for iy := y1; iy < y2; iy++ {
 				r := Index2Coord(ix, iy, iz) // includes shift
 				if !g.shape(r[X], r[Y], r[Z]) {
-					cuda.SetCell(g.buffer, 0, ix, iy, iz, 0) // a bit slowish, but hardly reached
+					opencl.SetCell(g.buffer, 0, ix, iy, iz, 0) // a bit slowish, but hardly reached
 				}
 			}
 		}

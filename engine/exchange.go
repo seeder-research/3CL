@@ -1,7 +1,7 @@
 package engine
 
 // Exchange interaction (Heisenberg + Dzyaloshinskii-Moriya)
-// See also cuda/exchange.cu and cuda/dmi.cu
+// See also opencl/exchange.cl and opencl/dmi.cl
 
 import (
 	"github.com/mumax/3cl/data"

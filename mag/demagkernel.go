@@ -36,7 +36,7 @@ func DemagKernel(inputSize, pbc [3]int, cellsize [3]float64, accuracy float64, c
 	}()
 
 	// Try to load kernel
-	basename := fmt.Sprint(cacheDir, "/", "mumax3kernel_", inputSize, "_", pbc, "_", cellsize, "_", accuracy, "_")
+	basename := fmt.Sprint(cacheDir, "/", "mumax3clkernel_", inputSize, "_", pbc, "_", cellsize, "_", accuracy, "_")
 	var errLoad error
 	for i := 0; i < 3; i++ {
 		for j := i; j < 3; j++ {

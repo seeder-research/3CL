@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/mumax/3cl/opencl/cl"
-	"github.com/mumax/3cl/opencl"
 	"fmt"
+	"github.com/mumax/3cl/opencl"
+	"github.com/mumax/3cl/opencl/cl"
 	"math/rand"
 )
 
@@ -128,7 +128,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Begin first run of square kernel... \n");
+	fmt.Printf("Begin first run of square kernel... \n")
 
 	input, err := context.CreateEmptyBuffer(cl.MemReadOnly, 4*len(data))
 	if err != nil {
@@ -191,7 +191,7 @@ func main() {
 		return
 	}
 
-	fmt.Printf("First run of square kernel completed...starting second run \n");
+	fmt.Printf("First run of square kernel completed...starting second run \n")
 
 	// Create second set of data to re-run kernel
 	var data1 [1024]float32
@@ -242,4 +242,3 @@ func main() {
 	queue.Release()
 	context.Release()
 }
-

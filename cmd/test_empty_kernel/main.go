@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
+	"math/rand"
 )
 
 func main() {
@@ -13,7 +13,7 @@ func main() {
 		data[i] = rand.Float32()
 	}
 
-	opencl.Init(0, 0)
+	opencl.Init(0)
 	platforms := opencl.ClPlatforms
 	fmt.Printf("Discovered platforms: \n")
 	for i, p := range platforms {
@@ -84,7 +84,7 @@ func main() {
 		fmt.Printf("  Vendor: %s \n", d.Vendor())
 		fmt.Printf("  Version: %s \n", d.Version())
 	}
-//	device, context, queue := opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
+	//	device, context, queue := opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
 	kernels := opencl.KernList
 
 	// Name of non-existing kernel
@@ -100,4 +100,3 @@ func main() {
 
 	opencl.ReleaseAndClean()
 }
-

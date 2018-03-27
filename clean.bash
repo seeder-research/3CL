@@ -3,7 +3,7 @@
 if [ -n "${GOPATH+set}" ]; then
         if [ -n "${GOPATH}" ]; then
         rm -frv $GOPATH/pkg/*
-        rm -frv $GOPATH/bin/*
+        rm -frv $GOPATH/bin/mumax3cl*
     fi
 fi
 rm -fv  opencl/*_wrapper.go

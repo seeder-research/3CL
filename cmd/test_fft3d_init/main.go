@@ -17,7 +17,7 @@ func main() {
 	N0, N1, N2 := 4, 4, 4
 	X := make([]float32, 2*N0*N1*N2)
 
-	opencl.Init(0, 0)
+	opencl.Init(0)
 	platforms := opencl.ClPlatforms
 	fmt.Printf("Discovered platforms: \n")
 	for i, p := range platforms {
@@ -94,15 +94,15 @@ func main() {
 	/* print input array */
 	fmt.Printf("\nPerforming fft on a three dimensional array of size N0 x N1 x N2 = %d x %d x %d \n", N0, N1, N2)
 	for i := 0; i < N0; i++ {
-	        for j := 0; j < N1; j++ {
-	 		for k := 0; k < N2; k++ {
+		for j := 0; j < N1; j++ {
+			for k := 0; k < N2; k++ {
 				x := float32(0.0)
 				y := float32(0.0)
-				if (i == 0 && j == 0 && k == 0) {
+				if i == 0 && j == 0 && k == 0 {
 					x = float32(0.5)
 					y = float32(0.5)
 				}
-				idx := int(2*(k+j*N1+i*N0*N1))
+				idx := int(2 * (k + j*N1 + i*N0*N1))
 				X[idx] = x
 				X[idx+1] = y
 				fmt.Printf("(%f, %f) ", X[idx], X[idx+1])
@@ -170,10 +170,10 @@ func main() {
 	}
 
 	/* print output array */
-	for i := 0; i<N0; i++ {
-		for j := 0; j<N1; j++ {
-			for k := 0; k<N2; k++ {
-				idx := int(2*(k+j*N1+i*N0*N1))
+	for i := 0; i < N0; i++ {
+		for j := 0; j < N1; j++ {
+			for k := 0; k < N2; k++ {
+				idx := int(2 * (k + j*N1 + i*N0*N1))
 				fmt.Printf("(%f, %f) ", X[idx], X[idx+1])
 			}
 			fmt.Printf("\n")

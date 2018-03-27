@@ -3,12 +3,16 @@ package opencl
 
 import (
 	"fmt"
-	//	"log"
 	"runtime"
 
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/opencl/cl"
 )
+
+type GPU struct {
+	Platform *cl.Platform
+	Device   *cl.Device
+}
 
 var (
 	Version      string                    // OpenCL version
@@ -16,6 +20,7 @@ var (
 	TotalMem     int64                     // total GPU memory
 	PlatformInfo string                    // Human-readable OpenCL platform description
 	GPUInfo      string                    // Human-readable GPU description
+	GPUList      []GPU                     // List of GPUs available
 	Synchronous  bool                      // for debug: synchronize stream0 at every kernel launch
 	ClPlatforms  []*cl.Platform            // list of platforms available
 	ClPlatform   *cl.Platform              // platform the global OpenCL context is attached to
@@ -32,10 +37,12 @@ var (
 )
 
 // Locks to an OS thread and initializes CUDA for that thread.
-func Init(gpu, platformId int) {
+func Init(gpu int) {
 	defer func() {
 		initialized = true
 	}()
+
+	selection := int(0)
 
 	if initialized {
 		fmt.Printf("Already initialized \n")
@@ -44,55 +51,62 @@ func Init(gpu, platformId int) {
 
 	runtime.LockOSThread()
 	platforms, err := cl.GetPlatforms()
+	tmpClPlatforms := []*cl.Platform{}
+	tmpGpuList := []GPU{}
+	tmpClDevices := []*cl.Device{}
+
 	if err != nil {
 		fmt.Printf("Failed to get platforms: %+v \n", err)
-	}
-
-	fmt.Printf("// Platform %d: \n", platformId)
-	platform := platforms[platformId]
-
-	PlatformName := platform.Name()
-	PlatformVendor := platform.Vendor()
-	PlatformProfile := platform.Profile()
-	PlatformVersion := platform.Version()
-	PlatformInfo = fmt.Sprint("//   Name: ", PlatformName, "\n//   Vendor: ", PlatformVendor, "\n//   Profile: ", PlatformProfile, "\n//   Version: ", PlatformVersion, "\n")
-	ClPlatforms = platforms
-	ClPlatform = platform
-
-	devices, err := platform.GetDevices(cl.DeviceTypeGPU)
-	if err != nil {
-		fmt.Printf("Failed to get devices: %+v \n", err)
 		return
 	}
-	if len(devices) == 0 {
-		fmt.Printf("GetDevices returned no devices \n")
-		return
+	for _, plat := range platforms {
+		var pDevices []*cl.Device
+		pDevices, err = plat.GetDevices(cl.DeviceTypeGPU)
+		if err != nil {
+			fmt.Printf("Failed to get devices: %+v \n", err)
+		}
+		for ii, gpDev := range pDevices {
+			if ii == 0 {
+				tmpClPlatforms = append(tmpClPlatforms, plat)
+			}
+			tmpGpuList = append(tmpGpuList, GPU{Platform: plat, Device: gpDev})
+			tmpClDevices = append(tmpClDevices, gpDev)
+		}
 	}
-	deviceIndex := -1
-
-	if gpu < len(devices) {
-		deviceIndex = gpu
+	if len(tmpGpuList) == 0 {
+		fmt.Printf("No devices found!\n")
+		return
 	} else {
-		fmt.Println("GPU choice not selectable... falling back to first GPU found!")
-		deviceIndex = 0
+		if gpu > len(tmpGpuList)-1 {
+			fmt.Printf("Unselectable GPU! Falling back to default selection\n")
+		} else {
+			selection = gpu
+		}
 	}
 
-	if deviceIndex < 0 {
-		deviceIndex = 0
-	}
+	GPUList = tmpGpuList
+	ClDevices = tmpClDevices
+	ClPlatforms = tmpClPlatforms
+	selectedGPU := GPUList[selection]
+	ClPlatform = selectedGPU.getGpuPlatform()
+	ClDevice = selectedGPU.getGpuDevice()
 
-	DevName = devices[deviceIndex].Name()
-	TotalMem = devices[deviceIndex].GlobalMemSize()
-	Version = devices[deviceIndex].OpenCLCVersion()
+	fmt.Printf("// GPU: %d\n", selection)
+	PlatformName := ClPlatform.Name()
+	PlatformVendor := ClPlatform.Vendor()
+	PlatformProfile := ClPlatform.Profile()
+	PlatformVersion := ClPlatform.Version()
+	PlatformInfo = fmt.Sprint("//   Platform Name: ", PlatformName, "\n//   Vendor: ", PlatformVendor, "\n//   Profile: ", PlatformProfile, "\n//   Version: ", PlatformVersion, "\n")
+
+	DevName = ClDevice.Name()
+	TotalMem = ClDevice.GlobalMemSize()
+	Version = ClDevice.OpenCLCVersion()
 	GPUInfo = fmt.Sprint("OpenCL C Version ", Version, "\n// GPU: ", DevName, "(", (TotalMem)/(1024*1024), "MB) \n")
-	device := devices[deviceIndex]
-	ClDevices = devices
-	ClDevice = device
-	context, err := cl.CreateContext([]*cl.Device{device})
+	context, err := cl.CreateContext([]*cl.Device{ClDevice})
 	if err != nil {
 		fmt.Printf("CreateContext failed: %+v \n", err)
 	}
-	queue, err := context.CreateCommandQueue(device, 0)
+	queue, err := context.CreateCommandQueue(ClDevice, 0)
 	if err != nil {
 		fmt.Printf("CreateCommandQueue failed: %+v \n", err)
 	}
@@ -100,7 +114,7 @@ func Init(gpu, platformId int) {
 	if err != nil {
 		fmt.Printf("CreateProgramWithSource failed: %+v \n", err)
 	}
-	if err := program.BuildProgram(nil, "-cl-std=CL1.2 -cl-kernel-arg-info"); err != nil {
+	if err := program.BuildProgram(nil, "-cl-std=CL1.2 -cl-fp32-correctly-rounded-divide-sqrt -cl-kernel-arg-info"); err != nil {
 		fmt.Printf("BuildProgram failed: %+v \n", err)
 	}
 
@@ -132,6 +146,14 @@ func Init(gpu, platformId int) {
 	if err := cl.SetupCLFFT(); err != nil {
 		fmt.Printf("failed to initialize clFFT \n")
 	}
+}
+
+func (s *GPU) getGpuDevice() *cl.Device {
+	return s.Device
+}
+
+func (s *GPU) getGpuPlatform() *cl.Platform {
+	return s.Platform
 }
 
 func ReleaseAndClean() {
