@@ -2,12 +2,12 @@ __kernel void
 reducedot(__global float* __restrict x1, __global float* __restrict x2,
           volatile __global float* __restrict  dst, float initVal, int n, __local float* scratch1, __local float* scratch2) {
 
-	// Initialize indices
-	int local_idx = get_local_id(0);
-	int grp_idx = get_group_id(0);
-	int grp_offset = get_local_size(0);
-	int global_idx =  grp_idx * grp_offset + local_idx;
-	grp_offset *= get_num_groups(0);
+	// Calculate indices
+	int local_idx = get_local_id(0); // Work-item index within workgroup
+	int grp_sz = get_local_size(0); // Total number of work-items in each workgroup
+	int grp_id = get_group_id(0); // Index of workgroup
+	int global_idx = grp_id * grp_sz + local_idx; // Calculate global index of work-item
+	int grp_offset = get_num_groups(0) * grp_sz; // Offset for memory access
 
 	// Initialize memory
 	float2 y;
@@ -43,7 +43,7 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 
 	// Add barrier to sync all threads
 	barrier(CLK_LOCAL_MEM_FENCE);
-	for (int offset = get_local_size(0) / 2; offset > 32; offset >>= 1) {
+	for (int offset = grp_sz / 2; offset > 32; offset >>= 1) {
 		if (local_idx < offset) {
 			y.x = scratch1[local_idx];
 			y.y = scratch1[local_idx + offset];
@@ -140,4 +140,3 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 		dst[grp_idx] = scratch1[0] - scratch2[0];
 	}
 }
-

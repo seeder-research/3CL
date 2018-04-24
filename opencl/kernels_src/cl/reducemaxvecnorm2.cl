@@ -1,9 +1,14 @@
 __kernel void
 reducemaxvecnorm2(__global float* __restrict x, __global float* __restrict y, __global float* __restrict z, __global float* __restrict dst,
 		  float initVal, int n, __local float* scratch) {
+	// Calculate indices
+	int local_idx = get_local_id(0); // Work-item index within workgroup
+	int grp_sz = get_local_size(0); // Total number of work-items in each workgroup
+	int grp_id = get_group_id(0); // Index of workgroup
+	int global_idx = grp_id * grp_sz + local_idx; // Calculate global index of work-item
+	int grp_offset = get_num_groups(0) * grp_sz; // Offset for memory access
+
 	// Initialize memory
-	int global_idx =  get_global_id(0);
-	int local_idx = get_local_id(0);
 	float currVal = initVal;
 	float other;
 	float mine;
@@ -12,14 +17,14 @@ reducemaxvecnorm2(__global float* __restrict x, __global float* __restrict y, __
 	while (global_idx < n) {
 		float element = (x[global_idx]*x[global_idx]) + (y[global_idx]*y[global_idx]) + (z[global_idx]*z[global_idx]);
 		currVal = fmax(currVal, element);
-		global_idx += get_global_size(0);
+		global_idx += grp_offset;
 	}
 
 	// At this point, accumulated values on chunks are in local memory. Perform parallel reduction
 	scratch[local_idx] = currVal;
 	// Add barrier to sync all threads
 	barrier(CLK_LOCAL_MEM_FENCE);
-	for (int offset = get_local_size(0) / 2; offset > 32; offset >>= 1) {
+	for (int offset = grp_sz / 2; offset > 32; offset >>= 1) {
 		if (local_idx < offset) {
 			other = scratch[local_idx + offset];
 			mine = scratch[local_idx];
