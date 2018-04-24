@@ -137,6 +137,6 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 			scratch2[local_idx] = currErr;
 	}
 	if (local_idx == 0) {
-		dst[grp_idx] = scratch1[0] - scratch2[0];
+		dst[grp_id] = scratch1[0] - scratch2[0];
 	}
 }

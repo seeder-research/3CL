@@ -56,7 +56,7 @@ reducemaxdiff(__global float* __restrict src1, __global float* __restrict  src2,
 	}
 	
 	if (local_idx == 0) {
-		dst[get_group_id(0)] = scratch[0];
+		dst[grp_id] = scratch[0];
 	}
 }
 

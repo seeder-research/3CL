@@ -27,7 +27,7 @@ reducesum(__global float* __restrict src, __global float* __restrict dst, float 
 		y.y = currVal;
 		t.x = y.y;
 		t.y = y.x;
-		u = y + x;
+		u = y + t;
 		currVal = u.x;
 		y = u - y;
 		u = y - t;
@@ -46,7 +46,7 @@ reducesum(__global float* __restrict src, __global float* __restrict dst, float 
 		y.y = scratch1[local_idx];
 		t.x = y.y;
 		t.y = y.x;
-		u = y + x;
+		u = y + t;
 		scratch1[local_idx] = u.x;
 		y = u - y;
 		u = y - t;
@@ -55,7 +55,7 @@ reducesum(__global float* __restrict src, __global float* __restrict dst, float 
 		y.y = scratch2[local_idx];
 		t.x = y.y;
 		t.y = y.x;
-		u = y + x;
+		u = y + t;
 		scratch2[local_idx] = u.x;
 		y = u - y;
 		u = y - t;
