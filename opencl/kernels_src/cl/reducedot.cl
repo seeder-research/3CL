@@ -10,14 +10,13 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 	grp_offset *= get_num_groups(0);
 
 	// Initialize memory
+	float2 y;
+	float2 t;
+	float2 u;
+	float tmpR0;
 	float currVal = 0;
 	float currErr = 0;
-	float tmpR0 = 0;
-	float tmpR1 = 0;
-	float tmpR2 = 0;
-	float tmpR3 = 0;
-	float tmpR4 = 0;
-	
+
 	// Set the accumulator value to initVal for the first work-item only
 	if (global_idx == 0) {
 		currVal = initVal;
@@ -25,16 +24,16 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 
 	// Loop over input elements in chunks and accumulate each chunk into local memory
 	while (global_idx < n) {
-		tmpR0 = x1[global_idx];
-		tmpR1 = x2[global_idx];
-		tmpR2 = fma(tmpR0, tmpR1, 0.0f);
-		tmpR3 = currVal + tmpR2;
-		tmpR0 = tmpR3 - currVal;
-		tmpR1 = tmpR3 - tmpR2;
-		tmpR4 = tmpR0 - tmpR2;
-		tmpR0 = tmpR1 - currVal;
-		currVal = tmpR3;
-		currErr += tmpR4 + tmpR0;
+		tmpR0 = x1[global_idx] * x2[global_idx];
+		y.x = currVal;
+		y.y = tmpR0;
+		t.x = y.y;
+		t.y = y.x;
+		u = y + t;
+		currVal = u.x;
+		y = u - y;
+		u = y - t;
+		currErr += u.x + u.y;
 		global_idx += grp_offset;
 	}
 
@@ -44,17 +43,18 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 
 	// Add barrier to sync all threads
 	barrier(CLK_LOCAL_MEM_FENCE);
-	for (int offset = get_local_size(0) / 2; offset > 0; offset = offset / 2) {
+	for (int offset = get_local_size(0) / 2; offset > 32; offset >>= 1) {
 		if (local_idx < offset) {
-			tmpR0 = scratch1[local_idx];
-			tmpR1 = scratch1[local_idx + offset];
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + offset];
+			t.x = y.y;
+			t.y = y.x;
 			currErr = scratch2[local_idx] + scratch2[local_idx + offset];
-			currVal = tmpR0 + tmpR1;
-			tmpR3 = currVal - tmpR0;
-			tmpR4 = currVal - tmpR1;
-			tmpR2 = tmpR3 - tmpR1;
-			tmpR3 = tmpR4 - tmpR1;
-			currErr += tmpR2 + tmpR3;
+			u = y + t;
+			currVal = u.x;
+			y = u - y;
+			u = y - t;
+			currErr += u.x + u.y;
 			scratch1[local_idx] = currVal;
 			scratch2[local_idx] = currErr;
 		}
@@ -62,8 +62,82 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 
+	if (local_idx < 32) {
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 32];
+			t.x = y.y;
+			t.y = y.x;
+			currErr = scratch2[local_idx] + scratch2[local_idx + 32];
+			u = y + t;
+			currVal = u.x;
+			y = u - y;
+			u = y - t;
+			currErr += u.x + u.y;
+			scratch1[local_idx] = currVal;
+			scratch2[local_idx] = currErr;
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 16];
+			t.x = y.y;
+			t.y = y.x;
+			currErr = scratch2[local_idx] + scratch2[local_idx + 16];
+			u = y + t;
+			currVal = u.x;
+			y = u - y;
+			u = y - t;
+			currErr += u.x + u.y;
+			scratch1[local_idx] = currVal;
+			scratch2[local_idx] = currErr;
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 8];
+			t.x = y.y;
+			t.y = y.x;
+			currErr = scratch2[local_idx] + scratch2[local_idx + 8];
+			u = y + t;
+			currVal = u.x;
+			y = u - y;
+			u = y - t;
+			currErr += u.x + u.y;
+			scratch1[local_idx] = currVal;
+			scratch2[local_idx] = currErr;
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 4];
+			t.x = y.y;
+			t.y = y.x;
+			currErr = scratch2[local_idx] + scratch2[local_idx + 4];
+			u = y + t;
+			currVal = u.x;
+			y = u - y;
+			u = y - t;
+			currErr += u.x + u.y;
+			scratch1[local_idx] = currVal;
+			scratch2[local_idx] = currErr;
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 2];
+			t.x = y.y;
+			t.y = y.x;
+			currErr = scratch2[local_idx] + scratch2[local_idx + 2];
+			u = y + t;
+			currVal = u.x;
+			y = u - y;
+			u = y - t;
+			currErr += u.x + u.y;
+			scratch1[local_idx] = currVal;
+			scratch2[local_idx] = currErr;
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 1];
+			t.x = y.y;
+			t.y = y.x;
+			currErr = scratch2[local_idx] + scratch2[local_idx + 1];
+			u = y + t;
+			currVal = u.x;
+			y = u - y;
+			u = y - t;
+			currErr += u.x + u.y;
+			scratch1[local_idx] = currVal;
+			scratch2[local_idx] = currErr;
+	}
 	if (local_idx == 0) {
-		dst[grp_idx] = scratch1[0];
+		dst[grp_idx] = scratch1[0] - scratch2[0];
 	}
 }
 
