@@ -25,13 +25,13 @@ func (p *fftplan) Free() {
 }
 
 func calcChirpLength(x int) int {
-	if (x < 1) {
+	if x < 1 {
 		return -1
 	}
 	tmp := x
 	fft_primes := []int{13, 11, 8, 7, 5, 4, 3, 2}
 	for _, vv := range fft_primes {
-		for tmp % vv == 0 {
+		for tmp%vv == 0 {
 			tmp /= vv
 		}
 	}
@@ -39,13 +39,13 @@ func calcChirpLength(x int) int {
 }
 
 func calcExtendedLength(x int) int {
-	y := x+1
-	result := calcChirpLength(2*y)
+	y := x + 1
+	result := calcChirpLength(2 * y)
 	for result != 1 {
 		y++
-		result = calcChirpLength(2*y)
+		result = calcChirpLength(2 * y)
 	}
-	return 2*y
+	return 2 * y
 }
 
 func chkFFTSize(x, y, z int) (bool, [3]int) {
