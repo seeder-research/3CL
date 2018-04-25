@@ -37,3 +37,12 @@ func calcChirpLength(x int) int {
 	}
 	return tmp
 }
+
+func chkFFTSize(x, y, z int) (bool, [3]int) {
+	tmp := [3]int{calcChirpLength(x), calcChirpLength(y), calcChirpLength(z)}
+	flag := true
+	if tmp[0]*tmp[1]*tmp[2] != 1 {
+		flag = false
+	}
+	return flag, tmp
+}
