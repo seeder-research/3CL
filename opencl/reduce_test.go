@@ -36,7 +36,7 @@ func toGPU(list []float32) *data.Slice {
 }
 
 func TestMain(m *testing.M) {
-	Init(0, 0)
+	Init(0)
 	initTest()
 	code := m.Run()
 	ReleaseAndClean()

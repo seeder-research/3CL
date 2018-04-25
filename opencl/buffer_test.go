@@ -23,7 +23,7 @@ func TestBuffer(t *testing.T) {
 }
 
 func BenchmarkBuffer(b *testing.B) {
-	Init(0, 0)
+	Init(0)
 	b.StopTimer()
 	m := [3]int{2, 1024, 2048}
 	a := Buffer(3, m)
