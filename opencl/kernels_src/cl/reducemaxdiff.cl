@@ -37,22 +37,34 @@ reducemaxdiff(__global float* __restrict src1, __global float* __restrict  src2,
 	if (local_idx < 32) {
 		other = scratch[local_idx + 32];
 		mine = scratch[local_idx];
+		barrier(CLK_LOCAL_MEM_FENCE);
 		scratch[local_idx] = fmax(mine, other);
+		barrier(CLK_LOCAL_MEM_FENCE);
 		other = scratch[local_idx + 16];
 		mine = scratch[local_idx];
+		barrier(CLK_LOCAL_MEM_FENCE);
 		scratch[local_idx] = fmax(mine, other);
+		barrier(CLK_LOCAL_MEM_FENCE);
 		other = scratch[local_idx + 8];
 		mine = scratch[local_idx];
+		barrier(CLK_LOCAL_MEM_FENCE);
 		scratch[local_idx] = fmax(mine, other);
+		barrier(CLK_LOCAL_MEM_FENCE);
 		other = scratch[local_idx + 4];
 		mine = scratch[local_idx];
+		barrier(CLK_LOCAL_MEM_FENCE);
 		scratch[local_idx] = fmax(mine, other);
+		barrier(CLK_LOCAL_MEM_FENCE);
 		other = scratch[local_idx + 2];
 		mine = scratch[local_idx];
+		barrier(CLK_LOCAL_MEM_FENCE);
 		scratch[local_idx] = fmax(mine, other);
+		barrier(CLK_LOCAL_MEM_FENCE);
 		other = scratch[local_idx + 1];
 		mine = scratch[local_idx];
+		barrier(CLK_LOCAL_MEM_FENCE);
 		scratch[local_idx] = fmax(mine, other);
+		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 	
 	if (local_idx == 0) {

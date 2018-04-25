@@ -47,9 +47,11 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 		if (local_idx < offset) {
 			y.x = scratch1[local_idx];
 			y.y = scratch1[local_idx + offset];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			t.x = y.y;
 			t.y = y.x;
 			currErr = scratch2[local_idx] + scratch2[local_idx + offset];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			u = y + t;
 			currVal = u.x;
 			y = u - y;
@@ -65,9 +67,11 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 	if (local_idx < 32) {
 			y.x = scratch1[local_idx];
 			y.y = scratch1[local_idx + 32];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			t.x = y.y;
 			t.y = y.x;
 			currErr = scratch2[local_idx] + scratch2[local_idx + 32];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			u = y + t;
 			currVal = u.x;
 			y = u - y;
@@ -75,11 +79,14 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 			currErr += u.x + u.y;
 			scratch1[local_idx] = currVal;
 			scratch2[local_idx] = currErr;
+			barrier(CLK_LOCAL_MEM_FENCE);
 			y.x = scratch1[local_idx];
 			y.y = scratch1[local_idx + 16];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			t.x = y.y;
 			t.y = y.x;
 			currErr = scratch2[local_idx] + scratch2[local_idx + 16];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			u = y + t;
 			currVal = u.x;
 			y = u - y;
@@ -87,11 +94,14 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 			currErr += u.x + u.y;
 			scratch1[local_idx] = currVal;
 			scratch2[local_idx] = currErr;
+			barrier(CLK_LOCAL_MEM_FENCE);
 			y.x = scratch1[local_idx];
 			y.y = scratch1[local_idx + 8];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			t.x = y.y;
 			t.y = y.x;
 			currErr = scratch2[local_idx] + scratch2[local_idx + 8];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			u = y + t;
 			currVal = u.x;
 			y = u - y;
@@ -99,11 +109,14 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 			currErr += u.x + u.y;
 			scratch1[local_idx] = currVal;
 			scratch2[local_idx] = currErr;
+			barrier(CLK_LOCAL_MEM_FENCE);
 			y.x = scratch1[local_idx];
 			y.y = scratch1[local_idx + 4];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			t.x = y.y;
 			t.y = y.x;
 			currErr = scratch2[local_idx] + scratch2[local_idx + 4];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			u = y + t;
 			currVal = u.x;
 			y = u - y;
@@ -111,11 +124,14 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 			currErr += u.x + u.y;
 			scratch1[local_idx] = currVal;
 			scratch2[local_idx] = currErr;
+			barrier(CLK_LOCAL_MEM_FENCE);
 			y.x = scratch1[local_idx];
 			y.y = scratch1[local_idx + 2];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			t.x = y.y;
 			t.y = y.x;
 			currErr = scratch2[local_idx] + scratch2[local_idx + 2];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			u = y + t;
 			currVal = u.x;
 			y = u - y;
@@ -123,11 +139,14 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 			currErr += u.x + u.y;
 			scratch1[local_idx] = currVal;
 			scratch2[local_idx] = currErr;
+			barrier(CLK_LOCAL_MEM_FENCE);
 			y.x = scratch1[local_idx];
 			y.y = scratch1[local_idx + 1];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			t.x = y.y;
 			t.y = y.x;
 			currErr = scratch2[local_idx] + scratch2[local_idx + 1];
+			barrier(CLK_LOCAL_MEM_FENCE);
 			u = y + t;
 			currVal = u.x;
 			y = u - y;
@@ -135,6 +154,7 @@ reducedot(__global float* __restrict x1, __global float* __restrict x2,
 			currErr += u.x + u.y;
 			scratch1[local_idx] = currVal;
 			scratch2[local_idx] = currErr;
+			barrier(CLK_LOCAL_MEM_FENCE);
 	}
 	if (local_idx == 0) {
 		dst[grp_id] = scratch1[0] - scratch2[0];

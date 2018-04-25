@@ -8,134 +8,324 @@ reducesum(__global float* __restrict src, __global float* __restrict dst, float 
 	int grp_offset = get_num_groups(0) * grp_sz; // Offset for memory access
 
 	// Initialize registers for work-item
-	float grpSum = 0; // Accumulator for workgroup
-	float grpErr = 0; // Error for workgroup accumulator
-	float aVal = 0; // Register to track operand A
-	float bVal = 0; // Register to track operand B
+	float2 y; // Temporary register
+	float2 t; // Temporary register
+	float2 u; // Temporary register
+	float v; // Temporary register
 	float lsum = 0; // Register to temporarily store A + B
 	float lerr = 0; // Register to temporarily store error from A + B
-	float lerr2 = 0;
-	float2 tmpR0 = 0; // Temporary register
-	float2 tmpR1 = 0; // Temporary register
-	float2 tmpR2 = 0; // Temporary register
-	float2 tmpR3 = 0; // Temporary register
-	float2 tmpR4 = 0; // Temporary register
+	float lerr2 = 0; // Register to temporarily store error from summing errors
 	
 	// Set the accumulator value to initVal for the first work-item only
 	if (global_idx == 0) {
-		grpSum = initVal;
+		lsum = initVal;
 	}
 
 /*
 	// During each loop iteration, we:
-	// 1) load source data into scratch1. If global index exceeds the position, then we load 0
-	// 2) perform a reduction sum over the values in scratch1
-	// 3) Accumulate into accumulator in work-item with local_idx = 0
+	// 1) add source data into local accumulator. If global index exceeds the position, then we load 0
+	// 2) once all source data has been scanned, load accumulator and error values into scratch1 and scratch2
+	// 3) perform a reduction sum over the values in scratch1 with the errors in scratch2
+	// 4) Accumulate into accumulator in work-item with local_idx = 0
 */
 
-	for (int ii = 0; ii < n; ii += grp_offset) {
-		// Get source data and load into local memory
-		scratch1[local_idx] = (global_idx < n) ? src[global_idx] : 0.0f ;
-		scratch2[local_idx] = 0.0f;
-
-		// Add barrier to sync all threads
-		barrier(CLK_LOCAL_MEM_FENCE);
-
-		// Reduce sum of data in local memory using divide and conquer strategy
-		for (int offset = get_local_size(0) / 2; offset > 0; offset = offset / 2) {
-			if (local_idx < offset) {
-				aVal = scratch1[local_idx]; // Load accumulator
-				bVal = scratch1[local_idx + offset]; // Load accumulator
-				lsum = aVal + bVal; // Temporary sum
-
-				// Write sum back into workgroup scratch memory
-				scratch1[local_idx] = lsum;
-
-				// Calculate error in summing error
-				tmpR0.x = lsum; tmpR0.y = lsum;
-				tmpR1.x = aVal; tmpR1.y = bVal;
-				tmpR2.y = aVal; tmpR2.x = bVal;
-
-				tmpR3 = tmpR0 - tmpR1; // Calculate the operands of the sum from temporary sum
-				tmpR4 = tmpR3 - tmpR2; // Calculate error between calculated operands and actual operands
-				lerr = tmpR4.x + tmpR4.y; // Combine the errors
-
-				// Retrieve the errors from scratch memory
-				aVal = scratch2[local_idx];
-				bVal = scratch2[local_idx + offset];
-				lsum = aVal + bVal;
-
-				// Calculate error in summing error
-				tmpR0.x = lsum; tmpR0.y = lsum;
-				tmpR1.x = aVal; tmpR1.y = bVal;
-				tmpR2.y = aVal; tmpR2.x = bVal;
-				tmpR3 = tmpR0 - tmpR1; // Calculate the operands of the sum from temporary sum
-				tmpR4 = tmpR3 - tmpR2; // Calculate error between calculated operands and actual operands
-				lerr2 = tmpR4.x + tmpR4.y; // Combine the errors
-
-				aVal = lerr; bVal = lsum;
-				lsum = aVal + bVal;
-
-				// Calculate error in summing error
-				tmpR0.x = lsum; tmpR0.y = lsum;
-				tmpR1.x = aVal; tmpR1.y = bVal;
-				tmpR2.y = aVal; tmpR2.x = bVal;
-				tmpR3 = tmpR0 - tmpR1; // Calculate the operands of the sum from temporary sum
-				tmpR4 = tmpR3 - tmpR2; // Calculate error between calculated operands and actual operands
-				lerr = tmpR4.x + tmpR4.y; // Combine the errors
-				lerr -= lerr2;
-
-				scratch2[local_idx] = lerr;
-			}
-			// barrier for syncing workgroup
-			barrier(CLK_LOCAL_MEM_FENCE);
-		}
-
-		// barrier for syncing workgroup
-		barrier(CLK_LOCAL_MEM_FENCE);
-		if (local_idx == 0) {
-			aVal = scratch1[0]; bVal = grpSum;
-			lsum = aVal + bVal;
-
-			// Calculate error in summing error
-			tmpR0.x = lsum; tmpR0.y = lsum;
-			tmpR1.x = aVal; tmpR1.y = bVal;
-			tmpR2.y = aVal; tmpR2.x = bVal;
-
-			tmpR3 = tmpR0 - tmpR1; // Calculate the operands of the sum from temporary sum
-			tmpR4 = tmpR3 - tmpR2; // Calculate error between calculated operands and actual operands
-			lerr = tmpR4.x + tmpR4.y; // Combine the errors
-
-			grpSum = lsum;
-
-			aVal = scratch2[0]; bVal = grpErr;
-			lsum = aVal + bVal;
-			// Calculate error in summing error
-			tmpR0.x = lsum; tmpR0.y = lsum;
-			tmpR1.x = aVal; tmpR1.y = bVal;
-			tmpR2.y = aVal; tmpR2.x = bVal;
-
-			tmpR3 = tmpR0 - tmpR1; // Calculate the operands of the sum from temporary sum
-			tmpR4 = tmpR3 - tmpR2; // Calculate error between calculated operands and actual operands
-			lerr2 = tmpR4.x + tmpR4.y; // Combine the errors
-
-			aVal = lerr; bVal = lerr2;
-			lsum = aVal + bVal;
-			// Calculate error in summing error
-			tmpR0.x = lsum; tmpR0.y = lsum;
-			tmpR1.x = aVal; tmpR1.y = bVal;
-			tmpR2.y = aVal; tmpR2.x = bVal;
-
-			tmpR3 = tmpR0 - tmpR1; // Calculate the operands of the sum from temporary sum
-			tmpR4 = tmpR3 - tmpR2; // Calculate error between calculated operands and actual operands
-			lerr = tmpR4.x + tmpR4.y; // Combine the errors
-			grpErr = lsum - lerr;
-		}
+	while (global_idx < n) {
+		y.x = src[global_idx];
+		y.y = lsum;
+		t.x = y.y;
+		t.y = y.x;
+		u = y + t;
+		lsum = u.x;
+		y = u - y;
+		u = y - t;
+		v = u.x + u.y;
+		y.x = v;
+		y.y = lerr;
+		t.x = y.y;
+		t.y = y.x;
+		u = y + t;
+		lerr = u.x;
+		y = u - y;
+		u = y - t;
+		lerr2 += u.x + u.y;
 		global_idx += grp_offset;
 	}
 
+	scratch1[local_idx] = lsum;
+	scratch2[local_idx] = lerr - lerr2;
+
+	// Add barrier to sync all threads
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	for (int offset = grp_sz / 2; offset > 32; offset >>= 1) {
+		if (local_idx < offset) {
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + offset];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lsum = u.x;
+			y = u - y;
+			u = y - t;
+			lerr2 = u.x + u.y;
+			y.x = scratch2[local_idx];
+			y.y = scratch2[local_idx + offset];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			v = u.x + u.y;
+			y.x = lerr;
+			y.y = lerr2;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			y.x = u.x + u.y;
+			y.y = v;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr2 = u.x;
+			scratch1[local_idx] = lsum;
+			scratch2[local_idx] = lerr - lerr2;
+		}
+		// barrier for syncing workgroup
+		barrier(CLK_LOCAL_MEM_FENCE);
+	}
+
+	if (local_idx < 32) {
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 32];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lsum = u.x;
+			y = u - y;
+			u = y - t;
+			lerr2 = u.x + u.y;
+			y.x = scratch2[local_idx];
+			y.y = scratch2[local_idx + 32];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			v = u.x + u.y;
+			y.x = lerr;
+			y.y = lerr2;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			y.x = u.x + u.y;
+			y.y = v;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr2 = u.x;
+			scratch1[local_idx] = lsum;
+			scratch2[local_idx] = lerr - lerr2;
+			barrier(CLK_LOCAL_MEM_FENCE);
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 16];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lsum = u.x;
+			y = u - y;
+			u = y - t;
+			lerr2 = u.x + u.y;
+			y.x = scratch2[local_idx];
+			y.y = scratch2[local_idx + 16];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			v = u.x + u.y;
+			y.x = lerr;
+			y.y = lerr2;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			y.x = u.x + u.y;
+			y.y = v;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr2 = u.x;
+			scratch1[local_idx] = lsum;
+			scratch2[local_idx] = lerr - lerr2;
+			barrier(CLK_LOCAL_MEM_FENCE);
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 8];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lsum = u.x;
+			y = u - y;
+			u = y - t;
+			lerr2 = u.x + u.y;
+			y.x = scratch2[local_idx];
+			y.y = scratch2[local_idx + 8];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			v = u.x + u.y;
+			y.x = lerr;
+			y.y = lerr2;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			y.x = u.x + u.y;
+			y.y = v;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr2 = u.x;
+			scratch1[local_idx] = lsum;
+			scratch2[local_idx] = lerr - lerr2;
+			barrier(CLK_LOCAL_MEM_FENCE);
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 4];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lsum = u.x;
+			y = u - y;
+			u = y - t;
+			lerr2 = u.x + u.y;
+			y.x = scratch2[local_idx];
+			y.y = scratch2[local_idx + 4];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			v = u.x + u.y;
+			y.x = lerr;
+			y.y = lerr2;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			y.x = u.x + u.y;
+			y.y = v;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr2 = u.x;
+			scratch1[local_idx] = lsum;
+			scratch2[local_idx] = lerr - lerr2;
+			barrier(CLK_LOCAL_MEM_FENCE);
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 2];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lsum = u.x;
+			y = u - y;
+			u = y - t;
+			lerr2 = u.x + u.y;
+			y.x = scratch2[local_idx];
+			y.y = scratch2[local_idx + 2];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			v = u.x + u.y;
+			y.x = lerr;
+			y.y = lerr2;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			y.x = u.x + u.y;
+			y.y = v;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr2 = u.x;
+			scratch1[local_idx] = lsum;
+			scratch2[local_idx] = lerr - lerr2;
+			barrier(CLK_LOCAL_MEM_FENCE);
+			y.x = scratch1[local_idx];
+			y.y = scratch1[local_idx + 1];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lsum = u.x;
+			y = u - y;
+			u = y - t;
+			lerr2 = u.x + u.y;
+			y.x = scratch2[local_idx];
+			y.y = scratch2[local_idx + 1];
+			barrier(CLK_LOCAL_MEM_FENCE);
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			v = u.x + u.y;
+			y.x = lerr;
+			y.y = lerr2;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr = u.x;
+			y = u - y;
+			u = y - t;
+			y.x = u.x + u.y;
+			y.y = v;
+			t.x = y.y;
+			t.y = y.x;
+			u = y + t;
+			lerr2 = u.x;
+			scratch1[local_idx] = lsum;
+			scratch2[local_idx] = lerr - lerr2;
+			barrier(CLK_LOCAL_MEM_FENCE);
+	}
+
 	if (local_idx == 0) {
-		dst[grp_id] = grpSum - grpErr;
+		dst[grp_id] = scratch1[0] - scratch2[0];
 	}
 }
-
