@@ -38,6 +38,16 @@ func calcChirpLength(x int) int {
 	return tmp
 }
 
+func calcExtendedLength(x int) int {
+	y := x+1
+	result := calcChirpLength(2*y)
+	for result != 1 {
+		y++
+		result = calcChirpLength(2*y)
+	}
+	return 2*y
+}
+
 func chkFFTSize(x, y, z int) (bool, [3]int) {
 	tmp := [3]int{calcChirpLength(x), calcChirpLength(y), calcChirpLength(z)}
 	flag := true

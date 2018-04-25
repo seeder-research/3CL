@@ -40,3 +40,11 @@ func TestFFTCalcChirpLength1(t *testing.T) {
 	}
 }
 
+func TestFFTLengthExtension(t *testing.T) {
+	fft_length := 23
+	result := calcExtendedLength(fft_length)
+	if result != 48 {
+		t.Error("got:", result)
+	}
+}
+
