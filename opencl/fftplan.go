@@ -23,3 +23,17 @@ func (p *fftplan) Free() {
 		p.handle = nil
 	}
 }
+
+func calcChirpLength(x int) int {
+	if (x < 1) {
+		return -1
+	}
+	tmp := x
+	fft_primes := []int{13, 11, 8, 7, 5, 4, 3, 2}
+	for _, vv := range fft_primes {
+		for tmp % vv == 0 {
+			tmp /= vv
+		}
+	}
+	return tmp
+}
