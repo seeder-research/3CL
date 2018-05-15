@@ -37,7 +37,7 @@ func reinitmfmconv() {
 	SetBusy(true)
 	defer SetBusy(false)
 	if mfmconv_ == nil {
-		mfmconv_ = opencl.NewMFM(Mesh(), MFMLift.v, MFMTipSize.v,*Flag_cachedir )
+		mfmconv_ = opencl.NewMFM(Mesh(), MFMLift.v, MFMTipSize.v, *Flag_cachedir)
 	} else {
 		mfmconv_.Reinit(MFMLift.v, MFMTipSize.v, *Flag_cachedir)
 	}
