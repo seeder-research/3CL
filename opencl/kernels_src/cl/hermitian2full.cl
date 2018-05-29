@@ -2,6 +2,7 @@
 __kernel void hermitian2full(
    __global float2* dst,
    __global float2* src,
+   __local float2* scratch,
    const unsigned int sz,
    const unsigned int count)
 {
@@ -13,23 +14,28 @@ __kernel void hermitian2full(
 	int grp_offset = get_num_groups(0) * grp_sz; // Offset for memory access
 	int init_offset = 1; // First entry that we need to copy
 
-	__local float2 scratch[256];
-
 	int currCnt = count; // Track how many items we have left to update in the array
-	int currPivot = 128; // Default value of pivot. Will only get updated in last iteration
+	int currSize = grp_sz; // Default value of pivot. Will only get updated in last iteration
+	int outIdx = sz + local_idx;
 	while(global_idx < count) {
-		float2 tmpR0 = src[global_idx + init_offset];
-		if(currCnt < 256) {
-			currPivot = currCnt / 2;
+		float2 tmpR0 = src[global_idx]; // Grab src array element
+		dst[global_idx] = tmpR0; // Copy the first half from src to dst
+		if (global_idx > 0) {
+			tmpR0.y *= -1.0f;
+			if(currCnt < grp_sz) {
+				currSize = currCnt;
+			}
+			// Place reversed in local memory
+			scratch[currSize - local_idx] = tmpR0;
 		}
-		// Place reversed in local memory
-		scratch[currPivot - lid + currPivot - 1] = tmpR0;
 		barrier(CLK_LOCAL_MEM_FENCE);
 		// Retrieve in order from local memory and store in global memory
-		int outIdx = sz - global_idx;
-		dst[outIdx] = scratch[local_idx];
+		outIdx -= currSize;
+		if ((outIdx < sz) && (outIdx >= count)) {
+			dst[outIdx] = scratch[local_idx];
+		}
 		barrier(CLK_GLOBAL_MEM_FENCE);
-		currCnt -= 256;
+		currCnt -= grp_sz;
 		global_idx += grp_offset;
 	}
 }
