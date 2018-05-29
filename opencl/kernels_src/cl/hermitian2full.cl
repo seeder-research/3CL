@@ -12,7 +12,6 @@ __kernel void hermitian2full(
 	int grp_id = get_group_id(0); // Index of workgroup
 	int global_idx = grp_id * grp_sz + local_idx; // Calculate global index of work-item
 	int grp_offset = get_num_groups(0) * grp_sz; // Offset for memory access
-	int init_offset = 1; // First entry that we need to copy
 
 	int currCnt = count; // Track how many items we have left to update in the array
 	int currSize = grp_sz; // Default value of pivot. Will only get updated in last iteration
