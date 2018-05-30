@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	Flag_gpu = flag.Int("gpu", 0, "Specify GPU")
+	Flag_gpu  = flag.Int("gpu", 0, "Specify GPU")
 	Flag_size = flag.Int("length", 1024, "Specify GPU")
 )
 
@@ -158,7 +158,7 @@ func main() {
 
 	correct := 0
 	for i, v := range data {
-		if ((results[2*i] == v) && (results[2*i+1] == 0.0)) {
+		if (results[2*i] == v) && (results[2*i+1] == 0.0) {
 			correct++
 		}
 	}

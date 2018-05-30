@@ -3,99 +3,82 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/engine"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
 	"math/rand"
 )
 
 var (
-	Flag_gpu = flag.Int("gpu", 0, "Specify GPU")
-	Flag_size = flag.Int("fft", 512, "Specify length of FFT")
+	Flag_size  = flag.Int("fft", 512, "Specify length of FFT")
+	Flag_print = flag.Bool("print", false, "Print out result")
 )
 
 func main() {
 	flag.Parse()
-	testFFTSize := int(*Flag_size)
-	dataSize := testFFTSize / 2
-	dataSize += 1
-	data := make([]float32, 2*dataSize)
-	for i := 0; i < 2*dataSize; i++ {
-		data[i] = rand.Float32()
-	}
 
-	opencl.Init(*Flag_gpu)
-	platforms := opencl.ClPlatforms
-	fmt.Printf("Discovered platforms: \n")
-	for i, p := range platforms {
-		fmt.Printf("Platform %d: \n", i)
-		fmt.Printf("  Name: %s \n", p.Name())
-		fmt.Printf("  Vendor: %s \n", p.Vendor())
-		fmt.Printf("  Profile: %s \n", p.Profile())
-		fmt.Printf("  Version: %s \n", p.Version())
-		fmt.Printf("  Extensions: %s \n", p.Extensions())
-	}
+	opencl.Init(*engine.Flag_gpu)
+
 	platform := opencl.ClPlatform
-	fmt.Printf("In use: \n")
+	fmt.Printf("Platform in use: \n")
 	fmt.Printf("  Vendor: %s \n", platform.Vendor())
 	fmt.Printf("  Profile: %s \n", platform.Profile())
 	fmt.Printf("  Version: %s \n", platform.Version())
 	fmt.Printf("  Extensions: %s \n", platform.Extensions())
 
-	fmt.Printf("Discovered devices: \n")
-	devices := opencl.ClDevices
-	deviceIndex := -1
-	for i, d := range devices {
-		if deviceIndex < 0 && d.Type() == cl.DeviceTypeGPU {
-			deviceIndex = i
-		}
-		fmt.Printf("Device %d (%s): %s \n", i, d.Type(), d.Name())
-		fmt.Printf("  Address Bits: %d \n", d.AddressBits())
-		fmt.Printf("  Available: %+v \n", d.Available())
-		fmt.Printf("  Compiler Available: %+v \n", d.CompilerAvailable())
-		fmt.Printf("  Double FP Config: %s \n", d.DoubleFPConfig())
-		fmt.Printf("  Driver Version: %s \n", d.DriverVersion())
-		fmt.Printf("  Error Correction Supported: %+v \n", d.ErrorCorrectionSupport())
-		fmt.Printf("  Execution Capabilities: %s \n", d.ExecutionCapabilities())
-		fmt.Printf("  Extensions: %s \n", d.Extensions())
-		fmt.Printf("  Global Memory Cache Type: %s \n", d.GlobalMemCacheType())
-		fmt.Printf("  Global Memory Cacheline Size: %d KB \n", d.GlobalMemCachelineSize()/1024)
-		fmt.Printf("  Global Memory Size: %d MB \n", d.GlobalMemSize()/(1024*1024))
-		fmt.Printf("  Half FP Config: %s \n", d.HalfFPConfig())
-		fmt.Printf("  Host Unified Memory: %+v \n", d.HostUnifiedMemory())
-		fmt.Printf("  Image Support: %+v \n", d.ImageSupport())
-		fmt.Printf("  Image2D Max Dimensions: %d x %d \n", d.Image2DMaxWidth(), d.Image2DMaxHeight())
-		fmt.Printf("  Image3D Max Dimensions: %d x %d x %d \n", d.Image3DMaxWidth(), d.Image3DMaxHeight(), d.Image3DMaxDepth())
-		fmt.Printf("  Little Endian: %+v \n", d.EndianLittle())
-		fmt.Printf("  Local Mem Size Size: %d KB \n", d.LocalMemSize()/1024)
-		fmt.Printf("  Local Mem Type: %s \n", d.LocalMemType())
-		fmt.Printf("  Max Clock Frequency: %d \n", d.MaxClockFrequency())
-		fmt.Printf("  Max Compute Units: %d \n", d.MaxComputeUnits())
-		fmt.Printf("  Max Constant Args: %d \n", d.MaxConstantArgs())
-		fmt.Printf("  Max Constant Buffer Size: %d KB \n", d.MaxConstantBufferSize()/1024)
-		fmt.Printf("  Max Mem Alloc Size: %d KB \n", d.MaxMemAllocSize()/1024)
-		fmt.Printf("  Max Parameter Size: %d \n", d.MaxParameterSize())
-		fmt.Printf("  Max Read-Image Args: %d \n", d.MaxReadImageArgs())
-		fmt.Printf("  Max Samplers: %d \n", d.MaxSamplers())
-		fmt.Printf("  Max Work Group Size: %d \n", d.MaxWorkGroupSize())
-		fmt.Printf("  Preferred Work Group Size: %d \n", opencl.ClPrefWGSz)
-		fmt.Printf("  Max Work Item Dimensions: %d \n", d.MaxWorkItemDimensions())
-		fmt.Printf("  Max Work Item Sizes: %d \n", d.MaxWorkItemSizes())
-		fmt.Printf("  Max Write-Image Args: %d \n", d.MaxWriteImageArgs())
-		fmt.Printf("  Memory Base Address Alignment: %d \n", d.MemBaseAddrAlign())
-		fmt.Printf("  Native Vector Width Char: %d \n", d.NativeVectorWidthChar())
-		fmt.Printf("  Native Vector Width Short: %d \n", d.NativeVectorWidthShort())
-		fmt.Printf("  Native Vector Width Int: %d \n", d.NativeVectorWidthInt())
-		fmt.Printf("  Native Vector Width Long: %d \n", d.NativeVectorWidthLong())
-		fmt.Printf("  Native Vector Width Float: %d \n", d.NativeVectorWidthFloat())
-		fmt.Printf("  Native Vector Width Double: %d \n", d.NativeVectorWidthDouble())
-		fmt.Printf("  Native Vector Width Half: %d \n", d.NativeVectorWidthHalf())
-		fmt.Printf("  OpenCL C Version: %s \n", d.OpenCLCVersion())
-		fmt.Printf("  Profile: %s \n", d.Profile())
-		fmt.Printf("  Profiling Timer Resolution: %d \n", d.ProfilingTimerResolution())
-		fmt.Printf("  Vendor: %s \n", d.Vendor())
-		fmt.Printf("  Version: %s \n", d.Version())
-	}
-	device, context, queue := opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
+	fmt.Printf("Device in use: \n")
+
+	d := opencl.ClDevice
+	fmt.Printf("Device %d (%s): %s \n", *engine.Flag_gpu, d.Type(), d.Name())
+	fmt.Printf("  Address Bits: %d \n", d.AddressBits())
+	fmt.Printf("  Available: %+v \n", d.Available())
+	fmt.Printf("  Compiler Available: %+v \n", d.CompilerAvailable())
+	fmt.Printf("  Double FP Config: %s \n", d.DoubleFPConfig())
+	fmt.Printf("  Driver Version: %s \n", d.DriverVersion())
+	fmt.Printf("  Error Correction Supported: %+v \n", d.ErrorCorrectionSupport())
+	fmt.Printf("  Execution Capabilities: %s \n", d.ExecutionCapabilities())
+	fmt.Printf("  Extensions: %s \n", d.Extensions())
+	fmt.Printf("  Global Memory Cache Type: %s \n", d.GlobalMemCacheType())
+	fmt.Printf("  Global Memory Cacheline Size: %d KB \n", d.GlobalMemCachelineSize()/1024)
+	fmt.Printf("  Global Memory Size: %d MB \n", d.GlobalMemSize()/(1024*1024))
+	fmt.Printf("  Half FP Config: %s \n", d.HalfFPConfig())
+	fmt.Printf("  Host Unified Memory: %+v \n", d.HostUnifiedMemory())
+	fmt.Printf("  Image Support: %+v \n", d.ImageSupport())
+	fmt.Printf("  Image2D Max Dimensions: %d x %d \n", d.Image2DMaxWidth(), d.Image2DMaxHeight())
+	fmt.Printf("  Image3D Max Dimensions: %d x %d x %d \n", d.Image3DMaxWidth(), d.Image3DMaxHeight(), d.Image3DMaxDepth())
+	fmt.Printf("  Little Endian: %+v \n", d.EndianLittle())
+	fmt.Printf("  Local Mem Size Size: %d KB \n", d.LocalMemSize()/1024)
+	fmt.Printf("  Local Mem Type: %s \n", d.LocalMemType())
+	fmt.Printf("  Max Clock Frequency: %d \n", d.MaxClockFrequency())
+	fmt.Printf("  Max Compute Units: %d \n", d.MaxComputeUnits())
+	fmt.Printf("  Max Constant Args: %d \n", d.MaxConstantArgs())
+	fmt.Printf("  Max Constant Buffer Size: %d KB \n", d.MaxConstantBufferSize()/1024)
+	fmt.Printf("  Max Mem Alloc Size: %d KB \n", d.MaxMemAllocSize()/1024)
+	fmt.Printf("  Max Parameter Size: %d \n", d.MaxParameterSize())
+	fmt.Printf("  Max Read-Image Args: %d \n", d.MaxReadImageArgs())
+	fmt.Printf("  Max Samplers: %d \n", d.MaxSamplers())
+	fmt.Printf("  Max Work Group Size: %d \n", d.MaxWorkGroupSize())
+	fmt.Printf("  Preferred Work Group Size: %d \n", opencl.ClPrefWGSz)
+	fmt.Printf("  Max Work Item Dimensions: %d \n", d.MaxWorkItemDimensions())
+	fmt.Printf("  Max Work Item Sizes: %d \n", d.MaxWorkItemSizes())
+	fmt.Printf("  Max Write-Image Args: %d \n", d.MaxWriteImageArgs())
+	fmt.Printf("  Memory Base Address Alignment: %d \n", d.MemBaseAddrAlign())
+	fmt.Printf("  Native Vector Width Char: %d \n", d.NativeVectorWidthChar())
+	fmt.Printf("  Native Vector Width Short: %d \n", d.NativeVectorWidthShort())
+	fmt.Printf("  Native Vector Width Int: %d \n", d.NativeVectorWidthInt())
+	fmt.Printf("  Native Vector Width Long: %d \n", d.NativeVectorWidthLong())
+	fmt.Printf("  Native Vector Width Float: %d \n", d.NativeVectorWidthFloat())
+	fmt.Printf("  Native Vector Width Double: %d \n", d.NativeVectorWidthDouble())
+	fmt.Printf("  Native Vector Width Half: %d \n", d.NativeVectorWidthHalf())
+	fmt.Printf("  OpenCL C Version: %s \n", d.OpenCLCVersion())
+	fmt.Printf("  Profile: %s \n", d.Profile())
+	fmt.Printf("  Profiling Timer Resolution: %d \n", d.ProfilingTimerResolution())
+	fmt.Printf("  Vendor: %s \n", d.Vendor())
+	fmt.Printf("  Version: %s \n", d.Version())
+
+	queue := opencl.ClCmdQueue
+	//	device, context, queue := opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
 	kernels := opencl.KernList
 
 	kernelObj := kernels["hermitian2full"]
@@ -119,79 +102,103 @@ func main() {
 
 	fmt.Printf("Begin first run of hermitian2full kernel... \n")
 
-	input, err := context.CreateEmptyBuffer(cl.MemReadOnly, 8*dataSize)
-	if err != nil {
-		fmt.Printf("CreateBuffer failed for input: %+v \n", err)
-		return
-	}
-	output, err := context.CreateEmptyBuffer(cl.MemReadOnly, 8*testFFTSize)
-	if err != nil {
-		fmt.Printf("CreateBuffer failed for output: %+v \n", err)
-		return
-	}
-	if _, err := queue.EnqueueWriteBufferFloat32(input, true, 0, data[:], nil); err != nil {
-		fmt.Printf("EnqueueWriteBufferFloat32 failed: %+v \n", err)
-		return
+	// Creating inputs
+	fmt.Println("Generating input data...")
+	testFFTSize := int(*Flag_size)
+	dataSize := testFFTSize / 2
+	dataSize += 1
+	size := [3]int{2 * dataSize, 1, 1}
+	inputs := make([][]float32, 1)
+	inputs[0] = make([]float32, size[0])
+	for i := 0; i < len(inputs[0]); i++ {
+		inputs[0][i] = rand.Float32()
 	}
 
-	local := device.MaxWorkGroupSize()
-	fmt.Printf("Work group size: %d \n", local)
+	fmt.Println("Done. Transferring input data from CPU to GPU...")
+	cpuArray := data.SliceFromArray(inputs, size)
+	gpuBuffer := opencl.Buffer(1, size)
+	outBuffer := opencl.Buffer(1, [3]int{2 * testFFTSize, 1, 1})
+	outArray := data.NewSlice(1, [3]int{2 * testFFTSize, 1, 1})
 
-	global := device.MaxComputeUnits() * local
-	if err := kernelObj.SetArg(0, output); err != nil {
-		fmt.Printf("First SetKernelArgs failed: %+v \n", err)
-		return
+	data.Copy(gpuBuffer, cpuArray)
+
+	fmt.Println("Waiting for data transfer to complete...")
+	queue.Finish()
+	fmt.Println("Input data transfer completed.")
+
+	fmt.Println("Executing kernel...")
+	opencl.Hermitian2Full(outBuffer, gpuBuffer)
+	fmt.Println("Waiting for kernel to finish execution...")
+	queue.Finish()
+	fmt.Println("Execution finished.")
+
+	fmt.Println("Retrieving results...")
+	data.Copy(outArray, outBuffer)
+	queue.Finish()
+	fmt.Println("Done.")
+	results := outArray.Host()
+
+	scanFlag := testFFTSize % 2
+	cntPt := 1
+	if scanFlag > 0 {
+		cntPt = dataSize
+	} else {
+		cntPt = dataSize - 1
 	}
 
-	if err := kernelObj.SetArg(1, input); err != nil {
-		fmt.Printf("Second SetKernelArgs failed: %+v \n", err)
-		return
+	incorrect := 0
+	var testVarR0, testVarR1, testVarR2, testVarR3 float32
+
+	// Check the pivots
+	testVarR0, testVarR1, testVarR2, testVarR3 = results[0][0], results[0][1], inputs[0][0], inputs[0][1]
+	if (testVarR0 == testVarR2) && (testVarR1 == testVarR3) {
+	} else {
+		fmt.Printf("Error at idx[0]: expect (%f + i*(%f)) but have (%f + i*(%f)) \n", testVarR0, testVarR1, testVarR2, testVarR3)
+		incorrect++
 	}
 
-	if err := kernelObj.SetArgLocal(2, int(opencl.SIZEOF_FLOAT32*local*2)); err != nil {
-		fmt.Printf("Third SetKernelArgs failed: %+v \n", err)
-		return
+	if scanFlag > 0 {
+		datIdx := 2 * (dataSize - 1)
+		testVarR0, testVarR1, testVarR2, testVarR3 = results[0][datIdx], results[0][datIdx+1], inputs[0][datIdx], inputs[0][datIdx+1]
+		if (testVarR0 == testVarR2) && (testVarR1 == testVarR3) {
+		} else {
+			fmt.Printf("Error at idx[%d]: expect (%f + i*(%f)) but have (%f + i*(%f)) \n", dataSize, testVarR0, testVarR1, testVarR2, testVarR3)
+			incorrect++
+		}
 	}
 
-	if err := kernelObj.SetArg(3, uint32(testFFTSize)); err != nil {
-		fmt.Printf("Fourth SetKernelArgs failed: %+v \n", err)
-		return
+	// Check the rest of the array
+	for ii := 1; ii < cntPt; ii++ {
+		reflectedIdx := 2 * (testFFTSize - ii)
+		testVarR0, testVarR1, testVarR2, testVarR3 = results[0][2*ii], results[0][2*ii+1], results[0][reflectedIdx], results[0][reflectedIdx+1]
+		if (testVarR0 == testVarR2) && (testVarR1 == -1.0*testVarR3) {
+		} else {
+			fmt.Printf("Error at idx[%d]: expect (%f - i*(%f)) but have (%f + i*(%f)) \n", ii, testVarR0, testVarR1, testVarR2, testVarR3)
+			incorrect++
+		}
 	}
 
-	if err := kernelObj.SetArg(4, uint32(dataSize)); err != nil {
-		fmt.Printf("Fifth SetKernelArgs failed: %+v \n", err)
-		return
+	if *Flag_print {
+		for ii := 0; ii < dataSize; ii++ {
+			fmt.Printf("result = %f + %f ;\t input: %f + %f\n", results[0][2*ii], results[0][2*ii+1], inputs[0][2*ii], inputs[0][2*ii+1])
+		}
+
+		for ii := dataSize; ii < testFFTSize; ii++ {
+			fmt.Printf("result = %f + %f ;\n", results[0][2*ii], results[0][2*ii+1])
+		}
 	}
 
-	if _, err := queue.EnqueueNDRangeKernel(kernelObj, nil, []int{global}, []int{local}, nil); err != nil {
-		fmt.Printf("EnqueueNDRangeKernel failed: %+v \n", err)
-		return
-	}
-
-	if err := queue.Finish(); err != nil {
-		fmt.Printf("Finish failed: %+v \n", err)
-		return
-	}
-
-	results := make([]float32, 2*testFFTSize)
-	if _, err := queue.EnqueueReadBufferFloat32(output, true, 0, results, nil); err != nil {
-		fmt.Printf("EnqueueReadBufferFloat32 failed: %+v \n", err)
-		return
-	}
-
-	for ii := 0; ii < dataSize; ii++ {
-		fmt.Printf("result = %f + %f ;\t input: %f + %f\n", results[2*ii], results[2*ii+1], data[2*ii], data[2*ii+1])
-	}
-
-	for ii := dataSize; ii < testFFTSize; ii++ {
-		fmt.Printf("result = %f + %f ;\n", results[2*ii], results[2*ii+1])
+	if incorrect == 0 {
+		fmt.Println("All points correct!")
+	} else {
+		fmt.Println("Errors were found!")
 	}
 
 	fmt.Printf("Finished tests on hermitian2full\n")
 
 	fmt.Printf("freeing resources \n")
-	input.Release()
-	output.Release()
+	opencl.Recycle(gpuBuffer)
+	opencl.Recycle(outBuffer)
 	for _, krn := range kernels {
 		krn.Release()
 	}
