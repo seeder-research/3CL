@@ -10,11 +10,12 @@ import (
 
 var (
 	Flag_gpu = flag.Int("gpu", 0, "Specify GPU")
+	Flag_size = flag.Int("fft", 512, "Specify length of FFT")
 )
 
 func main() {
 	flag.Parse()
-	testFFTSize := 512
+	testFFTSize := int(*Flag_size)
 	dataSize := testFFTSize / 2
 	dataSize += 1
 	data := make([]float32, 2*dataSize)

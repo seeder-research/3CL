@@ -10,11 +10,12 @@ import (
 
 var (
 	Flag_gpu = flag.Int("gpu", 0, "Specify GPU")
+	Flag_size = flag.Int("length", 1024, "Specify GPU")
 )
 
 func main() {
 	flag.Parse()
-	var data [1024]float32
+	data := make([]float32, int(*Flag_size))
 	for i := 0; i < len(data); i++ {
 		data[i] = rand.Float32()
 	}
