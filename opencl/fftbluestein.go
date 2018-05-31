@@ -30,8 +30,15 @@ func Hermitian2Full(dst, src *data.Slice) {
 }
 
 // Convert real array to full complex array
-func PackComplexArray(dst, src *data.Slice) {
+func PackComplexArray(dst, src *data.Slice, cnt, iOff, oOff int) {
 	util.Argument(src.NComp() == dst.NComp())
+	util.Argument(src.Len() <= cnt)
+	util.Argument(dst.Len() <= cnt)
+	util.Argument(cnt > 0)
+	util.Argument(iOff > 0)
+	util.Argument(oOff > 0)
+	util.Argument(cnt+iOff <= src.Len())
+	util.Argument(cnt+oOff <= dst.Len())
 	var tmpEventList, tmpEventList1 []*cl.Event
 	for ii := 0; ii < src.NComp(); ii++ {
 		tmpEvent := src.GetEvent(ii)
@@ -40,7 +47,7 @@ func PackComplexArray(dst, src *data.Slice) {
 		}
 	}
 	for ii := 0; ii < src.NComp(); ii++ {
-		event := k_pack_cmplx_async(dst.DevPtr(ii), src.DevPtr(ii), src.Len(), reduceintcfg, tmpEventList)
+		event := k_pack_cmplx_async(dst.DevPtr(ii), src.DevPtr(ii), cnt, iOff, oOff, reduceintcfg, tmpEventList)
 		dst.SetEvent(ii, event)
 		src.SetEvent(ii, event)
 		tmpEventList1 = append(tmpEventList1, event)

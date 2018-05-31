@@ -1,6 +1,6 @@
 // Kernel to transfer an array of reals to a complex array
 __kernel void
-pack_cmplx(__global float2* dst, __global float* src, const unsigned int count)
+pack_cmplx(__global float2* dst, __global float* src, const unsigned int count, const unsigned int iOffset, const unsigned int oOffset)
 {
 	// Calculate indices
 	int local_idx = get_local_id(0); // Work-item index within workgroup
@@ -10,12 +10,11 @@ pack_cmplx(__global float2* dst, __global float* src, const unsigned int count)
 	int grp_offset = get_num_groups(0) * grp_sz; // Offset for memory access
 
 	while(global_idx < count) {
-		float a0 = src[global_idx];
-		float a1 = 0.0f;
+		float a0 = src[global_idx + iOffset];
 		float2 b0;
 		b0.x = a0;
-		b0.y = a1;
-		dst[global_idx] = b0;
+		b0.y = 0.0f;
+		dst[global_idx + oOffset] = b0;
 		global_idx += grp_offset;
 	}
 }
