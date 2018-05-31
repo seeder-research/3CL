@@ -32,11 +32,11 @@ func Hermitian2Full(dst, src *data.Slice) {
 // Convert real array to full complex array
 func PackComplexArray(dst, src *data.Slice, cnt, iOff, oOff int) {
 	util.Argument(src.NComp() == dst.NComp())
-	util.Argument(src.Len() <= cnt)
-	util.Argument(dst.Len() <= cnt)
-	util.Argument(cnt > 0)
-	util.Argument(iOff > 0)
-	util.Argument(oOff > 0)
+	util.Argument(src.Len() >= cnt)
+	util.Argument(dst.Len() >= 2*cnt)
+	util.Argument(cnt >= 0)
+	util.Argument(iOff >= 0)
+	util.Argument(oOff >= 0)
 	util.Argument(cnt+iOff <= src.Len())
 	util.Argument(cnt+oOff <= dst.Len())
 	var tmpEventList, tmpEventList1 []*cl.Event
