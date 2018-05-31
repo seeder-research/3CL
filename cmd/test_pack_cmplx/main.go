@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	Flag_gpu  = flag.Int("gpu", 0, "Specify GPU")
-	Flag_size = flag.Int("length", 1024, "Specify GPU")
+	Flag_gpu   = flag.Int("gpu", 0, "Specify GPU")
+	Flag_size  = flag.Int("length", 1024, "Specify GPU")
+	Flag_print = flag.Bool("print", false, "Print out array")
 )
 
 func main() {
@@ -166,6 +167,12 @@ func main() {
 	if correct != len(data) {
 		fmt.Printf("%d/%d correct values \n", correct, len(data))
 		return
+	}
+
+	if *Flag_print {
+		for i, v := range data {
+			fmt.Printf("Expecting [%d]: (%f + i*(%f)) ; have: (%f + i*(%f)) \n", i, v, float32(0.000), results[2*i], results[2*i+1])
+		}
 	}
 
 	fmt.Printf("Finished tests on pack_cmplx\n")
