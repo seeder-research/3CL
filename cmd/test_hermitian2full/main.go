@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/engine"
 	"github.com/mumax/3cl/opencl"
@@ -13,10 +14,21 @@ import (
 var (
 	Flag_size  = flag.Int("fft", 512, "Specify length of FFT")
 	Flag_print = flag.Bool("print", false, "Print out result")
+	Flag_comp  = flag.Int("components", 1, "Number of components to test")
 )
 
 func main() {
 	flag.Parse()
+	testFFTSize := int(*Flag_size)
+	NComponents := int(*Flag_comp)
+	if (testFFTSize < 4) {
+		fmt.Println("argument to -fft must be 4 or greater!")
+		os.Exit(-1)
+	}
+	if (NComponents < 1) || (NComponents > 3) {
+		fmt.Println("argument to -components must be 1, 2 or 3!")
+		os.Exit(-1)
+	}
 
 	opencl.Init(*engine.Flag_gpu)
 
@@ -104,21 +116,22 @@ func main() {
 
 	// Creating inputs
 	fmt.Println("Generating input data...")
-	testFFTSize := int(*Flag_size)
 	dataSize := testFFTSize / 2
 	dataSize += 1
 	size := [3]int{2 * dataSize, 1, 1}
-	inputs := make([][]float32, 1)
-	inputs[0] = make([]float32, size[0])
-	for i := 0; i < len(inputs[0]); i++ {
-		inputs[0][i] = rand.Float32()
+	inputs := make([][]float32, NComponents)
+	for i := 0; i < NComponents; i++ {
+		inputs[i] = make([]float32, size[0])
+		for j := 0; j < len(inputs[i]); j++ {
+			inputs[i][j] = rand.Float32()
+		}
 	}
 
 	fmt.Println("Done. Transferring input data from CPU to GPU...")
 	cpuArray := data.SliceFromArray(inputs, size)
-	gpuBuffer := opencl.Buffer(1, size)
-	outBuffer := opencl.Buffer(1, [3]int{2 * testFFTSize, 1, 1})
-	outArray := data.NewSlice(1, [3]int{2 * testFFTSize, 1, 1})
+	gpuBuffer := opencl.Buffer(NComponents, size)
+	outBuffer := opencl.Buffer(NComponents, [3]int{2 * testFFTSize, 1, 1})
+	outArray := data.NewSlice(NComponents, [3]int{2 * testFFTSize, 1, 1})
 
 	data.Copy(gpuBuffer, cpuArray)
 
@@ -150,48 +163,50 @@ func main() {
 	var testVarR0, testVarR1, testVarR2, testVarR3 float32
 
 	// Check the pivots
-	testVarR0, testVarR1, testVarR2, testVarR3 = results[0][0], results[0][1], inputs[0][0], inputs[0][1]
-	if (testVarR0 == testVarR2) && (testVarR1 == testVarR3) {
-	} else {
-		fmt.Printf("Error at idx[0]: expect (%f + i*(%f)) but have (%f + i*(%f)) \n", testVarR0, testVarR1, testVarR2, testVarR3)
-		incorrect++
-	}
-
-	if scanFlag > 0 {
-		datIdx := 2 * (dataSize - 1)
-		testVarR0, testVarR1, testVarR2, testVarR3 = results[0][datIdx], results[0][datIdx+1], inputs[0][datIdx], inputs[0][datIdx+1]
+	for i := 0; i < NComponents; i++ {
+		testVarR0, testVarR1, testVarR2, testVarR3 = results[i][0], results[i][1], inputs[i][0], inputs[i][1]
 		if (testVarR0 == testVarR2) && (testVarR1 == testVarR3) {
 		} else {
-			fmt.Printf("Error at idx[%d]: expect (%f + i*(%f)) but have (%f + i*(%f)) \n", dataSize, testVarR0, testVarR1, testVarR2, testVarR3)
+			fmt.Printf("Error at idx[0]: expect (%f + i*(%f)) but have (%f + i*(%f)) \n", testVarR0, testVarR1, testVarR2, testVarR3)
 			incorrect++
 		}
-	}
 
-	// Check the rest of the array
-	for ii := 1; ii < cntPt; ii++ {
-		reflectedIdx := 2 * (testFFTSize - ii)
-		testVarR0, testVarR1, testVarR2, testVarR3 = results[0][2*ii], results[0][2*ii+1], results[0][reflectedIdx], results[0][reflectedIdx+1]
-		if (testVarR0 == testVarR2) && (testVarR1 == -1.0*testVarR3) {
+		if scanFlag > 0 {
+			datIdx := 2 * (dataSize - 1)
+			testVarR0, testVarR1, testVarR2, testVarR3 = results[i][datIdx], results[i][datIdx+1], inputs[i][datIdx], inputs[i][datIdx+1]
+			if (testVarR0 == testVarR2) && (testVarR1 == testVarR3) {
+			} else {
+				fmt.Printf("Error at idx[%d]: expect (%f + i*(%f)) but have (%f + i*(%f)) \n", dataSize, testVarR0, testVarR1, testVarR2, testVarR3)
+				incorrect++
+			}
+		}
+
+		// Check the rest of the array
+		for ii := 1; ii < cntPt; ii++ {
+			reflectedIdx := 2 * (testFFTSize - ii)
+			testVarR0, testVarR1, testVarR2, testVarR3 = results[i][2*ii], results[i][2*ii+1], results[i][reflectedIdx], results[i][reflectedIdx+1]
+			if (testVarR0 == testVarR2) && (testVarR1 == -1.0*testVarR3) {
+			} else {
+				fmt.Printf("Error at idx[%d]: expect (%f - i*(%f)) but have (%f + i*(%f)) \n", ii, testVarR0, testVarR1, testVarR2, testVarR3)
+				incorrect++
+			}
+		}
+
+		if *Flag_print {
+			for ii := 0; ii < dataSize; ii++ {
+				fmt.Printf("result = %f + %f ;\t input: %f + %f\n", results[i][2*ii], results[i][2*ii+1], inputs[i][2*ii], inputs[i][2*ii+1])
+			}
+
+			for ii := dataSize; ii < testFFTSize; ii++ {
+				fmt.Printf("result = %f + %f ;\n", results[i][2*ii], results[i][2*ii+1])
+			}
+		}
+
+		if incorrect == 0 {
+			fmt.Println("All points correct!")
 		} else {
-			fmt.Printf("Error at idx[%d]: expect (%f - i*(%f)) but have (%f + i*(%f)) \n", ii, testVarR0, testVarR1, testVarR2, testVarR3)
-			incorrect++
+			fmt.Println("Errors were found!")
 		}
-	}
-
-	if *Flag_print {
-		for ii := 0; ii < dataSize; ii++ {
-			fmt.Printf("result = %f + %f ;\t input: %f + %f\n", results[0][2*ii], results[0][2*ii+1], inputs[0][2*ii], inputs[0][2*ii+1])
-		}
-
-		for ii := dataSize; ii < testFFTSize; ii++ {
-			fmt.Printf("result = %f + %f ;\n", results[0][2*ii], results[0][2*ii+1])
-		}
-	}
-
-	if incorrect == 0 {
-		fmt.Println("All points correct!")
-	} else {
-		fmt.Println("Errors were found!")
 	}
 
 	fmt.Printf("Finished tests on hermitian2full\n")

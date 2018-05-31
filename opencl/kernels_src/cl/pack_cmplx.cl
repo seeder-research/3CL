@@ -1,8 +1,6 @@
 // Kernel to transfer an array of reals to a complex array
-__kernel void pack_cmplx(
-   __global float2* dst,
-   __global float* src,
-   const unsigned int count)
+__kernel void
+pack_cmplx(__global float2* dst, __global float* src, const unsigned int count)
 {
 	// Calculate indices
 	int local_idx = get_local_id(0); // Work-item index within workgroup

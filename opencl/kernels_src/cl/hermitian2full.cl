@@ -1,6 +1,6 @@
 // Kernel to convert a compact hermitian matrix into a full hermitian matrix
 __kernel void
-hermitian2full(__global float2* __restrict dst, __global float2* __restrict src, int sz, int count, __local float* scratchR, __local float* scratchI)
+hermitian2full(__global float2* __restrict dst, __global float2* __restrict src, const unsigned int sz, const unsigned int count, __local float* scratchR, __local float* scratchI)
 {
 	// Calculate indices
 	int local_idx = get_local_id(0); // Work-item index within workgroup
