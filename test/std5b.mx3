@@ -35,6 +35,6 @@ FixedLayer = vector(cos(mp_theta), sin(mp_theta), 0)
 m = uniform(1,0,0)
 
 run(0.5e-9)
-TOL := 1e-5
+TOL := 1e-3
 expectv("m", m.average(), vector(-0.9538384675979614, -0.27802664041519165, 0.0052331965416669846), TOL)
 

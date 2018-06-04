@@ -25,7 +25,6 @@ package cl
 ////WINDOWS:
 //#cgo windows LDFLAGS:-LC:/Intel/opencl/lib/x64
 //#cgo windows LDFLAGS:-LC:/Stuff/proj/goprojs/src/github.com/sources/clFFT/build/package/lib64
-//#cgo windows LDFLAGS:-l clFFT
 //#cgo windows CFLAGS: -IC:/Intel/opencl/include
 //#cgo windows CFLAGS: -IC:/Stuff/proj/goprojs/src/github.com/sources/clFFT/build/package/include
 import "C"

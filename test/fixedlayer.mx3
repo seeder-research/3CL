@@ -46,6 +46,6 @@ for i:=0; i<maxRegion; i++{
 
 print(STtorque.average())
 
-TOL := 1e-7
+TOL := 1e-6
 // testing against mumax3.9.1
 expectv("STtorque", STtorque.average(), vector(0.00020761338237207383, -6.879508873680606e-05, -0.00023736029106657952), TOL)

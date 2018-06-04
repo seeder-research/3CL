@@ -13,7 +13,7 @@ enabledemag = false
 defRegion(0, xrange(-inf, 0))
 defRegion(1, xrange(0, inf))
 
-tol := 1e-8
+tol := 1e-7
 
 expectv("B_exch", B_exch.Average(), vector(0, 0, 0), tol)
 
