@@ -3,6 +3,7 @@ package opencl
 
 import (
 	"fmt"
+	"regexp"
 	"runtime"
 
 	"github.com/mumax/3cl/data"
@@ -69,8 +70,13 @@ func Init(gpu int) {
 			if ii == 0 {
 				tmpClPlatforms = append(tmpClPlatforms, plat)
 			}
-			tmpGpuList = append(tmpGpuList, GPU{Platform: plat, Device: gpDev})
-			tmpClDevices = append(tmpClDevices, gpDev)
+			gpDevVersion := gpDev.OpenCLCVersion()
+			match0, _ := regexp.MatchString("1.1", gpDevVersion)
+			match1, _ := regexp.MatchString("1.0", gpDevVersion)
+			if (!match0) && (!match1) {
+				tmpGpuList = append(tmpGpuList, GPU{Platform: plat, Device: gpDev})
+				tmpClDevices = append(tmpClDevices, gpDev)
+			}
 		}
 	}
 	if len(tmpGpuList) == 0 {
@@ -114,7 +120,13 @@ func Init(gpu int) {
 	if err != nil {
 		fmt.Printf("CreateProgramWithSource failed: %+v \n", err)
 	}
-	if err := program.BuildProgram(nil, "-cl-std=CL1.2 -cl-fp32-correctly-rounded-divide-sqrt -cl-kernel-arg-info"); err != nil {
+	build_string := "-cl-std=CL1.2 -cl-kernel-arg-info"
+	chkConfig := ClDevice.SingleFPConfig()
+	match2, _ := regexp.MatchString(chkConfig.String(), "CorrectDivideSqrt")
+	if match2 {
+		build_string += " -cl-fp32-correctly-rounded-divide-sqrt"
+	}
+	if err := program.BuildProgram(nil, build_string); err != nil {
 		fmt.Printf("BuildProgram failed: %+v \n", err)
 	}
 

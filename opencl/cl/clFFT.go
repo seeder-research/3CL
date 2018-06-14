@@ -15,7 +15,7 @@ in the Go standard packages.
 package cl
 
 /*
-#cgo LDFLAGS: -l clFFT -L/usr/local/clFFT/lib64
+#cgo LDFLAGS: -lclFFT
 #include <stdlib.h>
 #include <clFFT.h>
 

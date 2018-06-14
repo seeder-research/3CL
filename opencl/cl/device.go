@@ -97,12 +97,13 @@ const (
 type FPConfig int
 
 const (
-	FPConfigDenorm         FPConfig = C.CL_FP_DENORM           // denorms are supported
-	FPConfigInfNaN         FPConfig = C.CL_FP_INF_NAN          // INF and NaNs are supported
-	FPConfigRoundToNearest FPConfig = C.CL_FP_ROUND_TO_NEAREST // round to nearest even rounding mode supported
-	FPConfigRoundToZero    FPConfig = C.CL_FP_ROUND_TO_ZERO    // round to zero rounding mode supported
-	FPConfigRoundToInf     FPConfig = C.CL_FP_ROUND_TO_INF     // round to positive and negative infinity rounding modes supported
-	FPConfigFMA            FPConfig = C.CL_FP_FMA              // IEEE754-2008 fused multiply-add is supported
+	FPConfigDenorm         FPConfig = C.CL_FP_DENORM                        // denorms are supported
+	FPConfigInfNaN         FPConfig = C.CL_FP_INF_NAN                       // INF and NaNs are supported
+	FPConfigRoundToNearest FPConfig = C.CL_FP_ROUND_TO_NEAREST              // round to nearest even rounding mode supported
+	FPConfigRoundToZero    FPConfig = C.CL_FP_ROUND_TO_ZERO                 // round to zero rounding mode supported
+	FPConfigRoundToInf     FPConfig = C.CL_FP_ROUND_TO_INF                  // round to positive and negative infinity rounding modes supported
+	FPConfigFMA            FPConfig = C.CL_FP_FMA                           // IEEE754-2008 fused multiply-add is supported
+	FPConfigCorrDivSqrt    FPConfig = C.CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT // divide and sqrt are correctly rounded as defined by the IEEE754 specification.
 )
 
 var fpConfigNameMap = map[FPConfig]string{
@@ -112,6 +113,7 @@ var fpConfigNameMap = map[FPConfig]string{
 	FPConfigRoundToZero:    "RoundToZero",
 	FPConfigRoundToInf:     "RoundToInf",
 	FPConfigFMA:            "FMA",
+	FPConfigCorrDivSqrt:    "CorrectDivideSqrt",
 }
 
 func (c FPConfig) String() string {
