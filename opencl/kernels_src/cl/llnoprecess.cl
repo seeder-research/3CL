@@ -4,18 +4,23 @@ llnoprecess(__global float* __restrict  tx, __global float* __restrict  ty, __gl
             __global float* __restrict  mx, __global float* __restrict  my, __global float* __restrict  mz,
             __global float* __restrict  hx, __global float* __restrict  hy, __global float* __restrict  hz, int N) {
 
-	int i = ( get_group_id(1)*get_num_groups(0) + get_group_id(0) ) * get_local_size(0) + get_local_id(0);
-	if (i < N) {
+    // Calculate indices
+    int local_idx = get_local_id(0); // Work-item index within workgroup
+    int grp_sz = get_local_size(0); // Total number of work-items in each workgroup
+    int grp_id = get_group_id(0); // Index of workgroup
+    int grp_offset = get_num_groups(0) * grp_sz; // Offset for memory access
 
-		float3 m = {mx[i], my[i], mz[i]};
-		float3 H = {hx[i], hy[i], hz[i]};
+    for (int i = grp_id * grp_sz + local_idx; i < N; i += grp_offset) {
 
-		float3 mxH = cross(m, H);
-		float3 torque = -cross(m, mxH);
+	float3 m = {mx[i], my[i], mz[i]};
+	float3 H = {hx[i], hy[i], hz[i]};
 
-		tx[i] = torque.x;
-		ty[i] = torque.y;
-		tz[i] = torque.z;
-	}
+	float3 mxH = cross(m, H);
+	float3 torque = -cross(m, mxH);
+
+	tx[i] = torque.x;
+	ty[i] = torque.y;
+	tz[i] = torque.z;
+    }
 }
 

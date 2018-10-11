@@ -58,7 +58,7 @@ func PackComplexArray(dst, src *data.Slice, cnt, iOff, oOff int) {
 	}
 }
 
-func ComplexArrayMul(dst, a, b *data.Slice, cnt, offset int) {
+func ComplexArrayMul(dst, a, b *data.Slice, conjB, cnt, offset int) {
 	util.Argument(a.NComp() == b.NComp())
 	util.Argument(dst.NComp() == b.NComp())
 	util.Argument(cnt >= 0)
@@ -87,7 +87,7 @@ func ComplexArrayMul(dst, a, b *data.Slice, cnt, offset int) {
 		}
 	}
 	for ii := 0; ii < a.NComp(); ii++ {
-		event := k_cmplx_mul_async(dst.DevPtr(ii), a.DevPtr(ii), b.DevPtr(ii), cnt, offset, cfg, tmpEventList)
+		event := k_cmplx_mul_async(dst.DevPtr(ii), a.DevPtr(ii), b.DevPtr(ii), conjB, cnt, offset, cfg, tmpEventList)
 		dst.SetEvent(ii, event)
 		a.SetEvent(ii, event)
 		b.SetEvent(ii, event)

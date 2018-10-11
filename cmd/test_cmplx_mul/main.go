@@ -17,6 +17,7 @@ var (
 	Flag_size  = flag.Int("length", 512, "length of data to test")
 	Flag_print = flag.Bool("print", false, "Print out result")
 	Flag_comp  = flag.Int("components", 1, "Number of components to test")
+	Flag_conj  = flag.Bool("conjugate", false, "Conjugate B in multiplication")
 )
 
 func main() {
@@ -96,7 +97,7 @@ func main() {
 	//	device, context, queue := opencl.ClDevice, opencl.ClCtx, opencl.ClCmdQueue
 	kernels := opencl.KernList
 
-	kernelObj := kernels["hermitian2full"]
+	kernelObj := kernels["cmplx_mul"]
 	totalArgs, err := kernelObj.NumArgs()
 	if err != nil {
 		fmt.Printf("Failed to get number of arguments of kernel: $+v \n", err)
@@ -115,7 +116,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Begin first run of pack_cmplx kernel... \n")
+	fmt.Printf("Begin first run of cmplx_mul kernel... \n")
 
 	// Creating inputs
 	fmt.Println("Generating input data...")
@@ -152,7 +153,11 @@ func main() {
 	fmt.Println("Input data transfer completed.")
 
 	fmt.Println("Executing kernel...")
-	opencl.ComplexArrayMul(outBuffer, gpuBuffer0, gpuBuffer1, dataSize/2, 0)
+	if *Flag_conj {
+		opencl.ComplexArrayMul(outBuffer, gpuBuffer0, gpuBuffer1, 1, dataSize/2, 0)
+	} else {
+		opencl.ComplexArrayMul(outBuffer, gpuBuffer0, gpuBuffer1, 0, dataSize/2, 0)
+	}
 	fmt.Println("Waiting for kernel to finish execution...")
 	queue.Finish()
 	fmt.Println("Execution finished.")
@@ -166,14 +171,22 @@ func main() {
 	for ii := 0; ii < NComponents; ii++ {
 		correct := 0
 		var tmpR0, tmpR1 float32
-		for i := 0; i < dataSize; i += 2 {
-			tmpR0 = inputs0[ii][i]*inputs1[ii][i] - inputs0[ii][i+1]*inputs1[ii][i+1]
-			tmpR1 = inputs0[ii][i]*inputs1[ii][i+1] + inputs0[ii][i+1]*inputs1[ii][i]
-			if (math.Abs(float64(results[ii][i]-tmpR0)) < tol) && (math.Abs(float64(results[ii][i+1]-tmpR1)) < tol) {
+		for i := 0; i < dataSize/2; i++ {
+			idx := 2*i
+			AX, AY := inputs0[ii][idx], inputs0[ii][idx+1]
+			BX, BY := inputs1[ii][idx], inputs1[ii][idx+1]
+			if *Flag_conj {
+				tmpR0 = AX*BX + AY*BY
+				tmpR1 = AY*BX - AX*BY
+			} else {
+				tmpR0 = AX*BX - AY*BY
+				tmpR1 = AX*BY + AY*BX
+			}
+			if (math.Abs(float64(results[ii][idx]-tmpR0)) < tol) && (math.Abs(float64(results[ii][idx+1]-tmpR1)) < tol) {
 				correct++
 			} else {
 				if *Flag_print {
-					fmt.Printf("Expecting [%d][%d]: (%f + i*(%f)) ; have: (%f + i*(%f)) \n", ii, i, tmpR0, tmpR1, results[ii][i], results[ii][i+1])
+					fmt.Printf("Expecting [%d][%d]: (%f + i*%f)*(%f + i*%f) = (%f + i*(%f)) ; have: (%f + i*(%f)) \n", ii, idx, inputs0[ii][idx], inputs0[ii][idx+1], inputs1[ii][idx], inputs1[ii][idx+1], tmpR0, tmpR1, results[ii][idx], results[ii][idx+1])
 				}
 			}
 		}
@@ -184,7 +197,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Finished tests on pack_cmplx\n")
+	fmt.Printf("Finished tests on cmplx_run\n")
 
 	fmt.Printf("freeing resources \n")
 	opencl.Recycle(gpuBuffer0)
