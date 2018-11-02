@@ -98,3 +98,34 @@ func ComplexArrayMul(dst, a, b *data.Slice, conjB, cnt, offset int) {
 		fmt.Printf("WaitForEvents failed in complexarraymul: %+v \n", err)
 	}
 }
+
+func ComplexMatrixTranspose(dst, src *data.Slice, offset, width, height int) {
+	util.Argument(dst.NComp() == src.NComp())
+	util.Argument(dst.Len() == src.Len())
+	util.Argument(width > 0)
+	util.Argument(height > 0)
+	cfg := make3DConf([3]int{width, height, 1})
+	var tmpEventList, tmpEventList1 []*cl.Event
+	for ii := 0; ii < src.NComp(); ii++ {
+		tmpEvent := src.GetEvent(ii)
+		if tmpEvent != nil {
+			tmpEventList = append(tmpEventList, tmpEvent)
+		}
+	}
+	for ii := 0; ii < dst.NComp(); ii++ {
+		tmpEvent := dst.GetEvent(ii)
+		if tmpEvent != nil {
+			tmpEventList = append(tmpEventList, tmpEvent)
+		}
+	}
+	for ii := 0; ii < src.NComp(); ii++ {
+		event := k_cmplx_transpose_async(dst.DevPtr(ii), src.DevPtr(ii), offset, width, height, cfg, tmpEventList)
+		dst.SetEvent(ii, event)
+		src.SetEvent(ii, event)
+		tmpEventList1 = append(tmpEventList1, event)
+	}
+
+	if err := cl.WaitForEvents(tmpEventList1); err != nil {
+		fmt.Printf("WaitForEvents failed in complexmatrixtranspose: %+v \n", err)
+	}
+}

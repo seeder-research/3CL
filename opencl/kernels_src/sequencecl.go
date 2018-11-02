@@ -69,4 +69,5 @@ var OCLKernelsList = []string{
 	"cmplx_mul",
 	"pack_cmplx",
 	"hermitian2full",
+	"cmplx_transpose",
 	"square"}
