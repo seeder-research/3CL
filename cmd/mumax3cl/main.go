@@ -156,12 +156,13 @@ func goServeGUI() string {
 
 // print version to stdout
 func printVersion() {
-	fmt.Print("//", engine.UNAME, "\n")
-	fmt.Print("//", opencl.GPUInfo, "\n")
-	//	fmt.Print("//", opencl.GPUInfo, ", using CC", opencl.UseCC, " PTX \n")
-	fmt.Print("//(c) Arne Vansteenkiste, Dynamat LAB, Ghent University, Belgium", "\n")
-	fmt.Print("//Ported to OpenCL by Xuanyao Fong, National University of Singapore, Singapore", "\n")
-	fmt.Print("//This is free software without any warranty. See license.txt", "\n")
-	fmt.Print("//If you use mumax in any work or publication,", "\n")
-	fmt.Print("//we kindly ask you to cite the references in references.bib", "\n")
+	engine.LogOut("//", engine.UNAME, "\n")
+	engine.LogOut("//", opencl.GPUInfo, "\n")
+	engine.LogOut("//(c) Arne Vansteenkiste, Dynamat LAB, Ghent University, Belgium", "\n")
+	engine.LogOut("//Ported to OpenCL by Xuanyao Fong, National University of Singapore, Singapore", "\n")
+	engine.LogOut("This is free software without any warranty. See license.txt")
+	engine.LogOut("********************************************************************//")
+	engine.LogOut("  If you use mumax in any work or publication,                      //")
+	engine.LogOut("  we kindly ask you to cite the references in references.bib        //")
+	engine.LogOut("********************************************************************//")
 }
