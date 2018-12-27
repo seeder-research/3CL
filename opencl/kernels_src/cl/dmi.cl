@@ -10,7 +10,7 @@ adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global fl
        __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
        __global float* __restrict Ms_, float Ms_mul,
        __global float* __restrict aLUT2d, __global float* __restrict dLUT2d, __global uint8_t* __restrict regions,
-       float cx, float cy, float cz, int Nx, int Ny, int Nz, uint8_t PBC) {
+       float cx, float cy, float cz, int Nx, int Ny, int Nz, uint8_t PBC, uint8_t OpenBC) {
 
 	int ix = get_group_id(0) * get_local_size(0) + get_local_id(0);
 	int iy = get_group_id(1) * get_local_size(1) + get_local_id(1);
@@ -37,17 +37,19 @@ adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global fl
 		if (ix-1 >= 0 || PBCx) {
 			m1 = make_float3(mx[i_], my[i_], mz[i_]);
 		}
-		int r1 = is0(m1)? r0 : regions[i_];            // don't use inter region params if m1=0
-		float A1 = aLUT2d[symidx(r0, r1)];             // inter-region Aex
-		float D1 = dLUT2d[symidx(r0, r1)];             // inter-region Dex
-		if (is0(m1)) {                                 // neighbor missing
-			m1.x = m0.x - (-cx * (0.5f*D1/A1) * m0.z); // extrapolate missing m from BC's
-			m1.y = m0.y;
-			m1.z = m0.z + (-cx * (0.5f*D1/A1) * m0.x);
-		}
-		h   += (2.0f*A1/(cx*cx)) * (m1 - m0);          // exchange
-		h.x += (D1/cx)*(- m1.z);
-		h.z -= (D1/cx)*(- m1.x);
+	        int r1 = is0(m1)? r0 : regions[i_];                // don't use inter region params if m1=0
+        	float A1 = aLUT2d[symidx(r0, r1)];                 // inter-region Aex
+	        float D1 = dLUT2d[symidx(r0, r1)];                 // inter-region Dex
+        	if (!is0(m1) || !OpenBC){                          // do nothing at an open boundary
+	            if (is0(m1)) {                                 // neighbor missing
+        	        m1.x = m0.x - (-cx * (0.5f*D1/A1) * m0.z); // extrapolate missing m from Neumann BC's
+	                m1.y = m0.y;
+        	        m1.z = m0.z + (-cx * (0.5f*D1/A1) * m0.x);
+	            }
+                    h   += (2.0f*A1/(cx*cx)) * (m1 - m0);          // exchange
+                    h.x += (D1/cx)*(- m1.z);
+                    h.z -= (D1/cx)*(- m1.x);
+                }
 	}
 
 	{
@@ -59,14 +61,16 @@ adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global fl
 		int r2 = is0(m2)? r0 : regions[i_];
 		float A2 = aLUT2d[symidx(r0, r2)];
 		float D2 = dLUT2d[symidx(r0, r2)];
-		if (is0(m2)) {
-			m2.x = m0.x - (cx * (0.5f*D2/A2) * m0.z);
-			m2.y = m0.y;
-			m2.z = m0.z + (cx * (0.5f*D2/A2) * m0.x);
-		}
-		h   += (2.0f*A2/(cx*cx)) * (m2 - m0);
-		h.x += (D2/cx)*(m2.z);
-		h.z -= (D2/cx)*(m2.x);
+                if (!is0(m2) || !OpenBC){
+                    if (is0(m2)) {
+                        m2.x = m0.x - (cx * (0.5f*D2/A2) * m0.z);
+                        m2.y = m0.y;
+                        m2.z = m0.z + (cx * (0.5f*D2/A2) * m0.x);
+                    }
+                    h   += (2.0f*A2/(cx*cx)) * (m2 - m0);
+                    h.x += (D2/cx)*(m2.z);
+                    h.z -= (D2/cx)*(m2.x);
+                }
 	}
 
 	// y derivatives (along height)
@@ -79,14 +83,16 @@ adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global fl
 		int r1 = is0(m1)? r0 : regions[i_];
 		float A1 = aLUT2d[symidx(r0, r1)];
 		float D1 = dLUT2d[symidx(r0, r1)];
-		if (is0(m1)) {
-			m1.x = m0.x;
-			m1.y = m0.y - (-cy * (0.5f*D1/A1) * m0.z);
-			m1.z = m0.z + (-cy * (0.5f*D1/A1) * m0.y);
-		}
-		h   += (2.0f*A1/(cy*cy)) * (m1 - m0);
-		h.y += (D1/cy)*(- m1.z);
-		h.z -= (D1/cy)*(- m1.y);
+                if (!is0(m1) || !OpenBC){
+                    if (is0(m1)) {
+                        m1.x = m0.x;
+                        m1.y = m0.y - (-cy * (0.5f*D1/A1) * m0.z);
+                        m1.z = m0.z + (-cy * (0.5f*D1/A1) * m0.y);
+                    }
+                    h   += (2.0f*A1/(cy*cy)) * (m1 - m0);
+                    h.y += (D1/cy)*(- m1.z);
+                    h.z -= (D1/cy)*(- m1.y);
+                }
 	}
 
 	{
@@ -98,14 +104,16 @@ adddmi(__global float* __restrict Hx, __global float* __restrict Hy, __global fl
 		int r2 = is0(m2)? r0 : regions[i_];
 		float A2 = aLUT2d[symidx(r0, r2)];
 		float D2 = dLUT2d[symidx(r0, r2)];
-		if (is0(m2)) {
-			m2.x = m0.x;
-			m2.y = m0.y - (cy * (0.5f*D2/A2) * m0.z);
-			m2.z = m0.z + (cy * (0.5f*D2/A2) * m0.y);
+                if (!is0(m2) || !OpenBC){
+                    if (is0(m2)) {
+                        m2.x = m0.x;
+                        m2.y = m0.y - (cy * (0.5f*D2/A2) * m0.z);
+                        m2.z = m0.z + (cy * (0.5f*D2/A2) * m0.y);
+                    }
+                    h   += (2.0f*A2/(cy*cy)) * (m2 - m0);
+                    h.y += (D2/cy)*(m2.z);
+                    h.z -= (D2/cy)*(m2.y);
 		}
-		h   += (2.0f*A2/(cy*cy)) * (m2 - m0);
-		h.y += (D2/cy)*(m2.z);
-		h.z -= (D2/cy)*(m2.y);
 	}
 
 	// only take vertical derivative for 3D sim

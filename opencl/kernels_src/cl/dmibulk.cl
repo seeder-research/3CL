@@ -29,7 +29,7 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
            __global float* __restrict Ms_, float Ms_mul,
            __global float* __restrict aLUT2d, __global float* __restrict DLUT2d,
            __global uint8_t* __restrict regions,
-           float cx, float cy, float cz, int Nx, int Ny, int Nz, uint8_t PBC) {
+           float cx, float cy, float cz, int Nx, int Ny, int Nz, uint8_t PBC, uint8_t OpenBC) {
 
 	int ix = get_group_id(0) * get_local_size(0) + get_local_id(0);
 	int iy = get_group_id(1) * get_local_size(1) + get_local_id(1);
@@ -60,14 +60,16 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
         	float A = aLUT2d[symidx(r0, r1)];
 	        float D = DLUT2d[symidx(r0, r1)];
 	        float D_2A = D/(2.0f*A);
-		if (is0(m1)) {                                 // neighbor missing
-			m1.x = m0.x;
-			m1.y = m0.y - (-cx * D_2A * m0.z);
-			m1.z = m0.z + (-cx * D_2A * m0.y);
+                if (!is0(m1) || !OpenBC){                      // do nothing at an open boundary
+                    if (is0(m1)) {                             // neighbor missing
+                        m1.x = m0.x;
+                        m1.y = m0.y - (-cx * D_2A * m0.z);
+                        m1.z = m0.z + (-cx * D_2A * m0.y);
+                    }
+                    h   += (2.0f*A/(cx*cx)) * (m1 - m0);       // exchange
+                    h.y += (D/cx)*(-m1.z);
+                    h.z -= (D/cx)*(-m1.y);
 		}
-		h   += (2.0f*A/(cx*cx)) * (m1 - m0);          // exchange
-		h.y += (D/cx)*(-m1.z);
-		h.z -= (D/cx)*(-m1.y);
 	}
 
 
@@ -81,14 +83,16 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
         	float A = aLUT2d[symidx(r0, r1)];
 	        float D = DLUT2d[symidx(r0, r1)];
         	float D_2A = D/(2.0f*A);
-		if (is0(m2)) {
-			m2.x = m0.x;
-			m2.y = m0.y - (+cx * D_2A * m0.z);
-			m2.z = m0.z + (+cx * D_2A * m0.y);
+                if (!is0(m2) || !OpenBC){
+                    if (is0(m2)) {
+                        m2.x = m0.x;
+                        m2.y = m0.y - (+cx * D_2A * m0.z);
+                        m2.z = m0.z + (+cx * D_2A * m0.y);
+                    }
+                    h   += (2.0f*A/(cx*cx)) * (m2 - m0);
+                    h.y += (D/cx)*(m2.z);
+                    h.z -= (D/cx)*(m2.y);
 		}
-		h   += (2.0f*A/(cx*cx)) * (m2 - m0);
-		h.y += (D/cx)*(m2.z);
-		h.z -= (D/cx)*(m2.y);
 	}
 
 	// y derivatives (along height)
@@ -102,14 +106,16 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
         	float A = aLUT2d[symidx(r0, r1)];
 	        float D = DLUT2d[symidx(r0, r1)];
         	float D_2A = D/(2.0f*A);
-		if (is0(m1)) {
-			m1.x = m0.x + (-cy * D_2A * m0.z);
-			m1.y = m0.y;
-			m1.z = m0.z - (-cy * D_2A * m0.x);
+                if (!is0(m1) || !OpenBC){
+                    if (is0(m1)) {
+                        m1.x = m0.x + (-cy * D_2A * m0.z);
+                        m1.y = m0.y;
+                        m1.z = m0.z - (-cy * D_2A * m0.x);
+                    }
+                    h   += (2.0f*A/(cy*cy)) * (m1 - m0);
+                    h.x -= (D/cy)*(-m1.z);
+                    h.z += (D/cy)*(-m1.x);
 		}
-		h   += (2.0f*A/(cy*cy)) * (m1 - m0);
-		h.x -= (D/cy)*(-m1.z);
-		h.z += (D/cy)*(-m1.x);
 	}
 
 	{
@@ -122,14 +128,16 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
         	float A = aLUT2d[symidx(r0, r1)];
 	        float D = DLUT2d[symidx(r0, r1)];
         	float D_2A = D/(2.0f*A);
-		if (is0(m2)) {
-			m2.x = m0.x + (+cy * D_2A * m0.z);
-			m2.y = m0.y;
-			m2.z = m0.z - (+cy * D_2A * m0.x);
+                if (!is0(m2) || !OpenBC){
+                    if (is0(m2)) {
+                        m2.x = m0.x + (+cy * D_2A * m0.z);
+                        m2.y = m0.y;
+                        m2.z = m0.z - (+cy * D_2A * m0.x);
+                    }
+                    h   += (2.0f*A/(cy*cy)) * (m2 - m0);
+                    h.x -= (D/cy)*(m2.z);
+                    h.z += (D/cy)*(m2.x);
 		}
-		h   += (2.0f*A/(cy*cy)) * (m2 - m0);
-		h.x -= (D/cy)*(m2.z);
-		h.z += (D/cy)*(m2.x);
 	}
 
 	// only take vertical derivative for 3D sim
@@ -145,14 +153,16 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
 			float A = aLUT2d[symidx(r0, r1)];
 			float D = DLUT2d[symidx(r0, r1)];
 			float D_2A = D/(2.0f*A);
-			if (is0(m1)) {
-				m1.x = m0.x - (-cz * D_2A * m0.y);
-				m1.y = m0.y + (-cz * D_2A * m0.x);
-				m1.z = m0.z;
+                        if (!is0(m1) || !OpenBC){
+                            if (is0(m1)) {
+                                m1.x = m0.x - (-cz * D_2A * m0.y);
+                                m1.y = m0.y + (-cz * D_2A * m0.x);
+                                m1.z = m0.z;
+                            }
+                            h   += (2.0f*A/(cz*cz)) * (m1 - m0);
+                            h.x += (D/cz)*(- m1.y);
+                            h.y -= (D/cz)*(- m1.x);
 			}
-			h   += (2.0f*A/(cz*cz)) * (m1 - m0);
-			h.x += (D/cz)*(- m1.y);
-			h.y -= (D/cz)*(- m1.x);
 		}
 
 		// top neighbor
@@ -166,14 +176,16 @@ adddmibulk(__global float* __restrict Hx, __global float* __restrict Hy, __globa
 			float A = aLUT2d[symidx(r0, r1)];
 			float D = DLUT2d[symidx(r0, r1)];
 			float D_2A = D/(2.0f*A);
-			if (is0(m2)) {
-				m2.x = m0.x - (+cz * D_2A * m0.y);
-				m2.y = m0.y + (+cz * D_2A * m0.x);
-				m2.z = m0.z;
+                        if (!is0(m2) || !OpenBC){
+                            if (is0(m2)) {
+                                m2.x = m0.x - (+cz * D_2A * m0.y);
+                                m2.y = m0.y + (+cz * D_2A * m0.x);
+                                m2.z = m0.z;
+                            }
+                            h   += (2.0f*A/(cz*cz)) * (m2 - m0);
+                            h.x += (D/cz)*(m2.y );
+                            h.y -= (D/cz)*(m2.x );
 			}
-			h   += (2.0f*A/(cz*cz)) * (m2 - m0);
-			h.x += (D/cz)*(m2.y );
-			h.y -= (D/cz)*(m2.x );
 		}
 	}
 
