@@ -47,6 +47,7 @@ var OCLKernelsList = []string{
 	"reducemaxvecnorm2",
 	"reducesum",
 	"regionaddv",
+	"regionadds",
 	"regiondecode",
 	"regionselect",
 	"resize",
