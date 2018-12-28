@@ -56,6 +56,8 @@ var OCLKernelsList = []string{
 	"shiftx",
 	"shifty",
 	"shiftz",
+	"addmagnetoelasticfield",
+	"getmagnetoelasticforce",
 	"addslonczewskitorque2",
 	"settemperature2",
 	"settopologicalcharge",
