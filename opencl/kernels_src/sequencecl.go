@@ -25,6 +25,7 @@ var OCLKernelsList = []string{
 	"adddmi",
 	"adddmibulk",
 	"dotproduct",
+	"crossproduct",
 	"addexchange",
 	"exchangedecode",
 	"kernmulC",
