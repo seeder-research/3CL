@@ -14,6 +14,9 @@ const MTGPDC_TN = MTGPDC_FLOOR_2P
 const MTGPDC_LS = (MTGPDC_TN * 3)
 const MTGPDC_TS = 16
 
+var mtgpdc_params_num = mtgpdc_params_11213_num
+var MTGP32_params_fast_ = MTGP32_params_fast_11213
+
 type MTGP32dc_params_fast_t struct {
 	mexp        int        /**< Mersenne exponent. This is redundant. */
 	pos         int        /**< pick up position. */
@@ -60,8 +63,8 @@ func NewMTGPParams() *MTGP32dc_params_array_ptr {
 }
 
 func (p *MTGP32dc_params_array_ptr) GetMTGPArrays() {
-	if (p.GroupSize > mtgpdc_params_11213_num) || (p.GroupSize < 0) {
-		log.Fatalln("Input range: 0 < GroupSize < ", mtgpdc_params_11213_num)
+	if (p.GroupSize > mtgpdc_params_num) || (p.GroupSize < 0) {
+		log.Fatalln("Input range: 0 < GroupSize < ", mtgpdc_params_num)
 	}
 	rec_array := make([]uint32, (MTGPDC_TS * p.GroupSize))
 	temper_array := make([]uint32, (MTGPDC_TS * p.GroupSize))
@@ -72,13 +75,13 @@ func (p *MTGP32dc_params_array_ptr) GetMTGPArrays() {
 	status_array := make([]uint32, MTGPDC_N)
 	for i := 0; i < p.GroupSize; i++ {
 		for j := 0; j < MTGPDC_TS; j++ {
-			rec_array[(i*MTGPDC_TS)+j] = MTGP32_params_fast_11213[i].tbl[j]
-			temper_array[(i*MTGPDC_TS)+j] = MTGP32_params_fast_11213[i].tmp_tbl[j]
-			flt_temper_array[(i*MTGPDC_TS)+j] = MTGP32_params_fast_11213[i].flt_tmp_tbl[j]
+			rec_array[(i*MTGPDC_TS)+j] = MTGP32_params_fast_[i].tbl[j]
+			temper_array[(i*MTGPDC_TS)+j] = MTGP32_params_fast_[i].tmp_tbl[j]
+			flt_temper_array[(i*MTGPDC_TS)+j] = MTGP32_params_fast_[i].flt_tmp_tbl[j]
 		}
-		pos_array[i] = MTGP32_params_fast_11213[i].pos
-		sh1_array[i] = MTGP32_params_fast_11213[i].sh1
-		sh2_array[i] = MTGP32_params_fast_11213[i].sh2
+		pos_array[i] = MTGP32_params_fast_[i].pos
+		sh1_array[i] = MTGP32_params_fast_[i].sh1
+		sh2_array[i] = MTGP32_params_fast_[i].sh2
 	}
 
 	p.Pos = pos_array
@@ -233,6 +236,14 @@ func (p *MTGP32dc_params_array_ptr) SetStatusArray(arr []uint32) {
 
 func (p *MTGP32dc_params_array_ptr) GetStatusArray() []uint32 {
 	return p.Status
+}
+
+func (p *MTGP32dc_params_array_ptr) SetGroupSize(in int) {
+	p.GroupSize = in
+}
+
+func (p *MTGP32dc_params_array_ptr) GetGroupSize() int {
+	return p.GroupSize
 }
 
 var MTGP32_params_fast_11213 = []MTGP32dc_params_fast_t{

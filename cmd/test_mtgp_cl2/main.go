@@ -15,6 +15,7 @@ import (
 
 var (
 	d_length      = flag.Int("size", 1024, "Total number of random numbers to generate")
+	n_cycles      = flag.Int("cycles", 5, "Total number of random number generation cycles")
 	r_seed        = flag.Uint("seed", 0, "Seed value of RNG")
 	d_dump        = flag.Bool("dump", false, "Whether to dump generated values to screen")
 	Flag_platform = flag.Int("platform", 0, "Specify OpenCL platform")
@@ -64,11 +65,13 @@ func main() {
 		fmt.Println("Results before execution: ", resultsArr[0])
 	}
 
-	event := rng.Uniform(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
-	err := cl.WaitForEvents([]*cl.Event{event})
-	if err != nil {
-		fmt.Printf("Uniform RN generation failed for output: %+v \n", err)
-		return
+	for idx := 0; idx < *n_cycles; idx++ {
+		event := rng.Normal(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
+		err := cl.WaitForEvents([]*cl.Event{event})
+		if err != nil {
+			fmt.Printf("CreateBuffer failed for output: %+v \n", err)
+			return
+		}
 	}
 
 	resultsSlice = output.HostCopy()
@@ -78,7 +81,7 @@ func main() {
 		fmt.Println("Results after execution: ", resultsArr[0])
 	}
 
-	fOut, fErr := os.Create("uniform_bytes.bin")
+	fOut, fErr := os.Create("norm_bytes.bin")
 	if fErr != nil {
 		panic(fErr)
 	}
@@ -93,58 +96,6 @@ func main() {
 	}
 
 	nn, wrErr := wr.Write(outBytes.Bytes())
-	if wrErr != nil {
-		fmt.Println("bufio.Write failed: ", wrErr)
-	} else {
-		wr.Flush()
-		fmt.Println("Wrote ", nn, "bytes to file")
-	}
-	fOut.Close()
-
-	opencl.Recycle(output)
-
-	fmt.Printf("Re-initializing MTGP RNG and generate normally distributed numbers... \n")
-
-	rng.Init(&seed, nil)
-
-	output = opencl.Buffer(1, [3]int{d_size, 1, 1})
-
-	resultsSlice = output.HostCopy()
-	resultsArr = resultsSlice.Host()
-
-	if *d_dump {
-		fmt.Println("Results before execution: ", resultsArr[0])
-	}
-
-	event = rng.Normal(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
-	err = cl.WaitForEvents([]*cl.Event{event})
-	if err != nil {
-		fmt.Printf("CreateBuffer failed for output: %+v \n", err)
-		return
-	}
-
-	resultsSlice = output.HostCopy()
-	resultsArr = resultsSlice.Host()
-
-	if *d_dump {
-		fmt.Println("Results after execution: ", resultsArr[0])
-	}
-
-	fOut, fErr = os.Create("norm_bytes.bin")
-	if fErr != nil {
-		panic(fErr)
-	}
-
-	wr = bufio.NewWriter(fOut)
-	outBytes = new(bytes.Buffer)
-	for _, v := range resultsArr[0] {
-		vErr := binary.Write(outBytes, binary.LittleEndian, v)
-		if vErr != nil {
-			fmt.Println("binary.Write failed: ", vErr)
-		}
-	}
-
-	nn, wrErr = wr.Write(outBytes.Bytes())
 	if wrErr != nil {
 		fmt.Println("bufio.Write failed: ", wrErr)
 	} else {
