@@ -17,12 +17,13 @@ import (
 var d_length = flag.Int("size", 1024, "Total number of random numbers to generate")
 var r_seed = flag.Uint("seed", 0, "Seed value of RNG")
 var d_dump = flag.Bool("dump", false, "Whether to dump generated values to screen")
+var gpu_flag = flag.Int("gpu", 0, "GPU selected for operation")
 
 func main() {
 
 	flag.Parse()
 
-	opencl.Init(0)
+	opencl.Init(*gpu_flag)
 	platforms := opencl.ClPlatforms
 	fmt.Printf("Discovered platforms: \n")
 	for i, p := range platforms {
@@ -132,7 +133,7 @@ func main() {
 	event := rng.PRNG.GenerateUniform((unsafe.Pointer)(output), d_size, nil)
 	err = cl.WaitForEvents([]*cl.Event{event})
 	if err != nil {
-		fmt.Printf("CreateBuffer failed for output: %+v \n", err)
+		fmt.Printf("WaitForEvents failed for GenerateUniform: %+v \n", err)
 		return
 	}
 
@@ -189,7 +190,7 @@ func main() {
 	event = rng.PRNG.GenerateNormal((unsafe.Pointer)(output), d_size, nil)
 	err = cl.WaitForEvents([]*cl.Event{event})
 	if err != nil {
-		fmt.Printf("CreateBuffer failed for output: %+v \n", err)
+		fmt.Printf("WaitForEvents failed for GenerateNormal: %+v \n", err)
 		return
 	}
 
