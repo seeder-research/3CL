@@ -8,8 +8,8 @@ import (
 
 const MTGPDC_MEXP = 23209
 const MTGPDC_N = 726
-const MTGPDC_FLOOR_2P = 512
-const MTGPDC_CEIL_2P = 1024
+const MTGPDC_FLOOR_2P = 8192
+const MTGPDC_CEIL_2P = 16384
 const MTGPDC_TN = MTGPDC_FLOOR_2P
 const MTGPDC_LS = (MTGPDC_TN * 3)
 const MTGPDC_TS = 16
