@@ -28,6 +28,7 @@ const MTGP32_CEIL_2P = RNGmtgp.MTGPDC_CEIL_2P
 const MTGP32_TN = RNGmtgp.MTGPDC_TN
 const MTGP32_LS = RNGmtgp.MTGPDC_LS
 const MTGP32_TS = RNGmtgp.MTGPDC_TS
+var RNGWGSIZE int
 
 type mtgp32_params RNGmtgp.MTGP32dc_params_array_ptr
 
@@ -77,6 +78,11 @@ func NewMTGPRNGParams() *mtgp32_params {
 	var event *cl.Event
 	tmp := RNGmtgp.NewMTGPParams()
 	tmp.GroupSize = ClCUnits
+        if MTGP32_TN > ClWGSize {
+            RNGWGSIZE = ClWGSize
+        } else {
+            RNGWGSIZE = MTGP32_TN
+        }
 	tmp.GetMTGPArrays()
 	tmp.CreateParamBuffers(ClCtx)
 	events_list, err = tmp.LoadAllParamBuffersToDevice(ClCmdQueue, nil)
@@ -96,7 +102,7 @@ func (p *mtgp32_params) Init(seed uint32, events []*cl.Event) {
 	//	args := mtgp32_init_seed_kernel_args.argptr[:]
 	event := k_mtgp32_init_seed_kernel_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
 		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), seed,
-		&config{[]int{ClCUnits * MTGP32_TN}, []int{MTGP32_TN}}, events)
+		&config{[]int{ClCUnits * RNGWGSIZE}, []int{RNGWGSIZE}}, events)
 
 	mtgp32_uniform_args.arg_param_tbl = unsafe.Pointer(p.Rec_buf)
 	mtgp32_uniform_args.arg_temper_tbl = unsafe.Pointer(p.Temper_buf)
@@ -155,7 +161,7 @@ func (p *mtgp32_params) GenerateUniform(d_data unsafe.Pointer, data_size int, ev
 	mtgp32_uniform_args.arg_d_data = d_data
 	mtgp32_uniform_args.arg_size = data_size
 
-	item_num := MTGP32_TN * ClCUnits
+	item_num := RNGWGSIZE * ClCUnits
 	min_size := MTGP32_LS * ClCUnits
 	working_Size := int(1)
 	if data_size%min_size != 0 {
@@ -166,7 +172,7 @@ func (p *mtgp32_params) GenerateUniform(d_data unsafe.Pointer, data_size int, ev
 	SetKernelArgWrapper("mtgp32_uniform", 8, working_Size)
 
 	//	args := mtgp32_uniform_args.argptr[:]
-	event := LaunchKernel("mtgp32_uniform", []int{item_num}, []int{MTGP32_TN}, events)
+	event := LaunchKernel("mtgp32_uniform", []int{item_num}, []int{RNGWGSIZE}, events)
 
 	if Synchronous { // debug
 		ClCmdQueue.Finish()
@@ -193,7 +199,7 @@ func (p *mtgp32_params) GenerateNormal(d_data unsafe.Pointer, data_size int, eve
 	mtgp32_uniform_args.arg_d_data = d_data
 	mtgp32_uniform_args.arg_size = data_size
 
-	item_num := MTGP32_TN * ClCUnits
+	item_num := RNGWGSIZE * ClCUnits
 	min_size := MTGP32_LS * ClCUnits
 	working_Size := int(1)
 	if data_size%min_size != 0 {
@@ -204,7 +210,7 @@ func (p *mtgp32_params) GenerateNormal(d_data unsafe.Pointer, data_size int, eve
 	SetKernelArgWrapper("mtgp32_normal", 8, working_Size)
 
 	//	args := mtgp32_uniform_args.argptr[:]
-	event := LaunchKernel("mtgp32_normal", []int{item_num}, []int{MTGP32_TN}, events)
+	event := LaunchKernel("mtgp32_normal", []int{item_num}, []int{RNGWGSIZE}, events)
 
 	if Synchronous { // debug
 		ClCmdQueue.Finish()
