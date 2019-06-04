@@ -95,7 +95,7 @@ func (p *mtgp32_params) Init(seed uint32, events []*cl.Event) {
 
 	event := k_mtgp32_init_seed_kernel_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
 		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), seed,
-		&config{[]int{MTGP32_TN}, []int{MTGP32_TN}}, events)
+		&config{[]int{p.GetGroupSize()}, []int{p.GetGroupSize()}}, events)
 
 	p.Ini = true
 	err := cl.WaitForEvents([]*cl.Event{event})
@@ -118,7 +118,7 @@ func (p *mtgp32_params) GenerateUniform(d_data unsafe.Pointer, data_size int, ev
 
 	event := k_mtgp32_uniform_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
 		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, data_size,
-		&config{[]int{MTGP32_TN}, []int{MTGP32_TN}}, events)
+		&config{[]int{p.GetGroupSize()}, []int{p.GetGroupSize()}}, events)
 
 	if Synchronous { // debug
 		ClCmdQueue.Finish()
@@ -141,7 +141,7 @@ func (p *mtgp32_params) GenerateNormal(d_data unsafe.Pointer, data_size int, eve
 
 	event := k_mtgp32_normal_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
 		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, data_size,
-		&config{[]int{MTGP32_TN}, []int{MTGP32_TN}}, events)
+		&config{[]int{p.GetGroupSize()}, []int{p.GetGroupSize()}}, events)
 
 	if Synchronous { // debug
 		ClCmdQueue.Finish()
@@ -189,4 +189,12 @@ func (p *mtgp32_params) SetStatusArray(arr []uint32) {
 
 func (p *mtgp32_params) GetStatusArray() []uint32 {
 	return p.Status
+}
+
+func (p *mtgp32_params) SetGroupSize(in int) {
+	p.GroupSize = in
+}
+
+func (p *mtgp32_params) GetGroupSize() int {
+	return p.GroupSize
 }
