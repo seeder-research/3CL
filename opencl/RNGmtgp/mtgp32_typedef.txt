@@ -33,7 +33,7 @@ type MTGP32dc_params_array_ptr struct {
 	Temper_size     int
 	Flt_temper_size int
 	Status_size     int
-	GroupSize		int
+	GroupSize       int
 }
 
 func NewMTGPParams() *MTGP32dc_params_array_ptr {
@@ -217,4 +217,12 @@ func (p *MTGP32dc_params_array_ptr) SetStatusArray(arr []uint32) {
 
 func (p *MTGP32dc_params_array_ptr) GetStatusArray() []uint32 {
 	return p.Status
+}
+
+func (p *MTGP32dc_params_array_ptr) SetGroupSize(in int) {
+        p.GroupSize = in
+}
+
+func (p *MTGP32dc_params_array_ptr) GetGroupSize() int {
+        return p.GroupSize
 }
