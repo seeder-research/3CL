@@ -76,7 +76,7 @@ func NewMTGPRNGParams() *mtgp32_params {
 	var events_list []*cl.Event
 	var event *cl.Event
 	tmp := RNGmtgp.NewMTGPParams()
-	tmp.GroupSize = ClCUnits
+	tmp.SetGroupSize(RNGmtgp.MTGPDC_FLOOR_2P)
 	tmp.GetMTGPArrays()
 	tmp.CreateParamBuffers(ClCtx)
 	events_list, err = tmp.LoadAllParamBuffersToDevice(ClCmdQueue, nil)
