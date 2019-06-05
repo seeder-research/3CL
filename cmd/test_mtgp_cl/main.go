@@ -50,7 +50,7 @@ func main() {
 	seed := InitRNG()
 	fmt.Println("Seed: ", seed)
 	rng := opencl.NewGenerator("mtgp")
-	rng.Init(seed, nil)
+	rng.Init(&seed, nil)
 
 	fmt.Printf("Creating output buffer... \n")
 	d_size := int(*d_length)
@@ -105,7 +105,7 @@ func main() {
 
 	fmt.Printf("Re-initializing MTGP RNG and generate normally distributed numbers... \n")
 
-	rng.Init(seed, nil)
+	rng.Init(&seed, nil)
 
 	output = opencl.Buffer(1, [3]int{d_size, 1, 1})
 

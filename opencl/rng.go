@@ -8,6 +8,8 @@ import (
 	"github.com/mumax/3cl/opencl/RNGmtgp"
 	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/timer"
+        "math/rand"
+        "time"
 )
 
 type Prng_ interface {
@@ -17,8 +19,9 @@ type Prng_ interface {
 }
 
 type Generator struct {
-	Name string
-	PRNG Prng_
+	Name   string
+	PRNG   Prng_
+	r_seed *uint32
 }
 
 const MTGP32_MEXP = RNGmtgp.MTGPDC_MEXP
@@ -59,8 +62,12 @@ func (g *Generator) CreatePNG() {
 	}
 }
 
-func (g *Generator) Init(seed uint32, events []*cl.Event) {
-	g.PRNG.Init(seed, events)
+func (g *Generator) Init(seed *uint32, events []*cl.Event) {
+	if seed == nil {
+		g.PRNG.Init(InitRNG(), events)
+	} else {
+		g.PRNG.Init(*seed, events)
+	}
 }
 
 func (g *Generator) Uniform(data unsafe.Pointer, d_size int, events []*cl.Event) *cl.Event {
@@ -89,6 +96,11 @@ func NewMTGPRNGParams() *mtgp32_params {
 	}
 	err = cl.WaitForEvents(append(events_list, event))
 	return (*mtgp32_params)(tmp)
+}
+
+func InitRNG() uint32 {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return rand.Uint32()
 }
 
 func (p *mtgp32_params) Init(seed uint32, events []*cl.Event) {
