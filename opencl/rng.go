@@ -8,8 +8,8 @@ import (
 	"github.com/mumax/3cl/opencl/RNGmtgp"
 	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/timer"
-        "math/rand"
-        "time"
+	"math/rand"
+	"time"
 )
 
 type Prng_ interface {
