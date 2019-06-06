@@ -64,7 +64,7 @@ func (g *Generator) CreatePNG() {
 
 func (g *Generator) Init(seed *uint32, events []*cl.Event) {
 	if seed == nil {
-		g.PRNG.Init(InitRNG(), events)
+		g.PRNG.Init(initRNG(), events)
 	} else {
 		g.PRNG.Init(*seed, events)
 	}
@@ -98,7 +98,7 @@ func NewMTGPRNGParams() *mtgp32_params {
 	return (*mtgp32_params)(tmp)
 }
 
-func InitRNG() uint32 {
+func initRNG() uint32 {
 	rand.Seed(time.Now().UTC().UnixNano())
 	return rand.Uint32()
 }

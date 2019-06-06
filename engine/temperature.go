@@ -7,8 +7,8 @@ import (
 	"github.com/mumax/3cl/opencl/cl"
 	//"github.com/mumax/3cl/util"
 	"math"
-        "math/rand"
-        "time"
+	"math/rand"
+	"time"
 )
 
 var (
