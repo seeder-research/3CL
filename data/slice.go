@@ -171,6 +171,7 @@ func (s *Slice) Comp(i int) *Slice {
 	sl.ptrs = sl.ptr_[:1]
 	sl.size = s.size
 	sl.memType = s.memType
+        sl.event[0] = s.event[i]
 	return sl
 }
 

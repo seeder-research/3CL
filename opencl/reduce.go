@@ -12,12 +12,16 @@ import (
 
 // Sum of all elements.
 func Sum(in *data.Slice) float32 {
+        fmt.Printf("Entered Sum \n")
 	util.Argument(in.NComp() == 1)
 	out, intermed := reduceBuf(0)
-	intEvent := k_reducesum_async(in.DevPtr(0), intermed, 0, in.Len(), reduceintcfg, [](*cl.Event){in.GetEvent(0)})
+        if err := cl.WaitForEvents([]*cl.Event{in.GetEvent(0)}); err != nil {
+                fmt.Printf("First WaitForEvents failed in sun: %+v \n", err)
+        }
+	intEvent := k_reducesum_async(in.DevPtr(0), intermed, 0, in.Len(), reduceintcfg, nil)
 	event := k_reducesum_async(intermed, out, 0, ClCUnits, reducecfg, [](*cl.Event){intEvent})
 	if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
-		fmt.Printf("WaitForEvents failed in sum: %+v \n", err)
+		fmt.Printf("Second WaitForEvents failed in sum: %+v \n", err)
 	}
 	reduceIntBuffers <- (*cl.MemObject)(intermed)
 	return copyback(out)
