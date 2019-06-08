@@ -250,7 +250,7 @@ m = {{.Data.Configs | .SelectArray "mselect" "Uniform"}} {{.TextBox "margs" "(1,
 </p>
 
 <p> 
-<div class="img-loupe-div">
+<div class="img-loupe-div" style="margin: 0">
 {{.Img "display" "/render/m" "alt=\"display\""}}
 <script>
         /* Set loupe and update it as the image can change... */
