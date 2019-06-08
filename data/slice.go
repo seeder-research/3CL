@@ -16,8 +16,7 @@ const SIZEOF_FLOAT32 = 4
 
 // Slice is like a [][]float32, but may be stored in GPU or host memory.
 type Slice struct {
-	ptr_    [MAX_COMP]unsafe.Pointer // keeps data local // TODO: rm (premature optimization)
-	ptrs    []unsafe.Pointer         // points into ptr_, limited to NComp()
+	ptrs    []unsafe.Pointer
 	size    [3]int
 	memType int8
 	event   [MAX_COMP]*cl.Event
@@ -73,9 +72,9 @@ func NilSlice(nComp int, size [3]int) *Slice {
 func SliceFromPtrs(size [3]int, memType int8, ptrs []unsafe.Pointer) *Slice {
 	length := prod(size)
 	nComp := len(ptrs)
-	util.Argument(nComp > 0 && length > 0 && nComp <= MAX_COMP)
+	util.Argument(nComp > 0 && length > 0)
 	s := new(Slice)
-	s.ptrs = s.ptr_[:nComp]
+	s.ptrs = make([]unsafe.Pointer, nComp)
 	s.size = size
 	for c := range ptrs {
 		s.ptrs[c] = ptrs[c]
@@ -84,8 +83,6 @@ func SliceFromPtrs(size [3]int, memType int8, ptrs []unsafe.Pointer) *Slice {
 	s.memType = memType
 	return s
 }
-
-const MAX_COMP = 3 // Maximum supported number of Slice components
 
 // Frees the underlying storage and zeros the Slice header to avoid accidental use.
 // Slices sharing storage will be invalid after Free. Double free is OK.
@@ -116,7 +113,6 @@ func (s *Slice) Free() {
 // INTERNAL. Overwrite struct fields with zeros to avoid
 // accidental use after Free.
 func (s *Slice) Disable() {
-	s.ptr_ = [MAX_COMP]unsafe.Pointer{}
 	s.ptrs = s.ptrs[:0]
 	s.size = [3]int{0, 0, 0}
 	s.memType = 0
@@ -167,8 +163,8 @@ func (s *Slice) Size() [3]int {
 // Comp returns a single component of the Slice.
 func (s *Slice) Comp(i int) *Slice {
 	sl := new(Slice)
-	sl.ptr_[0] = s.ptrs[i]
-	sl.ptrs = sl.ptr_[:1]
+	sl.ptrs = make([]unsafe.Pointer, 1)
+	sl.ptrs[0] = s.ptrs[i]
 	sl.size = s.size
 	sl.memType = s.memType
 	return sl
@@ -247,12 +243,12 @@ func Copy(dst, src *Slice) {
 		}
 	case s && !d:
 		for c := 0; c < dst.NComp(); c++ {
-			eventsList := memCpyDtoH(dst.ptr_[c], src.DevPtr(c), bytes)
+			eventsList := memCpyDtoH(dst.ptr[c], src.DevPtr(c), bytes)
 			src.SetEvent(c, eventsList[0])
 		}
 	case !s && d:
 		for c := 0; c < dst.NComp(); c++ {
-			eventsList := memCpyHtoD(dst.DevPtr(c), src.ptr_[c], bytes)
+			eventsList := memCpyHtoD(dst.DevPtr(c), src.ptr[c], bytes)
 			dst.SetEvent(c, eventsList[0])
 		}
 	case !d && !s:
@@ -302,7 +298,7 @@ func (s *Slice) IsNil() bool {
 	if s == nil {
 		return true
 	}
-	return s.ptr_[0] == nil
+	return s.ptr[0] == nil
 }
 
 func (s *Slice) String() string {
