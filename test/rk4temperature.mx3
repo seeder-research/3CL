@@ -18,6 +18,10 @@ enabledemag = false
 setsolver(4)
 ThermSeed(56)
 
-run(5e-9) 
+//run(5e-9) 
+OutputFormat = OVF2_TEXT
+steps(1)
+save(B_therm)
+save(m)
 print(m.average())
-expectv("m", m.average(), vector(-0.000, -0.000, 0.8366), 1e-3)
+//expectv("m", m.average(), vector(-0.000, -0.000, 0.8366), 1e-3)
