@@ -19,7 +19,7 @@ type Slice struct {
 	ptrs    []unsafe.Pointer
 	size    [3]int
 	memType int8
-	event   [MAX_COMP]*cl.Event
+	event   []*cl.Event
 }
 
 // this package must not depend on OpenCL.
@@ -76,6 +76,7 @@ func SliceFromPtrs(size [3]int, memType int8, ptrs []unsafe.Pointer) *Slice {
 	s := new(Slice)
 	s.ptrs = make([]unsafe.Pointer, nComp)
 	s.size = size
+	s.event = make([]*cl.Event, nComp)
 	for c := range ptrs {
 		s.ptrs[c] = ptrs[c]
 		s.event[c] = nil
@@ -211,6 +212,7 @@ func (s *Slice) SetEvents(events []*cl.Event) {
 	if s.NComp() != len(events) {
 		log.Panic("size of event list does not match number of components in slice")
 	}
+	s.event = make([]*cl.Event, len(events))
 	for idx, event := range events {
 		s.event[idx] = event
 	}
@@ -243,12 +245,12 @@ func Copy(dst, src *Slice) {
 		}
 	case s && !d:
 		for c := 0; c < dst.NComp(); c++ {
-			eventsList := memCpyDtoH(dst.ptr[c], src.DevPtr(c), bytes)
+			eventsList := memCpyDtoH(dst.ptrs[c], src.DevPtr(c), bytes)
 			src.SetEvent(c, eventsList[0])
 		}
 	case !s && d:
 		for c := 0; c < dst.NComp(); c++ {
-			eventsList := memCpyHtoD(dst.DevPtr(c), src.ptr[c], bytes)
+			eventsList := memCpyHtoD(dst.DevPtr(c), src.ptrs[c], bytes)
 			dst.SetEvent(c, eventsList[0])
 		}
 	case !d && !s:
@@ -298,7 +300,7 @@ func (s *Slice) IsNil() bool {
 	if s == nil {
 		return true
 	}
-	return s.ptr[0] == nil
+	return s.ptrs[0] == nil
 }
 
 func (s *Slice) String() string {
