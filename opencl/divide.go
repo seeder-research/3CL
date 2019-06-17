@@ -15,12 +15,12 @@ func Divide(dst, a, b *data.Slice) {
 	nComp := dst.NComp()
 	util.Assert(a.Len() == N && a.NComp() == nComp && b.Len() == N && b.NComp() == nComp)
 	cfg := make1DConf(N)
-	bar := make([]*cl.Event, nComp)
+	eventList := make([]*cl.Event, nComp)
 	for c := 0; c < nComp; c++ {
-		bar[c] = k_divide_async(dst.DevPtr(c), a.DevPtr(c), b.DevPtr(c), N, cfg,
+		eventList[c] = k_divide_async(dst.DevPtr(c), a.DevPtr(c), b.DevPtr(c), N, cfg,
 			[](*cl.Event){dst.GetEvent(c), a.GetEvent(c), b.GetEvent(c)})
 	}
-	err := cl.WaitForEvents(bar)
+	err := cl.WaitForEvents(eventList)
 	if err != nil {
 		fmt.Printf("WaitForEvents failed in divide: %+v \n", err)
 	}

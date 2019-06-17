@@ -69,7 +69,7 @@ func main() {
 		event := rng.Normal(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
 		err := cl.WaitForEvents([]*cl.Event{event})
 		if err != nil {
-			fmt.Printf("CreateBuffer failed for output: %+v \n", err)
+			fmt.Printf("WaitForEvents in random number generation failed: %+v \n", err)
 			return
 		}
 	}

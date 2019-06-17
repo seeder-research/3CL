@@ -161,7 +161,7 @@ static float normcdfinv_(float u) {
 
 	ushift = u - 0.5f;
 
-	v = copysign(ushift, 0.0f);
+	v = copysign(ushift, 1.0f);
 	
 	if (v < 0.499433f) {
 		v = rsqrt((-u*u) + u);
