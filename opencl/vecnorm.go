@@ -1,6 +1,7 @@
 package opencl
 
 import (
+	"fmt"
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/util"
@@ -20,4 +21,8 @@ func VecNorm(dst *data.Slice, a *data.Slice) {
 	a.SetEvent(X, event)
 	a.SetEvent(Y, event)
 	a.SetEvent(Z, event)
+	err := cl.WaitForEvents([](*cl.Event){event})
+	if err != nil {
+		fmt.Printf("WaitForEvents in VecNorm failed: %+v \n", err)
+	}
 }

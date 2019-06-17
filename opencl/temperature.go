@@ -1,6 +1,7 @@
 package opencl
 
 import (
+	"fmt"
 	"github.com/mumax/3cl/opencl/cl"
 
 	"github.com/mumax/3cl/data"
@@ -27,4 +28,8 @@ func SetTemperature(Bth, noise *data.Slice, k2mu0_Mu0VgammaDt float64, Msat, Tem
 	Msat.SetEvent(0, event)
 	Temp.SetEvent(0, event)
 	Alpha.SetEvent(0, event)
+	err := cl.WaitForEvents([](*cl.Event){event})
+	if err != nil {
+		fmt.Printf("WaitForEvents in SetTemperature failed: %+v \n", err)
+	}
 }

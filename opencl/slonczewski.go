@@ -1,6 +1,7 @@
 package opencl
 
 import (
+	"fmt"
 	"unsafe"
 
 	"github.com/mumax/3cl/data"
@@ -42,4 +43,8 @@ func AddSlonczewskiTorque2(torque, m *data.Slice, Msat, J, fixedP, alpha, pol, Î
 	fixedP.SetEvent(X, event)
 	fixedP.SetEvent(Y, event)
 	fixedP.SetEvent(Z, event)
+	err := cl.WaitForEvents([](*cl.Event){event})
+	if err != nil {
+		fmt.Printf("WaitForEvents in AddSlonczewskiTorque2 failed: %+v \n", err)
+	}
 }

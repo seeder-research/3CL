@@ -127,6 +127,10 @@ func zero1_async(dst *data.Slice) {
 	if err != nil {
 		fmt.Printf("EnqueueFillBuffer failed: %+v \n", err)
 	}
+	err = cl.WaitForEvents([](*cl.Event){event})
+	if err != nil {
+		fmt.Printf("error waiting for filling slice with zeros: %+v \n", err)
+	}
 }
 
 // forward FFT component i

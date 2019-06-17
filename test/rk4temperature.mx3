@@ -20,7 +20,7 @@ ThermSeed(56)
 
 //run(5e-9) 
 OutputFormat = OVF2_TEXT
-steps(1)
+steps(79)
 save(B_therm)
 save(m)
 print(m.average())
