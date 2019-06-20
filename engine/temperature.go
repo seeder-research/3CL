@@ -6,7 +6,6 @@ import (
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/opencl/cl"
 	//"github.com/mumax/3cl/util"
-	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -123,26 +122,9 @@ func (b *thermField) update() {
 	alpha := Alpha.MSlice()
 	defer alpha.Recycle()
 	for i := 0; i < 3; i++ {
-		err := opencl.ClCmdQueue.Finish()
-		if err != nil {
-			fmt.Printf("Error waiting for command queue to clear before generating random numbers: %+v \n", err)
-		}
 		noiseBufferEvent := b.generator.Normal(noise.DevPtr(0), int(N), []*cl.Event{noise.GetEvent(0)})
 		noise.SetEvent(0, noiseBufferEvent)
-		err = opencl.ClCmdQueue.Finish()
-		if err != nil {
-			fmt.Printf("Error waiting for command queue to clear prior to temperature update: %+v \n", err)
-		}
 		opencl.SetTemperature(dst.Comp(i), noise, k2_VgammaDt, ms, temp, alpha)
-
-		err = opencl.ClCmdQueue.Finish()
-		if err != nil {
-			fmt.Printf("Error waiting for command queue to clear after updating thermal field: %+v \n", err)
-		}
-		/*		rand.Seed((int64)(b.seed))
-				tmpSeedVal := rand.Uint32()
-				b.UpdateSeed(&tmpSeedVal)
-		*/
 	}
 
 	b.step = NSteps

@@ -16,12 +16,8 @@ Temp  = 100
 Ku1   = 1e4/4
 enabledemag = false
 setsolver(4)
-ThermSeed(56)
+ThermSeed(567)
 
-//run(5e-9) 
-OutputFormat = OVF2_TEXT
-steps(39)
-save(B_therm)
-save(m)
+run(5e-9) 
 print(m.average())
-//expectv("m", m.average(), vector(-0.000, -0.000, 0.8366), 1e-3)
+expectv("m", m.average(), vector(-0.000, -0.000, 0.8366), 2e-3)
