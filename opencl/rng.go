@@ -83,7 +83,11 @@ func NewMTGPRNGParams() *mtgp32_params {
 	var events_list []*cl.Event
 	var event *cl.Event
 	tmp := RNGmtgp.NewMTGPParams()
-	tmp.SetGroupSize(ClCUnits)
+	maxGroupSize, max_size := ClCUnits, 160
+	if maxGroupSize > max_size {
+		maxGroupSize = max_size
+	}
+	tmp.SetGroupSize(maxGroupSize)
 	tmp.GetMTGPArrays()
 	tmp.CreateParamBuffers(ClCtx)
 	events_list, err = tmp.LoadAllParamBuffersToDevice(ClCmdQueue, nil)
@@ -125,7 +129,7 @@ func (p *mtgp32_params) Init(seed uint32, events []*cl.Event) {
 	}
 	event := k_mtgp32_init_seed_kernel_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
 		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), seed,
-		&config{[]int{ClCUnits * local_item}, []int{local_item}}, events)
+		&config{[]int{p.GetGroupSize() * local_item}, []int{local_item}}, events)
 
 	p.Ini = true
 	err := cl.WaitForEvents([]*cl.Event{event})
@@ -141,8 +145,8 @@ func (p *mtgp32_params) GenerateUniform(d_data unsafe.Pointer, data_size int, ev
 		log.Fatalln("Generator has not been initialized!")
 	}
 
-	item_num := MTGP32_TN * ClCUnits
-	min_size := MTGP32_LS * ClCUnits
+	item_num := MTGP32_TN * p.GetGroupSize()
+	min_size := MTGP32_LS * p.GetGroupSize()
 	tmp_size := data_size
 	if data_size%min_size != 0 {
 		tmp_size = (data_size/min_size + 1) * min_size
@@ -154,7 +158,7 @@ func (p *mtgp32_params) GenerateUniform(d_data unsafe.Pointer, data_size int, ev
 	}
 
 	event := k_mtgp32_uniform_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
-		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, tmp_size/ClCUnits,
+		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, tmp_size/p.GetGroupSize(),
 		&config{[]int{item_num}, []int{MTGP32_TN}}, events)
 
 	if Synchronous { // debug
@@ -171,8 +175,8 @@ func (p *mtgp32_params) GenerateNormal(d_data unsafe.Pointer, data_size int, eve
 		log.Fatalln("Generator has not been initialized!")
 	}
 
-	item_num := MTGP32_TN * ClCUnits
-	min_size := MTGP32_LS * ClCUnits
+	item_num := MTGP32_TN * p.GetGroupSize()
+	min_size := MTGP32_LS * p.GetGroupSize()
 	tmp_size := data_size
 	if data_size%min_size != 0 {
 		tmp_size = (data_size/min_size + 1) * min_size
@@ -184,7 +188,7 @@ func (p *mtgp32_params) GenerateNormal(d_data unsafe.Pointer, data_size int, eve
 	}
 
 	event := k_mtgp32_normal_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
-		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, tmp_size/ClCUnits,
+		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, tmp_size/p.GetGroupSize(),
 		&config{[]int{item_num}, []int{MTGP32_TN}}, events)
 
 	if Synchronous { // debug

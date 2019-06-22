@@ -9,7 +9,7 @@ static float normcdfinv_(float u) {
 	float   tmp;
 
     if (u <= 0.0f) {
-	    tmp = FLT_MIN;
+	    tmp = 1e-5;
 	} else {
 	    tmp = u;
 	}

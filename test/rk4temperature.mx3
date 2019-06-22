@@ -16,7 +16,7 @@ Temp  = 100
 Ku1   = 1e4/4
 enabledemag = false
 setsolver(4)
-ThermSeed(567)
+//ThermSeed(56)
 
 run(5e-9) 
 print(m.average())
