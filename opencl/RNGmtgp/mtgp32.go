@@ -53,12 +53,14 @@ type MTGP32dc_params_array_ptr struct {
 	Flt_temper_size int
 	Status_size     int
 	GroupSize       int
+	GroupCount      int
 }
 
 func NewMTGPParams() *MTGP32dc_params_array_ptr {
 	q := new(MTGP32dc_params_array_ptr)
 	q.Ini = false
-	q.GroupSize = 1
+	q.GroupSize = MTGPDC_N
+	q.GroupCount = 1
 	return q
 }
 
@@ -72,7 +74,7 @@ func (p *MTGP32dc_params_array_ptr) GetMTGPArrays() {
 	pos_array := make([]int, p.GroupSize)
 	sh1_array := make([]int, p.GroupSize)
 	sh2_array := make([]int, p.GroupSize)
-	status_array := make([]uint32, MTGPDC_N)
+	status_array := make([]uint32, MTGPDC_N*p.GroupSize)
 	for i := 0; i < p.GroupSize; i++ {
 		for j := 0; j < MTGPDC_TS; j++ {
 			rec_array[(i*MTGPDC_TS)+j] = MTGP32_params_fast_[i].tbl[j]
@@ -244,6 +246,14 @@ func (p *MTGP32dc_params_array_ptr) SetGroupSize(in int) {
 
 func (p *MTGP32dc_params_array_ptr) GetGroupSize() int {
 	return p.GroupSize
+}
+
+func (p *MTGP32dc_params_array_ptr) SetGroupCount(in int) {
+	p.GroupCount = in
+}
+
+func (p *MTGP32dc_params_array_ptr) GetGroupSizeCount() int {
+	return p.GroupCount
 }
 
 var MTGP32_params_fast_11213 = []MTGP32dc_params_fast_t{

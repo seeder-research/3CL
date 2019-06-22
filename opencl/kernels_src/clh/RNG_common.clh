@@ -8,11 +8,11 @@ static float normcdfinv_(float u) {
 	float	ushift;
 	float   tmp;
 
-    if (u <= 0.0f) {
-	    tmp = FLT_MIN;
-	} else {
+//    if (u <= 0.0f) {
+//	    tmp = FLT_MIN;
+//	} else {
 	    tmp = u;
-	}
+//	}
 
 	ushift = tmp - 0.5f;
 

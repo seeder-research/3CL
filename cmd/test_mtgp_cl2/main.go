@@ -18,6 +18,7 @@ var (
 	n_cycles      = flag.Int("cycles", 5, "Total number of random number generation cycles")
 	r_seed        = flag.Uint("seed", 0, "Seed value of RNG")
 	d_dump        = flag.Bool("dump", false, "Whether to dump generated values to screen")
+	d_norm        = flag.Bool("norm", false, "Whether to generate normally distributed numbers")
 	Flag_platform = flag.Int("platform", 0, "Specify OpenCL platform")
 	Flag_gpu      = flag.Int("gpu", 0, "Specify GPU")
 )
@@ -66,7 +67,11 @@ func main() {
 	}
 
 	for idx := 0; idx < *n_cycles; idx++ {
-		event := rng.Normal(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
+		if *d_norm {
+			event := rng.Normal(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
+		} else {
+			event := rng.Uniform(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
+		}
 		err := cl.WaitForEvents([]*cl.Event{event})
 		if err != nil {
 			fmt.Printf("CreateBuffer failed for output: %+v \n", err)
