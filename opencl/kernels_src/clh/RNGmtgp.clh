@@ -55,7 +55,7 @@ static inline uint para_rec(mtgp32_t * mtgp, uint X1, uint X2, uint Y)
  * @param[in] T the tempering helper value.
  * @return the tempered and converted value.
  */
-static inline uint temper_single(mtgp32_t * mtgp, uint V, uint T)
+static inline uint temper_float_open(mtgp32_t * mtgp, uint V, uint T)
 {
     uint MAT;
     uint r;
@@ -63,7 +63,7 @@ static inline uint temper_single(mtgp32_t * mtgp, uint V, uint T)
     T ^= T >> 16;
     T ^= T >> 8;
     MAT = mtgp->single_temper_tbl[T & 0x0f];
-    r = (V >> 9) ^ MAT;
+    r = ((V >> 9) ^ MAT) | 1;
     return r;
 }
 

@@ -67,10 +67,11 @@ func main() {
 	}
 
 	for idx := 0; idx < *n_cycles; idx++ {
+                var event *cl.Event
 		if *d_norm {
-			event := rng.Normal(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
+			event = rng.Normal(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
 		} else {
-			event := rng.Uniform(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
+			event = rng.Uniform(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
 		}
 		err := cl.WaitForEvents([]*cl.Event{event})
 		if err != nil {
@@ -86,7 +87,15 @@ func main() {
 		fmt.Println("Results after execution: ", resultsArr[0])
 	}
 
-	fOut, fErr := os.Create("norm_bytes.bin")
+        var fOut *os.File
+        var fErr error
+
+        if *d_norm {
+        	fOut, fErr = os.Create("norm_bytes.bin")
+        } else {
+        	fOut, fErr = os.Create("uniform_bytes.bin")
+        }
+
 	if fErr != nil {
 		panic(fErr)
 	}

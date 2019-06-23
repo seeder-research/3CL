@@ -53,7 +53,7 @@ __kernel void mtgp32_uniform(
 		     status[MTGP32_LS - MTGP32_N + lid + 1],
 		     status[MTGP32_LS - MTGP32_N + lid + pos]);
 	status[lid] = r;
-	o = temper_single(&mtgp,
+	o = temper_float_open(&mtgp,
 			  r,
 			  status[MTGP32_LS - MTGP32_N + lid + pos - 1]);
 	d_data[size * gid + i + lid] = as_float(o) - 1.0f;
@@ -64,7 +64,7 @@ __kernel void mtgp32_uniform(
 		     status[(4 * MTGP32_TN - MTGP32_N + lid + pos)
 			    % MTGP32_LS]);
 	status[lid + MTGP32_TN] = r;
-	o = temper_single(
+	o = temper_float_open(
 	    &mtgp,
 	    r,
 	    status[(4 * MTGP32_TN - MTGP32_N + lid + pos - 1) % MTGP32_LS]);
@@ -75,7 +75,7 @@ __kernel void mtgp32_uniform(
 		     status[2 * MTGP32_TN - MTGP32_N + lid + 1],
 		     status[2 * MTGP32_TN - MTGP32_N + lid + pos]);
 	status[lid + 2 * MTGP32_TN] = r;
-	o = temper_single(&mtgp,
+	o = temper_float_open(&mtgp,
 			  r,
 			  status[lid + pos - 1 + 2 * MTGP32_TN - MTGP32_N]);
 	d_data[size * gid + 2 * MTGP32_TN + i + lid] = as_float(o) - 1.0f;

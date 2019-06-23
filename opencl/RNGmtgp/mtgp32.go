@@ -68,14 +68,14 @@ func (p *MTGP32dc_params_array_ptr) GetMTGPArrays() {
 	if (p.GroupSize > mtgpdc_params_num) || (p.GroupSize < 0) {
 		log.Fatalln("Input range: 0 < GroupSize < ", mtgpdc_params_num)
 	}
-	rec_array := make([]uint32, (MTGPDC_TS * p.GroupSize))
-	temper_array := make([]uint32, (MTGPDC_TS * p.GroupSize))
-	flt_temper_array := make([]uint32, (MTGPDC_TS * p.GroupSize))
-	pos_array := make([]int, p.GroupSize)
-	sh1_array := make([]int, p.GroupSize)
-	sh2_array := make([]int, p.GroupSize)
-	status_array := make([]uint32, MTGPDC_N*p.GroupSize)
-	for i := 0; i < p.GroupSize; i++ {
+	rec_array := make([]uint32, (MTGPDC_TS * p.GroupCount))
+	temper_array := make([]uint32, (MTGPDC_TS * p.GroupCount))
+	flt_temper_array := make([]uint32, (MTGPDC_TS * p.GroupCount))
+	pos_array := make([]int, p.GroupCount)
+	sh1_array := make([]int, p.GroupCount)
+	sh2_array := make([]int, p.GroupCount)
+	status_array := make([]uint32, MTGPDC_N*p.GroupCount)
+	for i := 0; i < p.GroupCount; i++ {
 		for j := 0; j < MTGPDC_TS; j++ {
 			rec_array[(i*MTGPDC_TS)+j] = MTGP32_params_fast_[i].tbl[j]
 			temper_array[(i*MTGPDC_TS)+j] = MTGP32_params_fast_[i].tmp_tbl[j]
