@@ -132,8 +132,10 @@ func (p *mtgp32_params) GenerateUniform(d_data unsafe.Pointer, data_size int, ev
 		log.Fatalln("Generator has not been initialized!")
 	}
 
-	item_num := MTGP32_TN * p.GetGroupCount()
-	min_size := MTGP32_LS * p.GetGroupCount()
+//	item_num := MTGP32_TN * p.GetGroupCount()
+//	min_size := MTGP32_LS * p.GetGroupCount()
+	item_num := MTGP32_TN
+	min_size := MTGP32_LS
 	tmpSize := data_size
 	if data_size%min_size != 0 {
 		tmpSize = (data_size/min_size + 1) * min_size
@@ -145,7 +147,7 @@ func (p *mtgp32_params) GenerateUniform(d_data unsafe.Pointer, data_size int, ev
 	}
 
 	event := k_mtgp32_uniform_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
-		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, tmpSize/p.GetGroupCount(),
+		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, tmpSize,
 		&config{[]int{item_num}, []int{MTGP32_TN}}, events)
 
 	if Synchronous { // debug
@@ -162,8 +164,10 @@ func (p *mtgp32_params) GenerateNormal(d_data unsafe.Pointer, data_size int, eve
 		log.Fatalln("Generator has not been initialized!")
 	}
 
-	item_num := MTGP32_TN * p.GetGroupCount()
-	min_size := MTGP32_LS * p.GetGroupCount()
+//	item_num := MTGP32_TN * p.GetGroupCount()
+//	min_size := MTGP32_LS * p.GetGroupCount()
+	item_num := MTGP32_TN
+	min_size := MTGP32_LS
 	tmpSize := data_size
 	if data_size%min_size != 0 {
 		tmpSize = (data_size/min_size + 1) * min_size
@@ -175,7 +179,7 @@ func (p *mtgp32_params) GenerateNormal(d_data unsafe.Pointer, data_size int, eve
 	}
 
 	event := k_mtgp32_normal_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
-		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, tmpSize/p.GetGroupCount(),
+		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, tmpSize,
 		&config{[]int{item_num}, []int{MTGP32_TN}}, events)
 
 	if Synchronous { // debug
