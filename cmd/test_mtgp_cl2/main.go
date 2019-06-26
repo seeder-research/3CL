@@ -67,16 +67,10 @@ func main() {
 	}
 
 	for idx := 0; idx < *n_cycles; idx++ {
-                var event *cl.Event
 		if *d_norm {
-			event = rng.Normal(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
+			rng.Normal(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
 		} else {
-			event = rng.Uniform(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
-		}
-		err := cl.WaitForEvents([]*cl.Event{event})
-		if err != nil {
-			fmt.Printf("CreateBuffer failed for output: %+v \n", err)
-			return
+			rng.Uniform(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
 		}
 	}
 

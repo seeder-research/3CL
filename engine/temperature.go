@@ -122,8 +122,7 @@ func (b *thermField) update() {
 	alpha := Alpha.MSlice()
 	defer alpha.Recycle()
 	for i := 0; i < 3; i++ {
-		noiseBufferEvent := b.generator.Normal(noise.DevPtr(0), int(N), []*cl.Event{noise.GetEvent(0)})
-		noise.SetEvent(0, noiseBufferEvent)
+		b.generator.Normal(noise.DevPtr(0), int(N), []*cl.Event{noise.GetEvent(0)})
 		opencl.SetTemperature(dst.Comp(i), noise, k2_VgammaDt, ms, temp, alpha)
 	}
 

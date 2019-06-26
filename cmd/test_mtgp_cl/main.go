@@ -64,12 +64,7 @@ func main() {
 		fmt.Println("Results before execution: ", resultsArr[0])
 	}
 
-	event := rng.Uniform(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
-	err := cl.WaitForEvents([]*cl.Event{event})
-	if err != nil {
-		fmt.Printf("Uniform RN generation failed for output: %+v \n", err)
-		return
-	}
+	rng.Uniform(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
 
 	resultsSlice = output.HostCopy()
 	resultsArr = resultsSlice.Host()
@@ -116,12 +111,7 @@ func main() {
 		fmt.Println("Results before execution: ", resultsArr[0])
 	}
 
-	event = rng.Normal(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
-	err = cl.WaitForEvents([]*cl.Event{event})
-	if err != nil {
-		fmt.Printf("CreateBuffer failed for output: %+v \n", err)
-		return
-	}
+	rng.Normal(output.DevPtr(0), d_size, []*cl.Event{output.GetEvent(0)})
 
 	resultsSlice = output.HostCopy()
 	resultsArr = resultsSlice.Host()
