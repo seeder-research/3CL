@@ -68,7 +68,7 @@ func (g *Generator) CreatePNG() {
 }
 
 func (g *Generator) Init(seed *uint32, events []*cl.Event) {
-	g.buf_size = 3 * ClCUnits * MTGP32_TN
+	g.buf_size = 1 * MTGP32_TN
 	if seed == nil {
 		g.PRNG.Init(initRNG(), events)
 	} else {
@@ -144,9 +144,11 @@ func (g *Generator) Normal(data unsafe.Pointer, d_size int, events []*cl.Event) 
 	var event *cl.Event
 	var err error
 	demand, demand_offset := d_size, 0
-	err = cl.WaitForEvents(events)
-	if err != nil {
-		fmt.Printf("WaitForEvents prior to generating random numbers failed: %+v \n", err)
+	if events != nil {
+		err = cl.WaitForEvents(events)
+		if err != nil {
+			fmt.Printf("WaitForEvents prior to generating random numbers failed: %+v \n", err)
+		}
 	}
 	for demand > 0 {
 		if g.supply <= 0 {

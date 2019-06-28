@@ -4,8 +4,9 @@ import (
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/mag"
 	"github.com/mumax/3cl/opencl"
-	"github.com/mumax/3cl/opencl/cl"
+	//"github.com/mumax/3cl/opencl/cl"
 	//"github.com/mumax/3cl/util"
+	//"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -122,7 +123,7 @@ func (b *thermField) update() {
 	alpha := Alpha.MSlice()
 	defer alpha.Recycle()
 	for i := 0; i < 3; i++ {
-		b.generator.Normal(noise.DevPtr(0), int(N), []*cl.Event{noise.GetEvent(0)})
+		b.generator.Normal(noise.DevPtr(0), int(N), nil)
 		opencl.SetTemperature(dst.Comp(i), noise, k2_VgammaDt, ms, temp, alpha)
 	}
 
