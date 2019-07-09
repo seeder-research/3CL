@@ -386,6 +386,14 @@ func (q *CommandQueue) EnqueueCopyBuffer(srcBuffer, dstBuffer *MemObject, srcOff
 	return newEvent(event), err
 }
 
+//EnqueueCopyBufferFloat32 Copies the buffer in the Float32 format
+func (q *CommandQueue) EnqueueCopyBufferFloat32(srcBuffer, dstBuffer *MemObject, srcOffset, dstOffset, byteCount int, eventWaitList []*Event) (*Event, error) {
+	var event C.cl_event
+	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
+	err := toError(C.clEnqueueCopyBuffer(q.clQueue, srcBuffer.clMem, dstBuffer.clMem, 4*C.size_t(srcOffset), 4*C.size_t(dstOffset), 4*C.size_t(byteCount), C.cl_uint(WaitListLen), eventWaitListPtr, &event))
+	return newEvent(event), err
+}
+
 // Enqueue command to write to a region in buffer object from host memory.
 func (q *CommandQueue) EnqueueCopyBufferRect(dst, src *MemObject, dst_origin, src_origin, region *Dim3, dst_row_pitch, dst_slice_pitch, src_row_pitch, src_slice_pitch int, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
@@ -444,7 +452,7 @@ func (q *CommandQueue) EnqueueWriteBufferRect(buffer *MemObject, blocking bool, 
 	return newEvent(event), err
 }
 
-// Enqueue commands to read from a buffer object to host memory.
+//EnqueueReadBuffer Enqueue commands to read from a buffer object to host memory.
 func (q *CommandQueue) EnqueueReadBuffer(buffer *MemObject, blocking bool, offset, dataSize int, dataPtr unsafe.Pointer, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
 	eventWaitListPtr, WaitListLen := eventListPtr(eventWaitList)
@@ -464,7 +472,7 @@ func (q *CommandQueue) EnqueueReadBufferFloat32(buffer *MemObject, blocking bool
 	return q.EnqueueReadBuffer(buffer, blocking, offset, dataSize, dataPtr, eventWaitList)
 }
 
-// Enqueue commands to read from a region in buffer object to host memory.
+//EnqueueReadBufferRect Enqueue commands to read from a region in buffer object to host memory.
 func (q *CommandQueue) EnqueueReadBufferRect(buffer *MemObject, blocking bool, buffer_origin, host_origin, region *Dim3, buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch int, dataPtr unsafe.Pointer, eventWaitList []*Event) (*Event, error) {
 	var event C.cl_event
 	host_offset := make([]C.size_t, 3)
