@@ -142,6 +142,8 @@ func Init(gpu int) {
 
 	data.EnableGPU(memFree, memFree, MemCpy, MemCpyDtoH, MemCpyHtoD)
 
+        // TODO: Update whether SetupCLFFT needs to be executed, or should
+        // there be a function in the new FFT library that does this
 	fmt.Printf("Initializing clFFT library \n")
 	if err := cl.SetupCLFFT(); err != nil {
 		fmt.Printf("failed to initialize clFFT \n")
@@ -157,6 +159,8 @@ func (s *GPU) getGpuPlatform() *cl.Platform {
 }
 
 func ReleaseAndClean() {
+        // TODO: Update whether TeardownCLFFT needs to be executed, or should
+        // there be a function in the new FFT library that does this
 	cl.TeardownCLFFT()
 	ClCmdQueue.Release()
 	ClProgram.Release()

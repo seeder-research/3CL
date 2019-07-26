@@ -134,6 +134,7 @@ func (c *DemagConvolution) fwFFT(i int, inp, vol *data.Slice, Msat MSlice) []*cl
 	zero1_async(c.fftRBuf[i])
 	in := inp.Comp(i)
 	copyPadMul(c.fftRBuf[i], in, vol, c.realKernSize, c.inputSize, Msat)
+	// TODO: Make sure the plan has an ExecAsync() function
 	event, err := c.fwPlan.ExecAsync(c.fftRBuf[i], c.fftCBuf[i])
 	if err != nil {
 		fmt.Printf("Error enqueuing forward fft: %+v \n", err)
@@ -143,6 +144,7 @@ func (c *DemagConvolution) fwFFT(i int, inp, vol *data.Slice, Msat MSlice) []*cl
 
 // backward FFT component i
 func (c *DemagConvolution) bwFFT(i int, outp *data.Slice) {
+    // TODO: Make sure the plan has an ExecAsync() function
 	event, err := c.bwPlan.ExecAsync(c.fftCBuf[i], c.fftRBuf[i])
 	if err != nil {
 		fmt.Printf("Error enqueuing backward fft: %+v", err)
@@ -159,16 +161,16 @@ func (c *DemagConvolution) init(realKern [3][3]*data.Slice) {
 	// init device buffers
 	// 2D re-uses fftBuf[X] as fftBuf[Z], 3D needs all 3 fftBufs.
 	nc := fftR2COutputSizeFloats(c.realKernSize)
-	c.fftCBuf[X] = NewSlice(1, nc)
-	c.fftCBuf[Y] = NewSlice(1, nc)
+	c.fftCBuf[X] = NewSlice(1, nc) // Output buffer for real to complex FFT
+	c.fftCBuf[Y] = NewSlice(1, nc) // Output buffer for real to complex FFT
 	if c.is2D() {
 		c.fftCBuf[Z] = c.fftCBuf[X]
 	} else {
 		c.fftCBuf[Z] = NewSlice(1, nc)
 	}
 
-	c.fftRBuf[X] = NewSlice(1, c.realKernSize)
-	c.fftRBuf[Y] = NewSlice(1, c.realKernSize)
+	c.fftRBuf[X] = NewSlice(1, c.realKernSize)  // Output buffer for complex to real FFT
+	c.fftRBuf[Y] = NewSlice(1, c.realKernSize)  // Output buffer for complex to real FFT
 	if c.is2D() {
 		c.fftRBuf[Z] = c.fftRBuf[X]
 	} else {
@@ -176,8 +178,9 @@ func (c *DemagConvolution) init(realKern [3][3]*data.Slice) {
 	}
 
 	// init FFT plans
-	c.fwPlan = newFFT3DR2C(c.realKernSize[X], c.realKernSize[Y], c.realKernSize[Z])
-	c.bwPlan = newFFT3DC2R(c.realKernSize[X], c.realKernSize[Y], c.realKernSize[Z])
+	// TODO: Make sure the plan types match those in the DemagConvolution structure
+	c.fwPlan = newFFT3DR2C(c.realKernSize[X], c.realKernSize[Y], c.realKernSize[Z]) // Create FFTplan for real to complex FFT
+	c.bwPlan = newFFT3DC2R(c.realKernSize[X], c.realKernSize[Y], c.realKernSize[Z]) // Create FFTplan for complex to real FFT
 
 	// init FFT kernel
 
@@ -205,6 +208,7 @@ func (c *DemagConvolution) init(realKern [3][3]*data.Slice) {
 			if realKern[i][j] != nil { // ignore 0's
 				// FW FFT
 				data.Copy(input, realKern[i][j])
+				// TODO: Make sure the plan has an ExecAsync() function
 				event, err := c.fwPlan.ExecAsync(input, output)
 				if err != nil {
 					fmt.Printf("error enqueuing forward fft in init: %+v \n ", err)
@@ -225,6 +229,7 @@ func (c *DemagConvolution) init(realKern [3][3]*data.Slice) {
 				}
 
 				// extract real parts (X symmetry)
+				// TODO: Make sure the plan has an InputLen() function
 				scaleRealParts(fftKern, kCmplx, 1/float32(c.fwPlan.InputLen()))
 				c.kern[i][j] = GPUCopy(fftKern)
 			}
@@ -248,7 +253,8 @@ func (c *DemagConvolution) Free() {
 			c.kern[i][j].Free()
 			c.kern[i][j] = nil
 		}
-		c.fwPlan.Free()
-		c.bwPlan.Free()
+		// TODO: Make sure the plan has a Free() function
+		c.fwPlan.Free() // Need to free the buffers and programs in the plan
+		c.bwPlan.Free() // Need to free the buffers and programs in the plan
 	}
 }

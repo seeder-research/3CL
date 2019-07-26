@@ -39,6 +39,7 @@ func (c *MFMConvolution) Free() {
 		c.gpuFFTKern[j] = nil
 		c.kern[j] = nil
 	}
+	// TODO: Make sure the Free() function for the FFT plans is supported
 	c.fwPlan.Free()
 	c.bwPlan.Free()
 }
@@ -46,6 +47,7 @@ func (c *MFMConvolution) Free() {
 func (c *MFMConvolution) init() {
 	// init FFT plans
 	padded := c.kernSize
+	// TODO: Make sure the plan type in the MFMConvolution structure is correct
 	c.fwPlan = newFFT3DR2C(padded[X], padded[Y], padded[Z])
 	c.bwPlan = newFFT3DC2R(padded[X], padded[Y], padded[Z])
 
@@ -67,10 +69,12 @@ func (c *MFMConvolution) initFFTKern3D() {
 	for i := 0; i < 3; i++ {
 		zero1_async(c.fftRBuf)
 		data.Copy(c.fftRBuf, c.kern[i])
+		// TODO: Make sure the plan has an ExecAsync() function
 		events, err := c.fwPlan.ExecAsync(c.fftRBuf, c.fftCBuf)
 		if err != nil {
 			fmt.Printf("error enqueuing forward fft in initfftkern3d: %+v \n", err)
 		}
+		// TODO: Make sure the plan has an InputLen() function
 		scale := 2 / float32(c.fwPlan.InputLen()) // ??
 		err = cl.WaitForEvents(events)
 		if err != nil {
@@ -86,6 +90,7 @@ func (c *MFMConvolution) Exec(outp, inp, vol *data.Slice, Msat MSlice) {
 	for i := 0; i < 3; i++ {
 		zero1_async(c.fftRBuf)
 		copyPadMul(c.fftRBuf, inp.Comp(i), vol, c.kernSize, c.size, Msat)
+		// TODO: Make sure the plan has an ExecAsync() function
 		events, err := c.fwPlan.ExecAsync(c.fftRBuf, c.fftCBuf)
 		if err != nil {
 			fmt.Printf("error enqueuing forward fft in mfmconv exec: %+v \n", err)
@@ -98,6 +103,7 @@ func (c *MFMConvolution) Exec(outp, inp, vol *data.Slice, Msat MSlice) {
 		Nx, Ny := c.fftKernSize[X]/2, c.fftKernSize[Y] //   ??
 		kernMulC_async(c.fftCBuf, c.gpuFFTKern[i], Nx, Ny)
 
+		// TODO: Make sure the plan has an ExecAsync() function
 		events, err = c.bwPlan.ExecAsync(c.fftCBuf, c.fftRBuf)
 		if err != nil {
 			fmt.Printf("error enqueuing backward fft in mfmconv exec: %+v \n", err)

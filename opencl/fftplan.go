@@ -8,6 +8,7 @@ import (
 )
 
 // Base implementation for all FFT plans.
+// TODO: Update fftplan structure according to new FFT library
 type fftplan struct {
 	handle *cl.ClFFTPlan
 }

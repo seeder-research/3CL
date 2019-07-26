@@ -17,10 +17,14 @@ type fft3DR2CPlan struct {
 
 // 3D single-precision real-to-complex FFT plan.
 func newFFT3DR2C(Nx, Ny, Nz int) fft3DR2CPlan {
+        // TODO: Update plan creation to create plan from new FFT library
 	handle, err := cl.NewCLFFTPlan(ClCtx, cl.CLFFTDim3D, []int{Nx, Ny, Nz})
 	if err != nil {
 		log.Printf("Unable to create fft3dr2c plan \n")
 	}
+        // TODO: The next lines running Set<> functions configure
+        // the clFFT plans for the simulator. These need to be
+        // updated accordingly for the new FFT library
 	arrLayout := cl.NewArrayLayout()
 	arrLayout.SetInputLayout(cl.CLFFTLayoutReal)
 	arrLayout.SetOutputLayout(cl.CLFFTLayoutHermitianInterleaved)
@@ -50,6 +54,8 @@ func newFFT3DR2C(Nx, Ny, Nz int) fft3DR2CPlan {
 		log.Printf("Unable to set transpose of fft3dr2c result \n")
 	}
 
+        // TODO: After configuring the plans, bakeplan is run so that
+        // it does not need to be run when plan is first executed
 	err = handle.BakePlanSimple([]*cl.CommandQueue{ClCmdQueue})
 	if err != nil {
 		log.Printf("Unable to bake fft3dr2c plan \n")
@@ -77,7 +83,8 @@ func (p *fft3DR2CPlan) ExecAsync(src, dst *data.Slice) ([]*cl.Event, error) {
 	srcMemObj := *(*cl.MemObject)(tmpPtr)
 	tmpPtr = dst.DevPtr(0)
 	dstMemObj := *(*cl.MemObject)(tmpPtr)
-	eventsList, err := p.handle.EnqueueForwardTransform([]*cl.CommandQueue{ClCmdQueue}, []*cl.Event{src.GetEvent(0), dst.GetEvent(0)},
+        // TODO: the following line needs to be updated for the new FFT library
+ 	eventsList, err := p.handle.EnqueueForwardTransform([]*cl.CommandQueue{ClCmdQueue}, []*cl.Event{src.GetEvent(0), dst.GetEvent(0)},
 		[]*cl.MemObject{&srcMemObj}, []*cl.MemObject{&dstMemObj}, nil)
 	if Synchronous {
 		ClCmdQueue.Finish()
