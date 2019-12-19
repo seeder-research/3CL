@@ -46,6 +46,24 @@ static inline uint para_rec(mtgp32_t * mtgp, uint X1, uint X2, uint Y)
 }
 
 /**
+ * The tempering function.
+ *
+ * @param[in] mtgp mtgp32 structure
+ * @param[in] V the output value should be tempered.
+ * @param[in] T the tempering helper value.
+ * @return the tempered value.
+ */
+static inline uint temper(mtgp32_t * mtgp, uint V, uint T)
+{
+    uint MAT;
+
+    T ^= T >> 16;
+    T ^= T >> 8;
+    MAT = mtgp->temper_tbl[T & 0x0f];
+    return V ^ MAT;
+}
+
+/**
  * The tempering and converting function.
  * By using the preset-ted table, converting to IEEE format
  * and tempering are done simultaneously.
