@@ -10,31 +10,25 @@ import (
 //        s = 2 atan[(a . b x c /(1 + a.b + a.c + b.c)] / (dx dy)
 // After M Boettcher et al, New J Phys 20, 103014 (2018), adapted from
 // B. Berg and M. Luescher, Nucl. Phys. B 190, 412 (1981).
-// A unit cell comprises two triangles, but s is a site-dependent quantity so we
-// double-count and average over four triangles.
-// This implementation works best for extended systems with periodic boundaries and provides a
-// workable definition of the local charge density.
-// See topologicalchargelattice.cl
-func SetTopologicalChargeLattice(s *data.Slice, m *data.Slice, mesh *data.Mesh) {
-	cellsize := mesh.CellSize()
+// This version is best for finite-sized lattices, but does not provide a useful local density.
+// See topologicalchargefinitelattice.cu
+func SetTopologicalChargeFiniteLattice(s *data.Slice, m *data.Slice, mesh *data.Mesh) {
 	N := s.Size()
 	util.Argument(m.Size() == N)
 	cfg := make3DConf(N)
-	icxcy := float32(1.0 / (cellsize[X] * cellsize[Y]))
 
-	event := k_settopologicalchargelattice_async(
-	        s.DevPtr(X),
+	event := k_settopologicalchargefinitelattice_async(s.DevPtr(X),
 		m.DevPtr(X), m.DevPtr(Y), m.DevPtr(Z),
-		icxcy, N[X], N[Y], N[Z], mesh.PBC_code(),
+		N[X], N[Y], N[Z], mesh.PBC_code(),
 		cfg, [](*cl.Event){s.GetEvent(X),
 		        m.GetEvent(X), m.GetEvent(Y), m.GetEvent(Z)})
-		        
+
         s.SetEvent(X, event)
         m.SetEvent(X, event)
         m.SetEvent(Y, event)
         m.SetEvent(Z, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
 	if err != nil {
-		fmt.Printf("WaitForEvents failed in settopologicalchargelattice: %+v \n", err)
+		fmt.Printf("WaitForEvents failed in settopologicalchargefinitelattice: %+v \n", err)
 	}
 }

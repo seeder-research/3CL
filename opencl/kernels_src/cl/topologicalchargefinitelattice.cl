@@ -9,9 +9,9 @@
 // workable definition of the local charge density.
 // See topologicalchargelattice.go.
 __kernel void
-settopologicalchargelattice(__global float* __restrict s,
-                     __global float* __restrict mx, __global float* __restrict my, __global float* __restrict mz,
-                     float icxcy, int Nx, int Ny, int Nz, uint8_t PBC) {
+settopologicalchargefinitelattice(float* __restrict__ s,
+                     float* __restrict__ mx, float* __restrict__ my, float* __restrict__ mz,
+                     int Nx, int Ny, int Nz, uint8_t PBC) {
 
 	int ix = get_group_id(0) * get_local_size(0) + get_local_id(0);
 	int iy = get_group_id(1) * get_local_size(1) + get_local_id(1);
@@ -40,12 +40,13 @@ settopologicalchargelattice(__global float* __restrict s,
         // 2: (i,j+1)
         // 3: (i-1,j)
         // 4: (i,j-1)
-        // The four triangles are therefore 012, 023, 034, 041
-        // The index order is important to preserve the same measure of chirality
-        float trig012, trig023, trig034, trig041;
+        // a: (i+1,j+1)
+        // The two main triangles are 012 and 034, with 01a and 0a2 being special edge cases
+        // The index order is important because the triangles are **oriented**.
+        float trig012, trig034, trig01a, trig0a2;
         float numer, denom;
 
-        {
+        { 
                 float3 m1 = make_float3(0.0f, 0.0f, 0.0f);      // load neighbour m if inside grid, keep 0 otherwise
                 i_ = idx(hclampx(ix+1), iy, iz);
                 if (ix+1 < Nx || PBCx)
@@ -74,6 +75,13 @@ settopologicalchargelattice(__global float* __restrict s,
                         m4 = make_float3(mx[i_], my[i_], mz[i_]);
                 }
 
+                float3 ma = make_float3(0.0f, 0.0f, 0.0f);	// only case of next-nearest neighbour
+                i_ = idx(hclampx(ix+1), lclampy(iy+1), iz);
+                if ( (ix+1 < Nx || PBCx) && (iy+1 < Ny || PBCy) )
+                {
+                        ma = make_float3(mx[i_], my[i_], mz[i_]);
+                }
+
                 // We don't care whether the neighbours exist, since the dot and
                 // cross products will be zero if they don't
                 // Triangle 012
@@ -82,26 +90,34 @@ settopologicalchargelattice(__global float* __restrict s,
                 denom   = 1.0f + dot(m0, m1) + dot(m0, m2) + dot(m1, m2);
                 trig012 = 2.0f * atan2(numer, denom);
 
-                // Triangle 023
-                bxc     = cross(m2, m3);
-                numer   = dot(m0, bxc);
-                denom   = 1.0f + dot(m0, m2) + dot(m0, m3) + dot(m2, m3);
-                trig023 = 2.0f * atan2(numer, denom);
-
                 // Triangle 034
                 bxc     = cross(m3, m4);
                 numer   = dot(m0, bxc);
                 denom   = 1.0f + dot(m0, m3) + dot(m0, m4) + dot(m3, m4);
                 trig034 = 2.0f * atan2(numer, denom);
 
-                // Triangle 041
-                bxc     = cross(m4, m1);
-                numer   = dot(m0, bxc);
-                denom   = 1.0f + dot(m0, m4) + dot(m0, m1) + dot(m4, m1);
-                trig041 = 2.0f * atan2(numer, denom);
+                // Special case 1: Triangle 01a
+                trig01a = 0.0f;
+                if ( dot(m2, m2)== 0.0f && dot(ma, ma) != 0.0f ) // If 2 doesn't exist, but a does
+                {
+                        bxc     = cross(m1, ma);
+                        numer   = dot(m0, bxc);
+                        denom   = 1.0f + dot(m0, m1) + dot(m0, ma) + dot(m1, ma);
+                        trig01a = 2.0f * atan2(numer, denom);
+                }
+
+                // Special case 2: Triangle 0a2
+                trig0a2	= 0.0f;
+                if ( dot(m1, m1)== 0.0f && dot(ma, ma) != 0.0f ) // If 1 doesn't exist, but a does
+                {
+                        bxc     = cross(ma, m2);
+                        numer   = dot(m0, bxc);
+                        denom   = 1.0f + dot(m0, ma) + dot(m0, m2) + dot(ma, m2);
+                        trig0a2 = 2.0f * atan2(numer, denom);
+                }
+
         }
 
-        // The on-site value of s is the sum of these 4 triangles divided by 2
-        // Normalize by cell area icxcy = 1/(dx dy) to obtain a true density
-        s[I] = 0.5f * icxcy * ( trig012 + trig023 + trig034 + trig041 );
+        // Sum over all triangles
+        s[I] = trig012 + trig034 + trig01a + trig0a2;
 }
