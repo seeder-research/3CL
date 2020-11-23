@@ -6,6 +6,4 @@ func init() {
 }
 
 func EnableUnsafe() {
-	util.Log("Allowing unsafe features")
-	allowUnsafe = true
 }

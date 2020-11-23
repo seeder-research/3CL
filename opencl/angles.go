@@ -1,8 +1,11 @@
 package opencl
 
 import (
-	"github.com/mumax/3/data"
-	"github.com/mumax/3/util"
+	"fmt"
+
+	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
+	"github.com/mumax/3cl/util"
 )
 
 func SetPhi(s *data.Slice, m *data.Slice) {
@@ -14,9 +17,9 @@ func SetPhi(s *data.Slice, m *data.Slice) {
 		N[X], N[Y], N[Z],
 		cfg, [](*cl.Event){s.GetEvent(X),
 			m.GetEvent(X), m.GetEvent(Y)})
-	s.SetEvent(X, [](*cl.Event){event})
-	m.SetEvent(X, [](*cl.Event){event})
-	m.SetEvent(Y, [](*cl.Event){event})
+	s.SetEvent(X, event)
+	m.SetEvent(X, event)
+	m.SetEvent(Y, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
 	if err != nil {
 		fmt.Printf("WaitForEvents failed in phi: %+v \n", err)
@@ -32,8 +35,8 @@ func SetTheta(s *data.Slice, m *data.Slice) {
 		N[X], N[Y], N[Z],
 		cfg, [](*cl.Event){s.GetEvent(X),
 			m.GetEvent(Z)})
-	s.SetEvent(X, [](*cl.Event){event})
-	m.SetEvent(Z, [](*cl.Event){event})
+	s.SetEvent(X, event)
+	m.SetEvent(Z, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
 	if err != nil {
 		fmt.Printf("WaitForEvents failed in theta: %+v \n", err)

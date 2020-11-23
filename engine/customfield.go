@@ -447,5 +447,5 @@ func (q *normalized) NComp() int {
 func (q *normalized) EvalTo(dst *data.Slice) {
 	util.Assert(dst.NComp() == q.NComp())
 	q.orig.EvalTo(dst)
-	cuda.Normalize(dst, nil)
+	opencl.Normalize(dst, nil)
 }

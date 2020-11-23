@@ -136,6 +136,7 @@ func Madd5(dst, src1, src2, src3, src4, src5 *data.Slice, factor1, factor2, fact
 	util.Assert(src1.Len() == N && src2.Len() == N && src3.Len() == N && src4.Len() == N && src5.Len() == N)
 	util.Assert(src1.NComp() == nComp && src2.NComp() == nComp && src3.NComp() == nComp && src4.NComp() == nComp && src5.NComp() == nComp)
 	cfg := make1DConf(N)
+	eventList := make([]*cl.Event, nComp)
 	for c := 0; c < nComp; c++ {
 		eventList[c] = k_madd5_async(dst.DevPtr(c),
 			src1.DevPtr(c), factor1,
@@ -166,6 +167,7 @@ func Madd6(dst, src1, src2, src3, src4, src5, src6 *data.Slice, factor1, factor2
 	util.Assert(src1.Len() == N && src2.Len() == N && src3.Len() == N && src4.Len() == N && src5.Len() == N && src6.Len() == N)
 	util.Assert(src1.NComp() == nComp && src2.NComp() == nComp && src3.NComp() == nComp && src4.NComp() == nComp && src5.NComp() == nComp && src6.NComp() == nComp)
 	cfg := make1DConf(N)
+	eventList := make([]*cl.Event, nComp)
 	for c := 0; c < nComp; c++ {
 		eventList[c] = k_madd6_async(dst.DevPtr(c),
 			src1.DevPtr(c), factor1,
@@ -199,8 +201,9 @@ func Madd7(dst, src1, src2, src3, src4, src5, src6, src7 *data.Slice, factor1, f
 	util.Assert(src1.Len() == N && src2.Len() == N && src3.Len() == N && src4.Len() == N && src5.Len() == N && src6.Len() == N && src7.Len() == N)
 	util.Assert(src1.NComp() == nComp && src2.NComp() == nComp && src3.NComp() == nComp && src4.NComp() == nComp && src5.NComp() == nComp && src6.NComp() == nComp && src7.NComp() == nComp)
 	cfg := make1DConf(N)
+	eventList := make([]*cl.Event, nComp)
 	for c := 0; c < nComp; c++ {
-		eventList[c] = k_madd6_async(dst.DevPtr(c),
+		eventList[c] = k_madd7_async(dst.DevPtr(c),
 			src1.DevPtr(c), factor1,
 			src2.DevPtr(c), factor2,
 			src3.DevPtr(c), factor3,

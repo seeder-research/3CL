@@ -1,6 +1,6 @@
 // dst[i] = src1[i] * fac1 + src2[i] * fac2 + src3[i] * fac3 + src4[i] * fac4 + src5[i] * fac5 + src6[i] * fac6
 __kernel void
-madd3(__global float* __restrict__ dst,
+madd6(__global float* __restrict__ dst,
       __global float* __restrict src1, float fac1,
       __global float* __restrict src2, float fac2,
       __global float* __restrict src3, float fac3,

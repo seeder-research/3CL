@@ -1,8 +1,11 @@
 package opencl
 
 import (
-	"github.com/mumax/3/data"
-	"github.com/mumax/3/util"
+	"fmt"
+
+	"github.com/mumax/3cl/data"
+	"github.com/mumax/3cl/opencl/cl"
+	"github.com/mumax/3cl/util"
 )
 
 // Topological charge according to Berg and Lüscher

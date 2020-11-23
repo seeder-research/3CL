@@ -59,7 +59,7 @@ func (mini *Minimizer) Step() {
 	size := m.Size()
 
 	if mini.k == nil {
-		mini.k = cuda.Buffer(3, size)
+		mini.k = opencl.Buffer(3, size)
 		torqueFn(mini.k)
 	}
 
@@ -147,7 +147,6 @@ func Minimize() {
 	}
 
 	// set stepper to the minimizer
-	size := M.Buffer().Size()
 	mini := Minimizer{
 		h:      1e-4,
 		k:      nil,
