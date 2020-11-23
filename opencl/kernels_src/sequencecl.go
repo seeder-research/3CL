@@ -62,6 +62,7 @@ var OCLKernelsList = []string{
 	"addslonczewskitorque2",
 	"settemperature2",
 	"settopologicalcharge",
+	"settopologicalchargelattice",
 	"adduniaxialanisotropy2",
 	"vecnorm",
 	"zeromask",
