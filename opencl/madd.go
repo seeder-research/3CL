@@ -111,10 +111,10 @@ func Madd4(dst, src1, src2, src3, src4 *data.Slice, factor1, factor2, factor3, f
 	eventList := make([]*cl.Event, nComp)
 	for c := 0; c < nComp; c++ {
 		eventList[c] = k_madd4_async(dst.DevPtr(c),
-		                        src1.DevPtr(c), factor1,
-			                src2.DevPtr(c), factor2,
-			                src3.DevPtr(c), factor3,
-			                src4.DevPtr(c), factor4, N, cfg,
+			src1.DevPtr(c), factor1,
+			src2.DevPtr(c), factor2,
+			src3.DevPtr(c), factor3,
+			src4.DevPtr(c), factor4, N, cfg,
 			[](*cl.Event){dst.GetEvent(c), src1.GetEvent(c),
 				src2.GetEvent(c), src3.GetEvent(c), src4.GetEvent(c)})
 		dst.SetEvent(c, eventList[c])
@@ -138,11 +138,11 @@ func Madd5(dst, src1, src2, src3, src4, src5 *data.Slice, factor1, factor2, fact
 	cfg := make1DConf(N)
 	for c := 0; c < nComp; c++ {
 		eventList[c] = k_madd5_async(dst.DevPtr(c),
-		                        src1.DevPtr(c), factor1,
-			                src2.DevPtr(c), factor2,
-			                src3.DevPtr(c), factor3,
-			                src4.DevPtr(c), factor4,
-			                src5.DevPtr(c), factor5, N, cfg,
+			src1.DevPtr(c), factor1,
+			src2.DevPtr(c), factor2,
+			src3.DevPtr(c), factor3,
+			src4.DevPtr(c), factor4,
+			src5.DevPtr(c), factor5, N, cfg,
 			[](*cl.Event){dst.GetEvent(c), src1.GetEvent(c),
 				src2.GetEvent(c), src3.GetEvent(c),
 				src4.GetEvent(c), src5.GetEvent(c)})
@@ -168,12 +168,12 @@ func Madd6(dst, src1, src2, src3, src4, src5, src6 *data.Slice, factor1, factor2
 	cfg := make1DConf(N)
 	for c := 0; c < nComp; c++ {
 		eventList[c] = k_madd6_async(dst.DevPtr(c),
-		                        src1.DevPtr(c), factor1,
-			                src2.DevPtr(c), factor2,
-			                src3.DevPtr(c), factor3,
-			                src4.DevPtr(c), factor4,
-			                src5.DevPtr(c), factor5,
-			                src6.DevPtr(c), factor6, N, cfg,
+			src1.DevPtr(c), factor1,
+			src2.DevPtr(c), factor2,
+			src3.DevPtr(c), factor3,
+			src4.DevPtr(c), factor4,
+			src5.DevPtr(c), factor5,
+			src6.DevPtr(c), factor6, N, cfg,
 			[](*cl.Event){dst.GetEvent(c), src1.GetEvent(c),
 				src2.GetEvent(c), src3.GetEvent(c),
 				src4.GetEvent(c), src5.GetEvent(c),
@@ -201,13 +201,13 @@ func Madd7(dst, src1, src2, src3, src4, src5, src6, src7 *data.Slice, factor1, f
 	cfg := make1DConf(N)
 	for c := 0; c < nComp; c++ {
 		eventList[c] = k_madd6_async(dst.DevPtr(c),
-		                        src1.DevPtr(c), factor1,
-			                src2.DevPtr(c), factor2,
-			                src3.DevPtr(c), factor3,
-			                src4.DevPtr(c), factor4,
-			                src5.DevPtr(c), factor5,
-			                src6.DevPtr(c), factor6,
-			                src7.DevPtr(c), factor7, N, cfg,
+			src1.DevPtr(c), factor1,
+			src2.DevPtr(c), factor2,
+			src3.DevPtr(c), factor3,
+			src4.DevPtr(c), factor4,
+			src5.DevPtr(c), factor5,
+			src6.DevPtr(c), factor6,
+			src7.DevPtr(c), factor7, N, cfg,
 			[](*cl.Event){dst.GetEvent(c), src1.GetEvent(c),
 				src2.GetEvent(c), src3.GetEvent(c),
 				src4.GetEvent(c), src5.GetEvent(c),
