@@ -4,10 +4,11 @@ package engine
 // See also opencl/exchange.cl and opencl/dmi.cl
 
 import (
+	"unsafe"
+
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/opencl"
 	"github.com/mumax/3cl/util"
-	"unsafe"
 )
 
 var (
@@ -19,8 +20,8 @@ var (
 	dbulk2 exchParam // inter-cell Dbulk
 
 	B_exch     = NewVectorField("B_exch", "T", "Exchange field", AddExchangeField)
-	E_exch     = NewScalarValue("E_exch", "J", "Total exchange energy", GetExchangeEnergy)
-	Edens_exch = NewScalarField("Edens_exch", "J/m3", "Total exchange energy density", AddExchangeEnergyDensity)
+	E_exch     = NewScalarValue("E_exch", "J", "Total exchange energy (including the DMI energy)", GetExchangeEnergy)
+	Edens_exch = NewScalarField("Edens_exch", "J/m3", "Total exchange energy density (including the DMI energy density)", AddExchangeEnergyDensity)
 
 	// Average exchange coupling with neighbors. Useful to debug inter-region exchange
 	ExchCoupling = NewScalarField("ExchCoupling", "arb.", "Average exchange coupling with neighbors", exchangeDecode)

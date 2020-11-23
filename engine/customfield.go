@@ -26,7 +26,8 @@ func init() {
 	DeclFunc("Dot", Dot, "Dot product of two vector quantities")
 	DeclFunc("Cross", Cross, "Cross product of two vector quantities")
 	DeclFunc("Mul", Mul, "Point-wise product of two quantities")
-	DeclFunc("MulMV", MulMV, "Matrix-Vector product: MulMV(AX, AY, AZ, m) = (AX·m, AY·m, AZ·m)")
+	DeclFunc("MulMV", MulMV, "Matrix-Vector product: MulMV(AX, AY, AZ, m) = (AX·m, AY·m, AZ·m). "+
+		"The arguments Ax, Ay, Az and m are quantities with 3 componets.")
 	DeclFunc("Div", Div, "Point-wise division of two quantities")
 	DeclFunc("Const", Const, "Constant, uniform number")
 	DeclFunc("ConstVector", ConstVector, "Constant, uniform vector")
