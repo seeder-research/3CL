@@ -3,8 +3,8 @@ package engine
 import (
 	"math"
 
-	"github.com/mumax/3/opencl"
 	"github.com/mumax/3/data"
+	"github.com/mumax/3/opencl"
 )
 
 var (
