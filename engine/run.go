@@ -172,6 +172,7 @@ func RunWhile(condition func() bool) {
 	SanityCheck()
 	pause = false // may be set by <-Inject
 	const output = true
+	stepper.Free()
 	runWhile(condition, output)
 	pause = true
 }
