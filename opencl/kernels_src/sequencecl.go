@@ -64,6 +64,8 @@ var OCLKernelsList = []string{
 	"addmagnetoelasticfield",
 	"getmagnetoelasticforce",
 	"addslonczewskitorque2",
+	"setPhi",
+	"setTheta",
 	"settemperature2",
 	"settopologicalcharge",
 	"settopologicalchargelattice",
