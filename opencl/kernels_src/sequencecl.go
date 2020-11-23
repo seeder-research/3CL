@@ -39,6 +39,7 @@ var OCLKernelsList = []string{
 	"madd4",
 	"madd5",
 	"madd6",
+	"madd7",
 	"setmaxangle",
 	"minimize",
 	"mul",
