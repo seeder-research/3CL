@@ -20,6 +20,7 @@ func SetTopologicalChargeDensityLattice(dst *data.Slice) {
 func GetTopologicalChargeLattice() float64 {
 	s := ValueOf(Ext_TopologicalChargeDensityLattice)
 	defer opencl.Recycle(s)
+	N := Mesh().Size()
 
-	return (0.25 / math.Pi) * float64(opencl.Sum(s))
+	return ( 0.25 / math.Pi / float64(N[Z]) ) * float64(opencl.Sum(s))
 }
