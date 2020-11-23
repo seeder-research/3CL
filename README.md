@@ -24,7 +24,7 @@ Tools
 https://godoc.org/github.com/mumax/3/cmd
 
 
-Building from source
+Building from source (for linux)
 --------------------
 
 Consider downloading a pre-compiled binary. If you want to compile nevertheless:
