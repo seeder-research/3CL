@@ -54,6 +54,6 @@ func ExchangeDecode(dst *data.Slice, Aex_red SymmLUT, regions *Bytes, mesh *data
 	dst.SetEvent(0, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
 	if err != nil {
-		fmt.Printf("WaitForEvents failed in addexchange: %+v", err)
+		fmt.Printf("WaitForEvents failed in exchangedecode: %+v", err)
 	}
 }

@@ -32,6 +32,7 @@ __kernel void mtgp32_normal(
     mtgp32_t mtgp;
     uint r;
     uint o;
+	float tmpNum;
 
     mtgp.status = status;
     mtgp.param_tbl = &param_tbl[MTGP32_TS * gid];
@@ -53,10 +54,11 @@ __kernel void mtgp32_normal(
 		     status[MTGP32_LS - MTGP32_N + lid + 1],
 		     status[MTGP32_LS - MTGP32_N + lid + pos]);
 	status[lid] = r;
-	o = temper_single(&mtgp,
+	o = temper(&mtgp,
 			  r,
 			  status[MTGP32_LS - MTGP32_N + lid + pos - 1]);
-	d_data[size * gid + i + lid] = normcdfinv_(as_float(o) - 1.0f);
+	tmpNum = convert_float(o);
+	d_data[size * gid + i + lid] = normcdfinv_(tmpNum * as_float(0x2f800000) + as_float(0x2f000000));
 	barrier(CLK_LOCAL_MEM_FENCE);
 	r = para_rec(&mtgp,
 		     status[(4 * MTGP32_TN - MTGP32_N + lid) % MTGP32_LS],
@@ -64,21 +66,23 @@ __kernel void mtgp32_normal(
 		     status[(4 * MTGP32_TN - MTGP32_N + lid + pos)
 			    % MTGP32_LS]);
 	status[lid + MTGP32_TN] = r;
-	o = temper_single(
+	o = temper(
 	    &mtgp,
 	    r,
 	    status[(4 * MTGP32_TN - MTGP32_N + lid + pos - 1) % MTGP32_LS]);
-	d_data[size * gid + MTGP32_TN + i + lid] = normcdfinv_(as_float(o) - 1.0f);
+	tmpNum = convert_float(o);
+	d_data[size * gid + MTGP32_TN + i + lid] = normcdfinv_(tmpNum * as_float(0x2f800000) + as_float(0x2f000000));
 	barrier(CLK_LOCAL_MEM_FENCE);
 	r = para_rec(&mtgp,
 		     status[2 * MTGP32_TN - MTGP32_N + lid],
 		     status[2 * MTGP32_TN - MTGP32_N + lid + 1],
 		     status[2 * MTGP32_TN - MTGP32_N + lid + pos]);
 	status[lid + 2 * MTGP32_TN] = r;
-	o = temper_single(&mtgp,
+	o = temper(&mtgp,
 			  r,
 			  status[lid + pos - 1 + 2 * MTGP32_TN - MTGP32_N]);
-	d_data[size * gid + 2 * MTGP32_TN + i + lid] = normcdfinv_(as_float(o) - 1.0f);
+	tmpNum = convert_float(o);
+	d_data[size * gid + 2 * MTGP32_TN + i + lid] = normcdfinv_(tmpNum * as_float(0x2f800000) + as_float(0x2f000000));
 	barrier(CLK_LOCAL_MEM_FENCE);
     }
     // write back status for next call

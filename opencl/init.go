@@ -142,10 +142,10 @@ func Init(gpu int) {
 
 	data.EnableGPU(memFree, memFree, MemCpy, MemCpyDtoH, MemCpyHtoD)
 
-	fmt.Printf("Initializing clFFT library \n")
-	if err := cl.SetupCLFFT(); err != nil {
-		fmt.Printf("failed to initialize clFFT \n")
-	}
+	//	fmt.Printf("Initializing clFFT library \n")
+	//	if err := cl.SetupCLFFT(); err != nil {
+	//		fmt.Printf("failed to initialize clFFT \n")
+	//	}
 }
 
 func (s *GPU) getGpuDevice() *cl.Device {
@@ -157,7 +157,7 @@ func (s *GPU) getGpuPlatform() *cl.Platform {
 }
 
 func ReleaseAndClean() {
-	cl.TeardownCLFFT()
+	//	cl.TeardownCLFFT()
 	ClCmdQueue.Release()
 	ClProgram.Release()
 	ClCtx.Release()

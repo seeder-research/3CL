@@ -39,6 +39,10 @@ func (m MSlice) Mul(c int) float32 {
 	return float32(m.mul[c])
 }
 
+func (m MSlice) GetSlicePtr(c int) *data.Slice {
+	return m.arr
+}
+
 func (m MSlice) SetMul(c int, mul float32) {
 	m.mul[c] = float64(mul)
 }

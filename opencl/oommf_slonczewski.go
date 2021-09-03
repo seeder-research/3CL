@@ -1,9 +1,11 @@
 package opencl
 
 import (
+	"fmt"
+	"unsafe"
+
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/opencl/cl"
-	"unsafe"
 )
 
 // Add Slonczewski ST torque to torque (Tesla).
@@ -51,4 +53,8 @@ func AddOommfSlonczewskiTorque(torque, m *data.Slice, Msat, J, fixedP, alpha, pf
 	pfree.SetEvent(0, event)
 	λfix.SetEvent(0, event)
 	λfree.SetEvent(0, event)
+	err := cl.WaitForEvents([]*cl.Event{event})
+	if err != nil {
+		fmt.Printf("WaitForEvents failed in addoommfslonczewskitorque: %+v \n", err)
+	}
 }

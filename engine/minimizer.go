@@ -116,7 +116,10 @@ func (mini *Minimizer) Step() {
 }
 
 func (mini *Minimizer) Free() {
-	mini.k.Free()
+	if mini.k != nil {
+		opencl.Recycle(mini.k)
+		mini.k = nil
+	}
 }
 
 func Minimize() {

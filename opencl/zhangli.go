@@ -1,6 +1,8 @@
 package opencl
 
 import (
+	"fmt"
+
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/opencl/cl"
 )
@@ -40,4 +42,8 @@ func AddZhangLiTorque(torque, m *data.Slice, Msat, J, alpha, xi, pol MSlice, mes
 	alpha.SetEvent(0, event)
 	xi.SetEvent(0, event)
 	pol.SetEvent(0, event)
+
+	if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
+		fmt.Printf("WaitForEvents failed in addzhanglitorque: %+v \n", err)
+	}
 }

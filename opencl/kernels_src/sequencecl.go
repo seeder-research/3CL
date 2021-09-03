@@ -13,6 +13,7 @@ var OCLHeadersList = []string{
 	"amul",
 	"RNGmrg32k3a",
 	"RNGmtgp",
+	"RNG_common",
 	"sum"}
 
 var OCLKernelsList = []string{

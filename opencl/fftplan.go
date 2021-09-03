@@ -9,7 +9,8 @@ import (
 
 // Base implementation for all FFT plans.
 type fftplan struct {
-	handle *cl.ClFFTPlan
+	//	handle *cl.ClFFTPlan
+	handle *cl.VkfftPlan
 }
 
 func prod3(x, y, z int) int {

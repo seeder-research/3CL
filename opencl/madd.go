@@ -226,6 +226,6 @@ func Madd7(dst, src1, src2, src3, src4, src5, src6, src7 *data.Slice, factor1, f
 	}
 	err := cl.WaitForEvents(eventList)
 	if err != nil {
-		fmt.Printf("WaitForEvents failed in madd6: %+v \n", err)
+		fmt.Printf("WaitForEvents failed in madd7: %+v \n", err)
 	}
 }

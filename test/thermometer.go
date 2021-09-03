@@ -1,4 +1,5 @@
-//+build ignore
+//go:build ignore
+// +build ignore
 
 /*
 Checks if the measured temperature in a ferromagnetic PMA film is equal to the input temperature.
@@ -17,8 +18,8 @@ Due to this difference, we need to add the following constant value to the divis
 package main
 
 import (
-	"github.com/mumax/3cl/opencl"
 	. "github.com/mumax/3cl/engine"
+	"github.com/mumax/3cl/opencl"
 )
 
 const kB = 1.38064852e-23 // Boltzmann constant

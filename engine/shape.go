@@ -6,8 +6,8 @@ import (
 	_ "image/png"
 	"math"
 
-	"github.com/mumax/3/httpfs"
-	"github.com/mumax/3/util"
+	"github.com/mumax/3cl/httpfs"
+	"github.com/mumax/3cl/util"
 )
 
 func init() {

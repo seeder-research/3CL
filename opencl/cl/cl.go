@@ -18,7 +18,7 @@ package cl
 
 /*
 #include "./opencl.h"
-#include <clFFT.h>
+#include "vkFFT_enum.h"
 */
 import "C"
 
@@ -160,16 +160,16 @@ func toError(code interface{}) error {
 	switch codeT := code.(type) {
 	default:
 		return ErrUnknown
+	case C.VkFFTResult:
+		if err, ok := errorMapVkFFT[codeT]; ok {
+			return err
+		}
+		return ErrOtherFFT(codeT)
 	case C.cl_int:
 		if err, ok := errorMap[codeT]; ok {
 			return err
 		}
 		return ErrOther(codeT)
-	case C.clfftStatus:
-		if err, ok := errorMapFFT[codeT]; ok {
-			return err
-		}
-		return ErrOtherFFT(codeT)
 	}
 }
 

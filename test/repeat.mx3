@@ -20,5 +20,5 @@ alpha = 1
 
 steps(1000)
 
-expectv("m", m.average(), vector(0.525,  0, 0),  1e-2)
+expectv("m", m.average(), vector(0.525,  0, 0),  2e-2)
 

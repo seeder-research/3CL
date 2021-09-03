@@ -31,11 +31,6 @@ __kernel void mtgp32_init_seed_kernel(
     mtgp32_t mtgp;
     mtgp.status = status;
     mtgp.param_tbl = &param_tbl[MTGP32_TS * gid];
-    mtgp.temper_tbl = &temper_tbl[MTGP32_TS * gid];
-    mtgp.single_temper_tbl = &single_temper_tbl[MTGP32_TS * gid];
-    mtgp.pos = pos_tbl[gid];
-    mtgp.sh1 = sh1_tbl[gid];
-    mtgp.sh2 = sh2_tbl[gid];
 
     // initialize
     mtgp32_init_state(&mtgp, seed + gid);

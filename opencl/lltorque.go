@@ -64,6 +64,6 @@ func LLNoPrecess(torque, m, B *data.Slice) {
 	B.SetEvent(Z, event)
 	err := cl.WaitForEvents([](*cl.Event){event})
 	if err != nil {
-		fmt.Printf("WaitForEvents failed in lltorque: %+v \n", err)
+		fmt.Printf("WaitForEvents failed in llnoprecess: %+v \n", err)
 	}
 }

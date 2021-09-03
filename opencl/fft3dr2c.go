@@ -17,51 +17,17 @@ type fft3DR2CPlan struct {
 
 // 3D single-precision real-to-complex FFT plan.
 func newFFT3DR2C(Nx, Ny, Nz int) fft3DR2CPlan {
-	handle, err := cl.NewCLFFTPlan(ClCtx, cl.CLFFTDim3D, []int{Nx, Ny, Nz})
-	if err != nil {
-		log.Printf("Unable to create fft3dr2c plan \n")
-	}
-	arrLayout := cl.NewArrayLayout()
-	arrLayout.SetInputLayout(cl.CLFFTLayoutReal)
-	arrLayout.SetOutputLayout(cl.CLFFTLayoutHermitianInterleaved)
-	err = handle.SetLayouts(arrLayout)
-	if err != nil {
-		log.Printf("Unable to set buffer layouts of fft3dr2c plan \n")
-	}
+	handle := cl.NewVkFFTPlan(ClCtx)
+	handle.VkFFTSetFFTPlanSize([]int{Nx, Ny, Nz})
 
-	OutStrideArr := []int{1, Nx/2 + 1, Ny * (Nx/2 + 1)}
-	err = handle.SetOutStride(OutStrideArr)
-	if err != nil {
-		log.Printf("Unable to set output stride of fft3dr2c plan \n")
-	}
-
-	err = handle.SetResultOutOfPlace()
-	if err != nil {
-		log.Printf("Unable to set placeness of fft3dr2c result \n")
-	}
-
-	err = handle.SetSinglePrecision()
-	if err != nil {
-		log.Printf("Unable to set precision of fft3dr2c plan \n")
-	}
-
-	err = handle.SetResultNoTranspose()
-	if err != nil {
-		log.Printf("Unable to set transpose of fft3dr2c result \n")
-	}
-
-	err = handle.BakePlanSimple([]*cl.CommandQueue{ClCmdQueue})
-	if err != nil {
-		log.Printf("Unable to bake fft3dr2c plan \n")
-	}
 	return fft3DR2CPlan{fftplan{handle}, [3]int{Nx, Ny, Nz}}
 }
 
 // Execute the FFT plan, asynchronous.
 // src and dst are 3D arrays stored 1D arrays.
-func (p *fft3DR2CPlan) ExecAsync(src, dst *data.Slice) ([]*cl.Event, error) {
+func (p *fft3DR2CPlan) ExecAsync(src, dst *data.Slice) error {
+	ClCmdQueue.Finish()
 	if Synchronous {
-		ClCmdQueue.Finish()
 		timer.Start("fft")
 	}
 	util.Argument(src.NComp() == 1 && dst.NComp() == 1)
@@ -77,13 +43,12 @@ func (p *fft3DR2CPlan) ExecAsync(src, dst *data.Slice) ([]*cl.Event, error) {
 	srcMemObj := *(*cl.MemObject)(tmpPtr)
 	tmpPtr = dst.DevPtr(0)
 	dstMemObj := *(*cl.MemObject)(tmpPtr)
-	eventsList, err := p.handle.EnqueueForwardTransform([]*cl.CommandQueue{ClCmdQueue}, []*cl.Event{src.GetEvent(0), dst.GetEvent(0)},
-		[]*cl.MemObject{&srcMemObj}, []*cl.MemObject{&dstMemObj}, nil)
+	err := p.handle.EnqueueForwardTransform([]*cl.MemObject{&srcMemObj}, []*cl.MemObject{&dstMemObj})
 	if Synchronous {
 		ClCmdQueue.Finish()
 		timer.Stop("fft")
 	}
-	return eventsList, err
+	return err
 }
 
 // 3D size of the input array.

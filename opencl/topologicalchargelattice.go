@@ -27,8 +27,8 @@ func SetTopologicalChargeLattice(s *data.Slice, m *data.Slice, mesh *data.Mesh) 
 	m.SetEvent(X, event)
 	m.SetEvent(Y, event)
 	m.SetEvent(Z, event)
-	err := cl.WaitForEvents([](*cl.Event){event})
-	if err != nil {
+
+	if err := cl.WaitForEvents([](*cl.Event){event}); err != nil {
 		fmt.Printf("WaitForEvents failed in settopologicalchargelattice: %+v \n", err)
 	}
 }

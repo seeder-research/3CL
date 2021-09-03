@@ -5,20 +5,30 @@ import (
 	"log"
 	"unsafe"
 
+	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/opencl/RNGmtgp"
 	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/timer"
+	"math/rand"
+	"time"
 )
 
 type Prng_ interface {
 	Init(uint32, []*cl.Event)
 	GenerateUniform(unsafe.Pointer, int, []*cl.Event) *cl.Event
 	GenerateNormal(unsafe.Pointer, int, []*cl.Event) *cl.Event
+	GetGroupSize() int
+	GetGroupCount() int
 }
 
 type Generator struct {
-	Name string
-	PRNG Prng_
+	Name       string
+	PRNG       Prng_
+	r_seed     *uint32
+	buf_size   int
+	buf        *data.Slice
+	supply     int
+	sup_offset int
 }
 
 const MTGP32_MEXP = RNGmtgp.MTGPDC_MEXP
@@ -28,6 +38,7 @@ const MTGP32_CEIL_2P = RNGmtgp.MTGPDC_CEIL_2P
 const MTGP32_TN = RNGmtgp.MTGPDC_TN
 const MTGP32_LS = RNGmtgp.MTGPDC_LS
 const MTGP32_TS = RNGmtgp.MTGPDC_TS
+const MTGP32_PARAM_NUM = RNGmtgp.MTGPDC_PARAMS_NUM
 
 type mtgp32_params RNGmtgp.MTGP32dc_params_array_ptr
 
@@ -59,16 +70,129 @@ func (g *Generator) CreatePNG() {
 	}
 }
 
-func (g *Generator) Init(seed uint32, events []*cl.Event) {
-	g.PRNG.Init(seed, events)
+func (g *Generator) Init(seed *uint32, events []*cl.Event) {
+	g.buf_size = 3 * g.PRNG.GetGroupSize() * g.PRNG.GetGroupCount()
+	if seed == nil {
+		g.PRNG.Init(initRNG(), events)
+	} else {
+		g.PRNG.Init(*seed, events)
+	}
+	if g.buf == nil {
+		g.buf = Buffer(1, [3]int{g.buf_size, 1, 1})
+	} else {
+		if g.buf.NComp() != 1 {
+			log.Fatalln("Bad buffer for RNG \n")
+		} else {
+			bufferSize := g.buf.Size()
+			if bufferSize[0] != g.buf_size {
+				g.buf.Free()
+				g.buf = Buffer(1, [3]int{g.buf_size, 1, 1})
+			}
+		}
+	}
+	g.supply = 0
 }
 
-func (g *Generator) Uniform(data unsafe.Pointer, d_size int, events []*cl.Event) *cl.Event {
-	return g.PRNG.GenerateUniform(data, d_size, events)
+func (g *Generator) Uniform(data unsafe.Pointer, d_size int, events []*cl.Event) {
+	var event *cl.Event
+	var err error
+	demand, demand_offset := d_size, 0
+	err = cl.WaitForEvents(events)
+	if err != nil {
+		fmt.Printf("WaitForEvents prior to generating random numbers failed: %+v \n", err)
+	}
+	for demand > 0 {
+		if g.supply <= 0 {
+			event = g.PRNG.GenerateUniform(g.buf.DevPtr(0), g.buf_size, events)
+			err = cl.WaitForEvents([]*cl.Event{event})
+			if err != nil {
+				fmt.Printf("WaitForEvents in generating uniform random numbers failed: %+v \n", err)
+			}
+			bufferSize := g.buf.Size()
+			if bufferSize[0] != g.buf_size {
+				fmt.Printf("Error in buffer size variables! \n")
+			}
+			g.supply = bufferSize[0]
+			g.sup_offset = 0
+		}
+		if g.supply >= demand {
+			event, err = ClCmdQueue.EnqueueCopyBuffer((*cl.MemObject)(g.buf.DevPtr(0)), (*cl.MemObject)(data), SIZEOF_FLOAT32*g.sup_offset, SIZEOF_FLOAT32*demand_offset, SIZEOF_FLOAT32*demand, nil)
+			if err != nil {
+				fmt.Printf("EnqueueCopyBuffer in copying uniform random numbers failed: %+v \n", err)
+			}
+			err = cl.WaitForEvents([]*cl.Event{event})
+			if err != nil {
+				fmt.Printf("WaitForEvents in copying uniform random numbers failed: %+v \n", err)
+			}
+			g.sup_offset += demand
+			g.supply -= demand
+			demand = 0
+		} else {
+			event, err = ClCmdQueue.EnqueueCopyBuffer((*cl.MemObject)(g.buf.DevPtr(0)), (*cl.MemObject)(data), SIZEOF_FLOAT32*g.sup_offset, SIZEOF_FLOAT32*demand_offset, SIZEOF_FLOAT32*g.supply, nil)
+			if err != nil {
+				fmt.Printf("EnqueueCopyBuffer in copying uniform random numbers failed: %+v \n", err)
+			}
+			err = cl.WaitForEvents([]*cl.Event{event})
+			if err != nil {
+				fmt.Printf("WaitForEvents in copying uniform random numbers failed: %+v \n", err)
+			}
+			demand -= g.supply
+			demand_offset += g.supply
+			g.supply = 0
+		}
+	}
 }
 
-func (g *Generator) Normal(data unsafe.Pointer, d_size int, events []*cl.Event) *cl.Event {
-	return g.PRNG.GenerateNormal(data, d_size, events)
+func (g *Generator) Normal(data unsafe.Pointer, d_size int, events []*cl.Event) {
+	var event *cl.Event
+	var err error
+	demand, demand_offset := d_size, 0
+	if events != nil {
+		err = cl.WaitForEvents(events)
+		if err != nil {
+			fmt.Printf("WaitForEvents prior to generating random numbers failed: %+v \n", err)
+		}
+	}
+	for demand > 0 {
+		if g.supply <= 0 {
+			event = g.PRNG.GenerateNormal(g.buf.DevPtr(0), g.buf_size, events)
+			err = cl.WaitForEvents([]*cl.Event{event})
+			if err != nil {
+				fmt.Printf("WaitForEvents in generating uniform random numbers failed: %+v \n", err)
+			}
+			bufferSize := g.buf.Size()
+			if bufferSize[0] != g.buf_size {
+				fmt.Printf("Error in buffer size variables! \n")
+			}
+			g.supply = bufferSize[0]
+			g.sup_offset = 0
+		}
+		if g.supply >= demand {
+			event, err = ClCmdQueue.EnqueueCopyBuffer((*cl.MemObject)(g.buf.DevPtr(0)), (*cl.MemObject)(data), SIZEOF_FLOAT32*g.sup_offset, SIZEOF_FLOAT32*demand_offset, SIZEOF_FLOAT32*demand, nil)
+			if err != nil {
+				fmt.Printf("EnqueueCopyBuffer in copying uniform random numbers failed: %+v \n", err)
+			}
+			err = cl.WaitForEvents([]*cl.Event{event})
+			if err != nil {
+				fmt.Printf("WaitForEvents in copying uniform random numbers failed: %+v \n", err)
+			}
+			g.sup_offset += demand
+			g.supply -= demand
+			demand = 0
+		} else {
+			event, err = ClCmdQueue.EnqueueCopyBuffer((*cl.MemObject)(g.buf.DevPtr(0)), (*cl.MemObject)(data), SIZEOF_FLOAT32*g.sup_offset, SIZEOF_FLOAT32*demand_offset, SIZEOF_FLOAT32*g.supply, nil)
+			if err != nil {
+				fmt.Printf("EnqueueCopyBuffer in copying uniform random numbers failed: %+v \n", err)
+			}
+			err = cl.WaitForEvents([]*cl.Event{event})
+			if err != nil {
+				fmt.Printf("WaitForEvents in copying uniform random numbers failed: %+v \n", err)
+			}
+			demand -= g.supply
+			demand_offset += g.supply
+			g.supply = 0
+		}
+	}
 }
 
 func NewMTGPRNGParams() *mtgp32_params {
@@ -76,7 +200,19 @@ func NewMTGPRNGParams() *mtgp32_params {
 	var events_list []*cl.Event
 	var event *cl.Event
 	tmp := RNGmtgp.NewMTGPParams()
-	tmp.GroupSize = ClCUnits
+	maxNumGroups, max_size := ClCUnits, MTGP32_PARAM_NUM
+	if maxNumGroups > max_size {
+		maxNumGroups = max_size
+	}
+	tmp.SetGroupCount(maxNumGroups)
+	if ClWGSize < MTGP32_TN {
+		log.Fatalln("Unable to use PRNG on device! Insufficient resources for parallel work-items")
+	}
+	local_item := MTGP32_N
+	if local_item > ClWGSize {
+		local_item = MTGP32_TN
+	}
+	tmp.SetGroupSize(local_item)
 	tmp.GetMTGPArrays()
 	tmp.CreateParamBuffers(ClCtx)
 	events_list, err = tmp.LoadAllParamBuffersToDevice(ClCmdQueue, nil)
@@ -91,44 +227,16 @@ func NewMTGPRNGParams() *mtgp32_params {
 	return (*mtgp32_params)(tmp)
 }
 
+func initRNG() uint32 {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return rand.Uint32()
+}
+
 func (p *mtgp32_params) Init(seed uint32, events []*cl.Event) {
 
-	//	args := mtgp32_init_seed_kernel_args.argptr[:]
 	event := k_mtgp32_init_seed_kernel_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
 		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), seed,
-		&config{[]int{ClCUnits * MTGP32_TN}, []int{MTGP32_TN}}, events)
-
-	mtgp32_uniform_args.arg_param_tbl = unsafe.Pointer(p.Rec_buf)
-	mtgp32_uniform_args.arg_temper_tbl = unsafe.Pointer(p.Temper_buf)
-	mtgp32_uniform_args.arg_single_temper_tbl = unsafe.Pointer(p.Flt_temper_buf)
-	mtgp32_uniform_args.arg_pos_tbl = unsafe.Pointer(p.Pos_buf)
-	mtgp32_uniform_args.arg_sh1_tbl = unsafe.Pointer(p.Sh1_buf)
-	mtgp32_uniform_args.arg_sh2_tbl = unsafe.Pointer(p.Sh2_buf)
-	mtgp32_uniform_args.arg_d_status = unsafe.Pointer(p.Status_buf)
-
-	SetKernelArgWrapper("mtgp32_uniform", 0, p.Rec_buf)
-	SetKernelArgWrapper("mtgp32_uniform", 1, p.Temper_buf)
-	SetKernelArgWrapper("mtgp32_uniform", 2, p.Flt_temper_buf)
-	SetKernelArgWrapper("mtgp32_uniform", 3, p.Pos_buf)
-	SetKernelArgWrapper("mtgp32_uniform", 4, p.Sh1_buf)
-	SetKernelArgWrapper("mtgp32_uniform", 5, p.Sh2_buf)
-	SetKernelArgWrapper("mtgp32_uniform", 6, p.Status_buf)
-
-	mtgp32_normal_args.arg_param_tbl = unsafe.Pointer(p.Rec_buf)
-	mtgp32_normal_args.arg_temper_tbl = unsafe.Pointer(p.Temper_buf)
-	mtgp32_normal_args.arg_single_temper_tbl = unsafe.Pointer(p.Flt_temper_buf)
-	mtgp32_normal_args.arg_pos_tbl = unsafe.Pointer(p.Pos_buf)
-	mtgp32_normal_args.arg_sh1_tbl = unsafe.Pointer(p.Sh1_buf)
-	mtgp32_normal_args.arg_sh2_tbl = unsafe.Pointer(p.Sh2_buf)
-	mtgp32_normal_args.arg_d_status = unsafe.Pointer(p.Status_buf)
-
-	SetKernelArgWrapper("mtgp32_normal", 0, p.Rec_buf)
-	SetKernelArgWrapper("mtgp32_normal", 1, p.Temper_buf)
-	SetKernelArgWrapper("mtgp32_normal", 2, p.Flt_temper_buf)
-	SetKernelArgWrapper("mtgp32_normal", 3, p.Pos_buf)
-	SetKernelArgWrapper("mtgp32_normal", 4, p.Sh1_buf)
-	SetKernelArgWrapper("mtgp32_normal", 5, p.Sh2_buf)
-	SetKernelArgWrapper("mtgp32_normal", 6, p.Status_buf)
+		&config{[]int{p.GetGroupCount() * p.GetGroupSize()}, []int{p.GetGroupSize()}}, events)
 
 	p.Ini = true
 	err := cl.WaitForEvents([]*cl.Event{event})
@@ -144,29 +252,21 @@ func (p *mtgp32_params) GenerateUniform(d_data unsafe.Pointer, data_size int, ev
 		log.Fatalln("Generator has not been initialized!")
 	}
 
+	item_num := MTGP32_TN * p.GetGroupCount()
+	min_size := MTGP32_LS * p.GetGroupCount()
+	tmpSize := data_size
+	if data_size%min_size != 0 {
+		tmpSize = (data_size/min_size + 1) * min_size
+	}
+
 	if Synchronous { // debug
 		ClCmdQueue.Finish()
 		timer.Start("mtgp32_uniform")
 	}
 
-	mtgp32_uniform_args.Lock()
-	defer mtgp32_uniform_args.Unlock()
-
-	mtgp32_uniform_args.arg_d_data = d_data
-	mtgp32_uniform_args.arg_size = data_size
-
-	item_num := MTGP32_TN * ClCUnits
-	min_size := MTGP32_LS * ClCUnits
-	working_Size := int(1)
-	if data_size%min_size != 0 {
-		working_Size = (data_size/min_size + 1) * min_size
-	}
-
-	SetKernelArgWrapper("mtgp32_uniform", 7, d_data)
-	SetKernelArgWrapper("mtgp32_uniform", 8, working_Size)
-
-	//	args := mtgp32_uniform_args.argptr[:]
-	event := LaunchKernel("mtgp32_uniform", []int{item_num}, []int{MTGP32_TN}, events)
+	event := k_mtgp32_uniform_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
+		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, tmpSize/p.GetGroupCount(),
+		&config{[]int{item_num}, []int{MTGP32_TN}}, events)
 
 	if Synchronous { // debug
 		ClCmdQueue.Finish()
@@ -182,29 +282,21 @@ func (p *mtgp32_params) GenerateNormal(d_data unsafe.Pointer, data_size int, eve
 		log.Fatalln("Generator has not been initialized!")
 	}
 
+	item_num := MTGP32_TN * p.GetGroupCount()
+	min_size := MTGP32_LS * p.GetGroupCount()
+	tmpSize := data_size
+	if data_size%min_size != 0 {
+		tmpSize = (data_size/min_size + 1) * min_size
+	}
+
 	if Synchronous { // debug
 		ClCmdQueue.Finish()
 		timer.Start("mtgp32_uniform")
 	}
 
-	mtgp32_normal_args.Lock()
-	defer mtgp32_normal_args.Unlock()
-
-	mtgp32_uniform_args.arg_d_data = d_data
-	mtgp32_uniform_args.arg_size = data_size
-
-	item_num := MTGP32_TN * ClCUnits
-	min_size := MTGP32_LS * ClCUnits
-	working_Size := int(1)
-	if data_size%min_size != 0 {
-		working_Size = (data_size/min_size + 1) * min_size
-	}
-
-	SetKernelArgWrapper("mtgp32_normal", 7, d_data)
-	SetKernelArgWrapper("mtgp32_normal", 8, working_Size)
-
-	//	args := mtgp32_uniform_args.argptr[:]
-	event := LaunchKernel("mtgp32_normal", []int{item_num}, []int{MTGP32_TN}, events)
+	event := k_mtgp32_normal_async(unsafe.Pointer(p.Rec_buf), unsafe.Pointer(p.Temper_buf), unsafe.Pointer(p.Flt_temper_buf), unsafe.Pointer(p.Pos_buf),
+		unsafe.Pointer(p.Sh1_buf), unsafe.Pointer(p.Sh2_buf), unsafe.Pointer(p.Status_buf), d_data, tmpSize/p.GetGroupCount(),
+		&config{[]int{item_num}, []int{MTGP32_TN}}, events)
 
 	if Synchronous { // debug
 		ClCmdQueue.Finish()
@@ -252,4 +344,20 @@ func (p *mtgp32_params) SetStatusArray(arr []uint32) {
 
 func (p *mtgp32_params) GetStatusArray() []uint32 {
 	return p.Status
+}
+
+func (p *mtgp32_params) SetGroupSize(in int) {
+	p.GroupSize = in
+}
+
+func (p *mtgp32_params) GetGroupSize() int {
+	return p.GroupSize
+}
+
+func (p *mtgp32_params) SetGroupCount(in int) {
+	p.GroupCount = in
+}
+
+func (p *mtgp32_params) GetGroupCount() int {
+	return p.GroupCount
 }

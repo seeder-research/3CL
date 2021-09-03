@@ -4,9 +4,12 @@ import (
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/mag"
 	"github.com/mumax/3cl/opencl"
-	"github.com/mumax/3cl/opencl/cl"
+	//"github.com/mumax/3cl/opencl/cl"
 	//"github.com/mumax/3cl/util"
+	//"fmt"
 	"math"
+	"math/rand"
+	"time"
 )
 
 var (
@@ -20,11 +23,11 @@ var AddThermalEnergyDensity = makeEdensAdder(&B_therm, -1)
 
 // thermField calculates and caches thermal noise.
 type thermField struct {
-	seed uint32 // seed for generator
+	seed      uint32            // seed for generator
 	generator *opencl.Generator //
-	noise *data.Slice // noise buffer
-	step  int         // solver step corresponding to noise
-	dt    float64     // solver timestep corresponding to noise
+	noise     *data.Slice       // noise buffer
+	step      int               // solver step corresponding to noise
+	dt        float64           // solver timestep corresponding to noise
 }
 
 func init() {
@@ -32,6 +35,23 @@ func init() {
 	registerEnergy(GetThermalEnergy, AddThermalEnergyDensity)
 	B_therm.step = -1 // invalidate noise cache
 	DeclROnly("B_therm", &B_therm, "Thermal field (T)")
+}
+
+func initRNG() uint32 {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return rand.Uint32()
+}
+
+func (b *thermField) UpdateSeed(seedVal *uint32) {
+	if b.generator == nil {
+		b.generator = opencl.NewGenerator("mtgp")
+	}
+	if seedVal == nil {
+		b.seed = initRNG()
+	} else {
+		b.seed = *seedVal
+	}
+	b.generator.Init(&b.seed, nil)
 }
 
 func (b *thermField) AddTo(dst *data.Slice) {
@@ -50,7 +70,8 @@ func (b *thermField) update() {
 
 	if b.generator == nil {
 		b.generator = opencl.NewGenerator("mtgp")
-		b.generator.Init(b.seed, nil)
+		b.seed = initRNG()
+		b.UpdateSeed(&b.seed)
 	}
 	if b.noise == nil {
 		b.noise = opencl.NewSlice(b.NComp(), b.Mesh().Size())
@@ -99,8 +120,7 @@ func (b *thermField) update() {
 	alpha := Alpha.MSlice()
 	defer alpha.Recycle()
 	for i := 0; i < 3; i++ {
-		noiseBufferEvent := b.generator.Normal(noise.DevPtr(0), int(N), []*cl.Event{noise.GetEvent(0)})
-		noise.SetEvent(0, noiseBufferEvent)
+		b.generator.Normal(noise.DevPtr(0), int(N), nil)
 		opencl.SetTemperature(dst.Comp(i), noise, k2_VgammaDt, ms, temp, alpha)
 	}
 
@@ -118,10 +138,8 @@ func GetThermalEnergy() float64 {
 
 // Seeds the thermal noise generator
 func ThermSeed(seed int) {
-	B_therm.seed = uint32(seed)
-	if B_therm.generator != nil {
-		B_therm.generator.Init(B_therm.seed, nil)
-	}
+	seedVal := (uint32)(seed)
+	B_therm.UpdateSeed(&seedVal)
 }
 
 func (b *thermField) Mesh() *data.Mesh       { return Mesh() }

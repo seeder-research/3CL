@@ -1,6 +1,8 @@
 package opencl
 
 import (
+	"fmt"
+
 	"github.com/mumax/3cl/data"
 	"github.com/mumax/3cl/opencl/cl"
 	"github.com/mumax/3cl/util"
@@ -24,4 +26,8 @@ func SetTopologicalCharge(s *data.Slice, m *data.Slice, mesh *data.Mesh) {
 	m.SetEvent(X, event)
 	m.SetEvent(Y, event)
 	m.SetEvent(Z, event)
+
+	if err := cl.WaitForEvents([]*cl.Event{event}); err != nil {
+		fmt.Printf("WaitForEvents failed in settopologicalcharge: %+v \n", err)
+	}
 }

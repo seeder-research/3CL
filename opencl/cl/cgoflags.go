@@ -10,13 +10,11 @@ package cl
 //#cgo LDFLAGS:-L/usr/local/cuda/lib64
 //#cgo LDFLAGS:-L/usr/local/cuda/lib
 //#cgo CFLAGS: -I/usr/include
-//#cgo CFLAGS: -I/usr/local/clFFT/include
 //#cgo CFLAGS: -I/usr/local/cuda/include
 //
 ////Ubuntu 15.04::
 //#cgo LDFLAGS:-L/usr/lib/x86_64-linux-gnu/
 //#cgo CFLAGS: -I/usr/include
-//#cgo CFLAGS: -I/usr/local/clFFT/include
 //
 ////arch linux:
 //#cgo LDFLAGS:-L/opt/lib64 -L/opt/lib
@@ -24,8 +22,5 @@ package cl
 //
 ////WINDOWS:
 //#cgo windows LDFLAGS:-LC:/Intel/opencl/lib/x64
-//#cgo windows LDFLAGS:-LC:/Stuff/proj/goprojs/src/github.com/sources/clFFT/build/package/lib64
-//#cgo windows LDFLAGS:-l clFFT
 //#cgo windows CFLAGS: -IC:/Intel/opencl/include
-//#cgo windows CFLAGS: -IC:/Stuff/proj/goprojs/src/github.com/sources/clFFT/build/package/include
 import "C"

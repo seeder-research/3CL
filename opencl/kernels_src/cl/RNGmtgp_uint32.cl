@@ -2,8 +2,7 @@
 /* mtgp32 sample kernel code        */
 /* ================================ */
 /**
- * This kernel function generates single precision floating point numbers
- * in the range [0, 1) in d_data.
+ * This kernel function generates 32-bit unsigned integers in d_data.
  *
  * @param[in] param_tbl recursion parameters
  * @param[in] temper_tbl tempering parameters
@@ -15,7 +14,7 @@
  * @param[out] d_data output. IEEE single precision format.
  * @param[in] size number of output data requested.
  */
-__kernel void mtgp32_uniform(
+__kernel void mtgp32_uint32(
     __constant uint* param_tbl,
     __constant uint* temper_tbl,
     __constant uint* single_temper_tbl,
@@ -23,7 +22,7 @@ __kernel void mtgp32_uniform(
     __constant uint* sh1_tbl,
     __constant uint* sh2_tbl,
     __global uint* d_status,
-    __global float* d_data,
+    __global uint* d_data,
     int size)
 {
     const int gid = get_group_id(0);
@@ -32,7 +31,6 @@ __kernel void mtgp32_uniform(
     mtgp32_t mtgp;
     uint r;
     uint o;
-	float tmpNum;
 
     mtgp.status = status;
     mtgp.param_tbl = &param_tbl[MTGP32_TS * gid];
@@ -57,8 +55,7 @@ __kernel void mtgp32_uniform(
 	o = temper(&mtgp,
 			  r,
 			  status[MTGP32_LS - MTGP32_N + lid + pos - 1]);
-	tmpNum = convert_float(o);
-	d_data[size * gid + i + lid] = tmpNum * as_float(0x2f800000) + as_float(0x2f000000);
+	d_data[size * gid + i + lid] = o;
 	barrier(CLK_LOCAL_MEM_FENCE);
 	r = para_rec(&mtgp,
 		     status[(4 * MTGP32_TN - MTGP32_N + lid) % MTGP32_LS],
@@ -70,8 +67,7 @@ __kernel void mtgp32_uniform(
 	    &mtgp,
 	    r,
 	    status[(4 * MTGP32_TN - MTGP32_N + lid + pos - 1) % MTGP32_LS]);
-	tmpNum = convert_float(o);
-	d_data[size * gid + MTGP32_TN + i + lid] = tmpNum * as_float(0x2f800000) + as_float(0x2f000000);
+	d_data[size * gid + MTGP32_TN + i + lid] = o;
 	barrier(CLK_LOCAL_MEM_FENCE);
 	r = para_rec(&mtgp,
 		     status[2 * MTGP32_TN - MTGP32_N + lid],
@@ -81,8 +77,7 @@ __kernel void mtgp32_uniform(
 	o = temper(&mtgp,
 			  r,
 			  status[lid + pos - 1 + 2 * MTGP32_TN - MTGP32_N]);
-	tmpNum = convert_float(o);
-	d_data[size * gid + 2 * MTGP32_TN + i + lid] = tmpNum * as_float(0x2f800000) + as_float(0x2f000000);;
+	d_data[size * gid + 2 * MTGP32_TN + i + lid] = o;
 	barrier(CLK_LOCAL_MEM_FENCE);
     }
     // write back status for next call

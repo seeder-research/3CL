@@ -46,6 +46,24 @@ static inline uint para_rec(mtgp32_t * mtgp, uint X1, uint X2, uint Y)
 }
 
 /**
+ * The tempering function.
+ *
+ * @param[in] mtgp mtgp32 structure
+ * @param[in] V the output value should be tempered.
+ * @param[in] T the tempering helper value.
+ * @return the tempered value.
+ */
+static inline uint temper(mtgp32_t * mtgp, uint V, uint T)
+{
+    uint MAT;
+
+    T ^= T >> 16;
+    T ^= T >> 8;
+    MAT = mtgp->temper_tbl[T & 0x0f];
+    return V ^ MAT;
+}
+
+/**
  * The tempering and converting function.
  * By using the preset-ted table, converting to IEEE format
  * and tempering are done simultaneously.
@@ -55,7 +73,7 @@ static inline uint para_rec(mtgp32_t * mtgp, uint X1, uint X2, uint Y)
  * @param[in] T the tempering helper value.
  * @return the tempered and converted value.
  */
-static inline uint temper_single(mtgp32_t * mtgp, uint V, uint T)
+static inline uint temper_float_open(mtgp32_t * mtgp, uint V, uint T)
 {
     uint MAT;
     uint r;
@@ -63,7 +81,7 @@ static inline uint temper_single(mtgp32_t * mtgp, uint V, uint T)
     T ^= T >> 16;
     T ^= T >> 8;
     MAT = mtgp->single_temper_tbl[T & 0x0f];
-    r = (V >> 9) ^ MAT;
+    r = ((V >> 9) ^ MAT) | 1;
     return r;
 }
 
@@ -151,61 +169,4 @@ static inline void mtgp32_init_state(mtgp32_t * mtgp, uint seed)
 	    hidden_seed = tmp;
 	}
     }
-}
-
-static float normcdfinv_(float u) {
-	float	v;
-	float	p;
-	float	q;
-	float	ushift;
-
-	ushift = u - 0.5f;
-
-	v = copysign(ushift, 0.0f);
-	
-	if (v < 0.499433f) {
-		v = rsqrt((-u*u) + u);
-		v *= 0.5f;
-		p = 0.001732781974270904f;
-		p = p * v + 0.1788417306083325f;
-		p = p * v + 2.804338363421083f;
-		p = p * v + 9.35716893191325f;
-		p = p * v + 5.283080058166861f;
-		p = p * v + 0.07885390444279965f;
-		p *= ushift;
-		q = 0.0001796248328874524f;
-		q = q * v + 0.02398533988976253f;
-		q = q * v + 0.4893072798067982f;
-		q = q * v + 2.406460595830034f;
-		q = q * v + 3.142947488363618f;
-	} else {
-		if (ushift > 0.0f) {
-			u = 1.0f - u;
-		}
-		v = log2(u+u);
-		v *= -0.6931471805599453f;
-		if (v < 22.0f) {
-			p = 0.000382438382914666f;
-			p = p * v + 0.03679041341785685f;
-			p = p * v + 0.5242351532484291f;
-			p = p * v + 1.21642047402659f;
-			q = 9.14019972725528e-6f;
-			q = q * v + 0.003523083799369908f;
-			q = q * v + 0.126802543865968f;
-			q = q * v + 0.8502031783957995f;
-		} else {
-			p = 0.00001016962895771568f;
-			p = p * v + 0.003330096951634844f;
-			p = p * v + 0.1540146885433827f;
-			p = p * v + 1.045480394868638f;
-			q = 1.303450553973082e-7f;
-			q = q * v + 0.0001728926914526662f;
-			q = q * v + 0.02031866871146244f;
-			q = q * v + 0.3977137974626933f;
-		}
-		p *= copysign(v, ushift);
-	}
-	q = q * v + 1.0f;
-	v = 1.0f / q;
-	return p * v;
 }
